@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# TeX build artifacts -- never commit these; bench/ commits sources only
+*.aux
+*.log
+*.toc
+*.lof
+*.lot
+*.loa
+*.out
+*.bbl
+*.blg
+*.idx
+*.ind
+*.ilg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.pdf
+
+# Exception: figures deliberately checked in for the paper
+!paper/figures/*.pdf
+
+# Benchmark output. Raw results are regenerated, not committed, except for
+# explicitly promoted result sets under bench/results/published/
+bench/results/*
+!bench/results/.gitkeep
+!bench/results/published/
+
+# Scratch
+/tmp/
+*.tmp
+scratch/
+
+# Editors and OS
+.vscode/
+.idea/
+*.swp
+.DS_Store

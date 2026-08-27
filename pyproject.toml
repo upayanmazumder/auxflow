@@ -1,0 +1,46 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "auxflow"
+version = "0.0.0"
+description = "Static convergence classification for multi-pass document compilation"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Upayan Mazumder" }]
+requires-python = ">=3.12"
+# Deliberately dependency-free at the core. The analysis must not depend on a
+# third-party graph library: implementing Tarjan and the dataflow fixpoint by
+# hand is part of the project.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "hypothesis>=6", "ruff>=0.6", "mypy>=1.11"]
+bench = ["matplotlib>=3.9"]
+
+[project.scripts]
+auxflow = "auxflow.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/auxflow"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+  "engine: requires a TeX engine to be installed",
+  "slow: excluded from the default run",
+]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src/auxflow"]
