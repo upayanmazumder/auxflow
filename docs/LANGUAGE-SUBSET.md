@@ -124,6 +124,17 @@ produce it. This table is the justification for the subset's contents.
 | Benign cycle | any generated list plus `\pageref` | b05, b07 |
 | Amplifying cycle | `\forloop` bounded by `\pageref`, generating `\newpage` | b08 |
 | Opaque fallback | unmodelled package, `\csname` | b10 |
+| Conditional on a reference value | `\ifthenelse` selecting differently sized content on `\pageref` | b14 |
+| Extent feedback — **not modelled** | resolved reference width changing a line break | b11 |
+| Float placement feedback — **not modelled** | `[!t]` float with roman page numbering | b12 |
+| Dynamic textual reference — **not modelled** | `varioref`-style reference whose length moves its float | b13 |
+| Same-page citation feedback — **refused, not modelled** | `biblatex` `ibid` across a page break | b15 |
+
+The last four rows are mechanisms the subset **deliberately does not model**, and the reason is in
+[RELATED-WORK.md](RELATED-WORK.md) section 7.4: modelling them requires an account of typeset extent
+and hence of line breaking, which is out of scope, and the alternative of treating every rendered
+value as pagination-affecting makes the analysis vacuous. They are listed here so that the subset's
+boundary is stated in terms of *convergence mechanisms* and not only in terms of syntax.
 
 ## Non-goals for the subset
 

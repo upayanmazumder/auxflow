@@ -11,7 +11,7 @@ appears here must be regenerable by `harness/run.py`.
 
 ```
 bench/
-  corpus/       ten documents, sources only, one directory each
+  corpus/       fifteen documents, sources only, one directory each
     shared/     shared bibliography database and document class
   baselines/    the convergence-detection mechanisms under comparison
   harness/      execution, normalisation, ground truth, reporting

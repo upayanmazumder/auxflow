@@ -3,103 +3,146 @@
 Authoritative specification. Where any other document in this repository conflicts with this
 one, this one governs.
 
+**Revised 2026-08-27 after a prior-art audit.** The audit falsified two hypotheses and removed five
+claimed contributions. Its findings govern this document; the evidence is in
+[`research/sources/`](../research/sources/) and the analysis in
+[RELATED-WORK.md](RELATED-WORK.md). Anything in this repository that still reads as though the audit
+had not happened is a defect.
+
 ## Title
 
-**AuxFlow: Static Convergence Classification for Multi-Pass Document Compilation**
+**AuxFlow: A Static Applicability Test for Fixpoint Convergence in Multi-Pass Document Compilation**
 
-Report subtitle: *An instance-level auxiliary-fact dependency analysis that classifies
-convergence behaviour and diagnoses non-convergent cross-reference structures before the first
-engine execution.*
+Report subtitle: *An instance-level auxiliary-fact dependency analysis that decides, before the
+first engine execution, whether classical fixed-graph fixpoint reasoning applies to a document — with
+a taxonomy of the non-convergence mechanisms it cannot see.*
+
+The previous title, "Static Convergence Classification for Multi-Pass Document Compilation", was
+retired because "convergence classification" is Farrow 1986 and the unqualified form implies a
+completeness the analysis provably does not have.
 
 ## Abstract
 
 Multi-pass document compilers resolve cross-references through an auxiliary-file fixpoint: each
 engine run reads the auxiliary state written by the previous run. The number of runs required is
 therefore a property of the document's cross-reference structure, but in current practice it is
-discovered only dynamically, by running the engine repeatedly and observing when the auxiliary
-state stops changing. This is adequate for correctness but yields no information before
-execution, and it is not free: a detector that certifies stability by comparing consecutive
-states must perform one execution beyond the last one that changed anything.
+discovered only dynamically. Five widely deployed systems each use a different convergence oracle
+and each caps iteration with a hand-chosen constant — `latexmk` 5, Tectonic 6, ConTeXt 9, Typst 5,
+`llmk` 5 — and none derives the number from the source. When the cap is reached, two of the five
+report no cause at all.
 
 AuxFlow investigates what can instead be determined statically. It implements a conventional
-compiler front end over a declared LaTeX subset — a category-code lexer, a recursive-descent
-parser, a multi-file AST and six symbol tables — and lowers the result to the Auxiliary
-Reference Graph (ARG), an intermediate representation whose nodes are individual auxiliary fact
-instances and whose edges carry a *pass lag*: a fact written during run *p* is first readable
-during run *p+1*. A monotone dataflow analysis over the ARG assigns each fact a stable pass
-number; Tarjan's algorithm identifies strongly connected components; and a taint analysis
-classifies each feedback edge by whether the fact value it carries can influence the quantity of
-generated content.
+compiler front end over a declared LaTeX subset — a category-code lexer, a recursive-descent parser,
+a multi-file AST and six symbol tables — and lowers the result to the Auxiliary Reference Graph
+(ARG), an intermediate representation whose nodes are individual auxiliary fact instances and whose
+edges carry a *pass lag*: a fact written during run *p* is first readable during run *p+1*. A
+monotone dataflow analysis over the ARG assigns each fact a stable pass number; Tarjan's algorithm
+identifies strongly connected components; and an influence analysis classifies each feedback edge by
+whether the fact value it carries can reach a construct governing the quantity of generated content.
 
-That last distinction is the technical core. Ordinary documents are structurally cyclic — a
-table of contents occupies pages, which changes the page numbers recorded in the table of
-contents — yet they converge. Documents in which a fact value controls content generation may
-not converge at all. AuxFlow separates these two cases statically and reports the offending
-facts and source locations for the second.
+**The machinery is established prior art and is transplanted, not claimed.** Static pass numbering
+is Bochmann 1976 and Alblas 1981; bounding fixpoint rounds by a structural graph parameter is Hecht
+and Ullman 1975; SCC partition plus per-component fixpoint over the condensation is Jones 1990;
+static analysis of circular dependency graphs with a well-definedness obligation is Farrow 1986; and
+the fixed-rate versus data-dependent-rate schedulability line is Lee and Messerschmitt 1987. What
+the classical work does not cover is a setting in which the dependency graph is **not invariant under
+iteration**, because a fact value can change how many fact instances exist. AuxFlow's classification
+is best understood as a test of whether the classical fixed-graph fixpoint theory applies to a
+document at all — a sufficient condition for the finite-height half of the convergence obligation
+that Farrow allocates and that Magnusson and Hedin 2007 state, in writing, that nobody checks.
 
-The system is evaluated against four dynamic convergence-detection mechanisms on a ten-document
-benchmark corpus, using normalised auxiliary-state equivalence as ground truth, with per-document
-results including the cases where static analysis provides no benefit.
+The analysis is provably incomplete: four published non-convergence mechanisms are cycles through
+the value component that the ARG's abstraction severs by construction, and AuxFlow cannot see them.
+That incompleteness is declared, given corpus members, and measured.
+
+The system is evaluated against the deployed convergence oracles on a benchmark corpus, using
+normalised auxiliary-state equivalence as ground truth, with per-document results including the
+cases where static analysis provides no benefit and the cases where it is wrong.
 
 ## Problem statement
 
-Given a document source *D* for a multi-pass compilation pipeline, determine before any
-execution:
+Given a document source *D* for a multi-pass compilation pipeline, determine before any execution:
 
-1. whether the auxiliary-state fixpoint for *D* exists;
+1. whether the preconditions under which the auxiliary-state fixpoint for *D* is guaranteed to exist
+   can be established;
 2. if so, an upper bound on the number of engine runs required to reach it;
-3. if not, or if this cannot be decided, which specific cross-reference structures are
-   responsible.
+3. if not, or if this cannot be decided, which specific cross-reference structures are responsible,
+   named with source locations.
 
-Existing tooling answers (1) and (2) only by executing, and does not answer (3) — it reports
-that a retry limit was exhausted, without attributing a cause.
+No existing tool answers (1) or (2) without executing. Three of five deployed tools answer (3) after
+executing — Typst with a source span and a per-iteration value history, `labelschanged` with the
+offending label instances, Tectonic with the file name. `latexmk` and ConTeXt answer it not at all.
+AuxFlow's difference is the absence of execution, and a dependency chain rather than an endpoint.
 
 ## Motivation
 
-1. **Fixed schedules are wrong in both directions.** The conventional sequence over-provisions
-   simple documents and under-provisions ordinary ones. A document combining a table of
-   contents, a bibliography and page references can require four engine runs where the
-   conventional schedule performs three.
-2. **The engine's rerun warning is not a sound completion oracle.** LaTeX warns when
-   *references* have changed. It does not warn when a generated list changes. A build that stops
-   when the engine stops complaining can emit a document missing its table of contents. The
-   existence of the `rerunfilecheck` package is independent confirmation that base LaTeX's
-   warning is insufficient.
-3. **Dynamic detection costs an execution.** Certifying stability by comparing consecutive
-   states requires observing one unchanged transition, hence one run beyond the last productive
-   one. This is structural.
-4. **Non-convergence is real and undiagnosed.** A published nine-line counterexample exists in
-   which a cross-reference is wrong regardless of how many runs are performed (Gaspar, TUGboat
-   35:1, 2014). Existing tools respond by exhausting a retry cap and reporting only that they
-   gave up.
+1. **Every deployed system caps iteration with a magic number and none derives it.** `latexmk`
+   `$max_repeat = 5`; Tectonic `DEFAULT_MAX_TEX_PASSES = 6`; ConTeXt `multipass_nofruns = 9`, with
+   the source comment `-- better for tracing oscillation`; Typst `MAX_ITERS = 5`; `llmk`
+   `max_repeat = 5`. Five independent implementations, five constants, no analysis. This is the
+   best-evidenced motivation the project has.
+2. **Fixed schedules are wrong in both directions.** The conventional sequence over-provisions
+   simple documents and under-provisions ordinary ones. A document combining a table of contents, a
+   bibliography and page references can require four engine runs where the conventional schedule
+   performs three.
+3. **The engine's rerun warning is unsound in both directions.** It has false negatives —
+   `rerunfilecheck`'s own documentation states that base LaTeX's warnings "are not given for the
+   table of contents and other data stored in the aux files" — and false positives, since
+   `labelschanged`'s documentation records active characters in captions as a cause of spurious
+   "may have changed" warnings. Baseline B exists to measure both directions.
+4. **The oracles deployed in practice disagree, and nothing characterises how.** Engine warning;
+   consecutive-run output checksum (`latexmk`, ConTeXt); consecutive-run *input* comparison
+   (latexrun); same-run read-then-written comparison (Tectonic); layout-iteration hash (Typst). No
+   published comparison of their agreement, soundness direction, or cost was located.
+5. **Non-convergence is real, has several distinct mechanisms, and is undiagnosed as a class.** A
+   published one-page counterexample diverges monotonically (Gaspar, *TUGboat* 35:1, 2014); the TeX
+   FAQ documents a case that oscillates with period two; a Stack Exchange thread supplies
+   counterexamples with no loop and no conditional at all. Nine distinct mechanisms are enumerated in
+   [RELATED-WORK.md](RELATED-WORK.md) section 7.3. Nobody has systematised them.
 
-Preliminary measurements supporting points 1–3 are recorded in
-[`research/preliminary-measurements.md`](../research/preliminary-measurements.md). They were
-taken in an unpinned environment and must be reproduced under
-[docs/EVALUATION.md](EVALUATION.md) before appearing in any report.
+**A previously stated motivation has been withdrawn.** "Dynamic detection costs an execution" is
+true only of output-comparison detectors. latexrun compares tool *inputs* and states the argument
+explicitly before engineering around it; Tectonic compares files the engine read and then rewrote
+within a single run. Both reach *N*, not *N+1*.
+
+Preliminary measurements are recorded in
+[`research/preliminary-measurements.md`](../research/preliminary-measurements.md). They were taken
+in an unpinned environment and must be reproduced under [docs/EVALUATION.md](EVALUATION.md) before
+appearing in any report. Prior-art evidence is in
+[`research/sources/`](../research/sources/) and [RELATED-WORK.md](RELATED-WORK.md).
 
 ## Research question
 
-> Can a static, instance-level dependency analysis of a document's cross-reference structure
-> distinguish convergent from potentially non-convergent compilations, and bound the required
-> number of engine runs, before any execution — and how does the resulting classification
-> compare, in accuracy and in executions consumed, against dynamic convergence detection?
+> For a declared subset of LaTeX, can a static influence analysis over an instance-level graph of
+> auxiliary fact instances decide whether the preconditions of classical fixed-graph fixpoint theory
+> hold for a document — and for which published non-convergence mechanisms does that decision
+> succeed, for which does it fail, and how does it compare against the convergence oracles deployed
+> in current tools?
 
 Secondary questions in [RESEARCH-QUESTIONS.md](RESEARCH-QUESTIONS.md).
 
 ## Hypotheses
 
-- **H1 (classification).** For documents in the declared subset, structural analysis of the
-  auxiliary-fact graph distinguishes potentially non-convergent documents from benignly cyclic
-  ones with zero false negatives on the benchmark corpus.
+Revised after the prior-art audit. Two of the original four were falsified by the audit before any
+measurement was taken; they are recorded as struck in
+[RESEARCH-QUESTIONS.md](RESEARCH-QUESTIONS.md) rather than deleted.
+
+- **H1′ (classification, restated).** For documents in the declared subset whose instability arises
+  from a *modelled* mechanism, structural analysis of the auxiliary-fact graph distinguishes
+  potentially non-convergent documents from benignly cyclic ones with no false negatives. For the
+  four *unmodelled* mechanisms — reference width changing a line break; `[!t]` floats with roman
+  page numbering; `varioref`-style dynamic textual references; references in margin or foot notes —
+  it produces false negatives, and the corpus contains one of each so that the failure is measured
+  rather than discovered.
 - **H2 (bound).** For documents that are acyclic after abstraction, the statically computed
-  stable-pass bound equals the experimentally determined ground-truth run count.
-- **H3 (execution economy).** Static classification certifies a document's run count using
-  strictly fewer engine executions than any consecutive-state comparison detector, the gap being
-  exactly one execution.
-- **H4 (diagnosis latency).** For non-convergent documents, AuxFlow reports the responsible
-  facts without executing the engine, whereas dynamic tools report only after exhausting a
-  retry cap.
+  stable-pass bound is at least the experimentally determined ground-truth run count. No minimality
+  is claimed: minimum-pass assignment is NP-complete (Räihä and Ukkonen, *SIAM J. Comput.*, 1981).
+- **H3′ (execution economy, restated).** The one-execution gap is a property of *output*-comparison
+  detectors specifically. It is observed for `latexmk` and ConTeXt and is **not** observed for
+  latexrun or Tectonic.
+- **H4′ (diagnosis form, restated).** For non-convergent documents AuxFlow reports a dependency
+  *chain* with source spans having performed zero engine executions, whereas the tools that do
+  report a cause report an endpoint and do so only after executing.
 
 All four are falsifiable. H2 in particular may fail; see [SCOPE.md](SCOPE.md) and
 [EVALUATION.md](EVALUATION.md) for why that is a result rather than a failure.
@@ -109,11 +152,20 @@ All four are falsifiable. H2 in particular may fail; see [SCOPE.md](SCOPE.md) an
 - O1. A working compiler front end over the declared subset, with diagnostics and no engine
   execution.
 - O2. The ARG as a documented, instance-level intermediate representation.
-- O3. Two dataflow analyses: content-quantity taint propagation and stable-pass numbering.
-- O4. A four-state convergence classifier with actionable diagnostics.
+- O3. Two dataflow analyses: content-quantity influence propagation and stable-pass numbering.
+- O4. A convergence classifier with actionable diagnostics naming a dependency chain.
 - O5. A build planner and a plan executor with state-based verification.
-- O6. A reproducible benchmark corpus and measurement harness covering five baselines.
+- O6. A reproducible benchmark corpus and measurement harness covering every deployed oracle,
+  including latexrun and Tectonic.
 - O7. An honest evaluation, including negative results.
+- O8. **A systematised taxonomy of LaTeX non-convergence mechanisms**, with a per-mechanism
+  statement of whether a dependency-based static criterion detects it. Currently the only
+  contribution with no located anticipation of any kind.
+- O9. **A controlled comparison of the five deployed convergence oracles** — verdict, soundness
+  direction, and executions consumed. Also unanticipated in the literature.
+- O10. **An operational account of the declared subset's auxiliary round trip.** No formal semantics
+  of TeX exists and Knuth disclaimed interest in one, so this definitional work is necessary and
+  unclaimed.
 
 ## Scope
 
@@ -137,34 +189,64 @@ production system. Full boundary in [SCOPE.md](SCOPE.md).
 
 ## Expected contribution
 
-An instance-level intermediate representation for auxiliary-fact dependencies in multi-pass
-document compilation, together with a static analysis that (a) assigns each fact a stable-pass
-number by monotone fixpoint, (b) classifies each strongly connected component by whether the
-fact values it carries can influence the quantity of generated content, and (c) uses that
-classification to separate convergent, benignly cyclic and potentially non-convergent documents,
-reporting the responsible facts and source locations for the last.
+Stated in three strengths. The full derivation, with the prior art each concession answers, is in
+[RELATED-WORK.md](RELATED-WORK.md) section 13.
 
-Minimal pass numbering itself is prior art and is explicitly transplanted, not claimed. The
-contribution is the feedback classification that makes the transplant applicable to a
-data-dependent domain, and the pre-execution diagnosis it enables. See
-[RELATED-WORK.md](RELATED-WORK.md).
+**Conservative — defensible now.** A declared subset of LaTeX with an operational account of its
+auxiliary-state round trip; an instance-level dependency graph of auxiliary fact instances carrying
+pass-lag edges; the application of established multipass and circular-attribute-grammar analyses to
+it; a systematised mechanism taxonomy of LaTeX non-convergence stating which mechanisms a
+dependency-based static criterion can and cannot detect; and a controlled comparison of the
+convergence oracles deployed in current tools.
+
+**Strong — only if the experiments validate it, and only after Krishnan and Van Wyk (SLE 2012) and
+Söderberg and Hedin (SLE 2013) are read in full.** That a static influence analysis from auxiliary
+fact values to constructs governing content quantity is a usable sufficient condition for the
+finite-height precondition of circular-attribute-grammar fixpoint theory — that is, that it decides
+statically whether classical fixed-graph fixpoint reasoning applies to a document at all — yielding a
+pre-execution verdict with source-level attribution for the loop-bounded-by-a-reference class, and
+demonstrably failing for the extent-driven class.
+
+**Overclaim — must never appear.** The full list is in [RELATED-WORK.md](RELATED-WORK.md) section 13
+and [PATENT-NOTES.md](PATENT-NOTES.md). The short form: AuxFlow did not invent static pass
+numbering, SCC-plus-condensation fixpoint, iteration bounds from graph structure, cycle
+classification, naming the offending facts, checksum verification, or the observation that
+non-convergence is undecidable. It does not detect all non-convergent documents even within its
+subset. Dynamic detection does not necessarily cost an extra execution. Existing tools do not all
+fail to report a cause.
 
 ## Limitations
 
 Stated up front because they constrain what may be claimed.
 
-- **L1.** The analysis is defined only over the declared subset. Everything else produces an
-  explicit unknown classification.
+- **L1.** The analysis is defined only over the declared subset. Everything else produces an explicit
+  unknown classification. This is not engineering convenience: circularity testing for *remote*
+  reference attribute grammars is undecidable (Boyland, *JACM* 52(4), 2005), and LaTeX's
+  `\ref`/`\pageref`/`\cite` are remote references. The subset is what makes the graph statically
+  constructible at all.
 - **L2.** The abstraction that resolving a reference does not alter pagination is *not faithful*.
   Substituting `17` for `??` can change a line break and therefore a page break. Without this
   abstraction every document collapses into one strongly connected component and the analysis is
-  vacuous. Its consequences are validated empirically, not proved.
-- **L3.** A cycle classified as amplifying is a *necessary* structural condition for known
-  non-convergence, not a proof of divergence.
-- **L4.** No minimality claim. A computed bound may exceed the true requirement.
-- **L5.** Package coverage is finite. An unmodelled package that writes auxiliary state will
-  manifest as a prediction miss.
+  vacuous. The dichotomy is stated openly in [RELATED-WORK.md](RELATED-WORK.md) section 7.4: model
+  extent feedback and be vacuous, or do not and be unsound for a named class. AuxFlow takes the
+  second option.
+- **L3.** A cycle classified as amplifying is a *necessary* structural condition for one class of
+  known non-convergence, not a proof of divergence.
+- **L3b.** **An ARG cycle is neither necessary nor sufficient for non-convergence.** Not sufficient
+  is well known. Not necessary is the audit's sharpest adverse finding: four published mechanisms are
+  non-convergent and produce no structural edge. Any claim of completeness within the subset is
+  false.
+- **L3c.** Divergence and oscillation are distinct failure modes with distinct causes — the first
+  violates finite height, the second monotonicity — and a single amplifying label conflates them.
+- **L4.** No minimality claim. Minimum-pass assignment is NP-complete; a computed bound may exceed
+  the true requirement by design.
+- **L5.** Package coverage is finite. An unmodelled package that writes auxiliary state will manifest
+  as a prediction miss. The `biblatex` same-page citation feedback mechanism is safe only because it
+  is unmodelled; modelling `biblatex` naively would introduce a false negative.
 - **L6.** Nothing is claimed about engine termination.
+- **L7.** Instance-level pass numbering is Alblas's *pure* multi-pass setting, and deciding pure
+  multi-pass membership is of inherently exponential complexity (Engelfriet and Filè). AuxFlow
+  computes a conservative approximation over a restricted subset and must say so.
 
 ## Open technical decisions
 
@@ -176,14 +258,17 @@ obvious and low-risk have been made and are marked RESOLVED with a rationale.
 | D1 | Implementation language | **RESOLVED: Python 3.12+.** The interesting logic is hand-written either way; Python keeps the front end short, makes the harness easy, and has no bearing on the research claims. Core package takes no third-party dependencies — Tarjan and the fixpoint are written by hand as part of the project. |
 | D2 | Parser architecture | **RESOLVED: hand-written recursive descent with one token of lookahead.** A parser generator would obscure category-code handling, which is the part with genuine subtlety. |
 | D3 | AST representation | **RESOLVED: frozen dataclasses, one class per node kind, mandatory `Span` on every node.** Spans are load-bearing: the diagnostics in [NON-CONVERGENCE.md](NON-CONVERGENCE.md) are worthless without them. |
-| D4 | Exact fact kind set | **OPEN.** A provisional set is given in [IR.md](IR.md). It will be revised once the corpus is authored, because fact kinds should be justified by documents that need them, not invented in advance. Freeze before implementation phase 7. |
-| D5 | Pass-lag semantics for external tools | **OPEN.** The auxiliary round trip is lag 1. Whether a tool edge (`bibtex`) is best modelled as lag 1 from the run that produced its input, or as a separate scheduling node, affects predicted counts for bibliography documents. Resolve with a targeted experiment in phase 8. |
-| D6 | State equivalence definition | **OPEN, leaning normalised auxiliary state.** PDF byte identity is measurably too strict; raw file equality is sensitive to ordering. See [EVALUATION.md](EVALUATION.md). Must be fixed before any ground truth is generated. |
+| D4 | Exact fact kind set | **OPEN.** A provisional set is given in [IR.md](IR.md). It will be revised once the corpus is authored, because fact kinds should be justified by documents that need them. Freeze before implementation phase 7. |
+| D5 | Pass-lag semantics for external tools | **OPEN.** The auxiliary round trip is lag 1, now sourced from `ltfiles.dtx`: `\begin{document}` inputs the previous run's `.aux` before reopening it for writing. Whether a tool edge (`bibtex`) is best modelled as lag 1 from the run that produced its input, or as a separate scheduling node, affects predicted counts for bibliography documents. Resolve with a targeted experiment in phase 8. |
+| D6 | State equivalence definition | **OPEN, leaning normalised auxiliary state.** PDF byte identity is measurably too strict; raw file equality is sensitive to ordering. Note that `ltfiles.dtx` shows `\newlabel` records survive the aux re-read while `\@writefile` records are gobbled (`\let\@writefile\@gobbletwo`), so the two fact families need different normalisation. Must be fixed before any ground truth is generated. |
 | D7 | Benign-cycle bound | **OPEN.** Whether a benign cycle can be assigned a finite bound at all, or should always be reported as unbounded and deferred to runtime verification. The conservative option is the fallback; do not tune a constant against the corpus. |
 | D8 | Runtime verification strategy | **RESOLVED: normalised auxiliary-state comparison, never engine warnings.** See [RUNTIME-VERIFICATION.md](RUNTIME-VERIFICATION.md). |
 | D9 | Benchmark harness form | **RESOLVED: Python harness emitting JSONL, plus shell baseline scripts.** Baselines must be readable shell so a reviewer can confirm exactly what was executed. |
-| D10 | Containerised engine environment | **OPEN.** A public TeX Live image must be selected and pinned by digest, and must contain `latexmk` so baseline C is measurable. |
+| D10 | Containerised engine environment | **OPEN.** A public TeX Live image must be selected and pinned by digest, and must contain `latexmk`. It should also contain, or the harness should install, `latexrun` and Tectonic — both are now required baselines. |
 | D11 | Whether opaque constructs invalidate the whole document or only the containing file | **OPEN.** Per-file is more useful but requires arguing that opacity cannot leak across an inclusion boundary. Currently specified as whole-document (conservative). |
+| **D12** | **Whether to split `AMPLIFYING` into a finite-height failure and a monotonicity failure** | **OPEN, added by the audit.** Gaspar's loop diverges monotonically (finite height fails); the width-driven and conditional cases oscillate with period two (monotonicity fails). The Magnusson and Hedin condition separates them, and so does synchronous dataflow's separation of rate inconsistency from deadlock. Splitting is a small, honest refinement; it also means the second class is largely undetectable, which is why it is a decision and not a foregone conclusion. |
+| **D13** | **Whether the taint criterion is stated as "quantity of generated content" or as "any layout-determining measurement"** | **OPEN, added by the audit, and the most consequential open decision.** The narrow form misses mechanisms M3, M4, M6 and M7. The wide form makes every document containing one `\ref` a single strongly connected component and the analysis vacuous. There is no third option available without modelling line breaking. Currently specified narrow; the choice must be argued explicitly in the report, not assumed. |
+| **D14** | **Whether the amplifying analysis may be claimed as a contribution at all** | **BLOCKED, added by the audit.** Contingent on reading Krishnan and Van Wyk (SLE 2012, DOI `10.1007/978-3-642-36089-3_4`) and Söderberg and Hedin (SLE 2013, DOI `10.1007/978-3-319-02654-1_17`) in full. Until then no novelty claim about it may appear in any report. |
 
 ## Engineering principles
 

@@ -78,11 +78,66 @@ reach a content-generating construct.
 - **That an amplifying document diverges.** The classification identifies a necessary structural
   condition, not a sufficient one. A loop bounded by a page reference may still settle if the
   fixpoint happens to be consistent.
-- **That a benign document converges.** Convergence of benign feedback is an empirical
-  regularity within the model, not a theorem.
+- **That a benign document converges.** Convergence of benign feedback is an empirical regularity
+  within the model, not a theorem. The formal condition it approximates is stated exactly by
+  Magnusson and Hedin (*SCP* 68(1), 2007): a fixpoint is guaranteed "if the values for each attribute
+  on a cycle can be organized in a lattice of finite height and if all the semantic functions
+  involved in computing these attributes are monotonic on the respective lattices". Nobody in that
+  literature checks the condition; AuxFlow's taint analysis is an attempt at a domain-specific
+  sufficient condition for the finite-height half only.
+- **That the absence of a structural cycle implies convergence.** This is the audit's sharpest
+  adverse finding and it is not a corner case. Four published mechanisms are non-convergent and
+  produce no structural edge at all:
+  - the *typeset width* of a resolved reference changing a line break, hence a page break, hence the
+    reference (period-2 oscillation, no loop, no conditional — `tex.stackexchange.com/questions/30674`
+    accepted answer);
+  - a `[!t]` float combined with roman page numbering (same thread, David Carlisle);
+  - `varioref`-style dynamic textual references whose length moves the floats they refer to
+    (`labelschanged` documentation);
+  - references inside margin or foot notes (same).
+
+  All four travel along the `.value` → pagination edge that [IR.md](IR.md)'s `exists`/`value` split
+  severs by construction. **An ARG cycle is therefore neither necessary nor sufficient for
+  non-convergence.** The full nine-mechanism taxonomy is in
+  [RELATED-WORK.md](RELATED-WORK.md) section 7.3.
 - **Anything about constructs outside the subset.**
-- **Anything about engine termination**, which can fail for reasons unrelated to
-  cross-references.
+- **Anything about engine termination**, which can fail for reasons unrelated to cross-references —
+  including reasons with no cross-reference content at all, such as a generated auxiliary file
+  carrying its own creation timestamp (documented in the `latexmk` manual).
+
+## Two failure modes, conflated by one label
+
+`AMPLIFYING` currently covers two distinct failures with distinct causes, and the audit recommends
+splitting them (open decision D12 in [PROJECT.md](PROJECT.md)):
+
+- **Finite-height failure.** Gaspar's `\forloop` bounded by `\pageref` diverges *monotonically*: the
+  recorded page value increases by exactly one every run, without bound. The value domain is
+  unbounded because the page count is a function of the iterate.
+- **Monotonicity failure.** The width-driven and conditional cases *oscillate* with period two. The
+  domain is bounded; the feedback function is not monotone.
+
+The distinction matters because AuxFlow detects the first class and largely cannot detect the second.
+Reporting them under one label makes the coverage gap invisible. Synchronous dataflow makes the same
+split — rate inconsistency versus deadlock — and it is a citable precedent (Lee and Messerschmitt,
+*IEEE Trans. Computers*, 1987).
+
+## What already ships elsewhere
+
+Recorded here because the diagnostic design below must be positioned against it rather than
+presented as new.
+
+- **Typst** emits, per unstable fact, a warning with a byte span, the full per-iteration value
+  history, and a secondary "created here" span for the element that produced the value — plus a
+  document-level `document did not converge within five attempts`. Its own test suite contains
+  AuxFlow's amplifying case with the observed counts `0,1,2,3,4,5`.
+- **`labelschanged`** (CTAN) prints the offending label instances with their old and new `\meaning`
+  on every compile, and ships a hand-written taxonomy of causes.
+- **Tectonic** names the file whose content changed (`"foo.aux" changed`).
+- **`latexmk` and ConTeXt** report nothing but that a cap was reached.
+
+AuxFlow's remaining differentiators are that it reports a *dependency chain* rather than an endpoint,
+and that it does so having performed **zero** engine executions. Both must be demonstrated
+side-by-side, not asserted. See RQ6 in [RESEARCH-QUESTIONS.md](RESEARCH-QUESTIONS.md).
 
 ## Required wording
 

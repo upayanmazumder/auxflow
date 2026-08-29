@@ -9,30 +9,59 @@ not hidden.
 
 ## Baselines
 
-| | Baseline | What it observes | When it knows | Executions to certify a document needing *N* runs |
+Revised after the prior-art audit of 2026-08-27. The previous set contained five baselines and
+treated consecutive-output comparison as the state of the art. It is not: two deployed tools use
+oracles that avoid the redundant execution, so comparing only against output comparison would be a
+strawman. Seven baselines.
+
+| | Baseline | Oracle | When it knows | Executions to certify a document needing *N* runs |
 |---|---|---|---|---|
 | **A** | Fixed schedule | nothing | never | always 3, plus tools |
-| **B** | Engine-warning detection | rerun warnings in the engine log | after each run | *N*, but **unsound** — misses generated-list changes |
-| **C** | Checksum / state-based detection | normalised auxiliary state | after each run | ***N + 1*** |
+| **B** | Engine-warning detection | rerun warnings in the engine log | after each run | *N*, but **unsound in both directions** — misses generated-list changes, and fires spuriously on active characters in captions |
+| **C** | Checksum / consecutive-output comparison | normalised auxiliary state, run *k* against run *k−1* | after each run | ***N + 1*** |
+| **C′** | Consecutive-**input** comparison | the tools' inputs, run *k* against run *k−1* | after each run | ***N*** |
+| **C″** | Same-run read-then-written comparison | files the engine read and then rewrote *within* one run | during each run | ***N*** |
 | **D** | AuxFlow static analysis | source only | **before any run** | **0** |
 | **E** | AuxFlow static plus runtime verification | source, then state | before, confirmed after | *N*, plus 1 only on a prediction miss |
 
-Baselines B and C are implemented inside this repository rather than delegated to an external
-tool, so that B, C and E share identical normalisation and differ only in the mechanism under
-study. Delegating C to an existing tool would introduce differences in file handling and
-iteration caps that confound the comparison.
+Baselines B, C, C′ and C″ are implemented inside this repository rather than delegated to an
+external tool, so that they share identical normalisation and differ only in the mechanism under
+study. Delegating to existing tools would introduce differences in file handling and iteration caps
+that confound the comparison. **However**, an external cross-check against the real implementations
+is required, because the point of C′ and C″ is that real tools already do this:
 
-Baseline B is included **because** it is unsound. Demonstrating the gap between B and C is one
-of the results.
+- C is `latexmk`'s and ConTeXt's oracle. `latexmk` 4.88 maintains a `(time, size, md5)` database per
+  source file; ConTeXt MD5-hashes the single `.tuc` file.
+- C′ is latexrun's oracle. Its README states the argument for it explicitly: output comparison "runs
+  latex too many times; it will have already produced its final output one iteration before this
+  approach can figure out that it's done", so instead "if the *inputs* to latex and bibtex do not
+  change over one iteration, then latexrun can guarantee that the output also will not change, and
+  stop."
+- C″ is Tectonic's oracle: `is_rerun_needed` tests whether "there was a file that the engine read and
+  then rewrote, and the rewritten version is different than the version that it read in".
 
-### Why baseline C costs an extra execution
+Baseline B is included **because** it is unsound. Demonstrating the gap between B and the C family is
+one of the results — and it is now expected to be a gap in *both* directions.
 
-C concludes stability by observing that a transition changed nothing. To establish that state
-*A_N* is the fixpoint it must compare *A_N* against *A_{N+1}*, which requires performing run
-*N+1*. The information does not exist until the redundant run has been paid for.
+### Why baseline C costs an extra execution, and C′ and C″ do not
 
-This is a structural property of consecutive-state comparison, not a defect in any particular
-tool, and the gap is exactly one execution.
+C concludes stability by observing that a transition changed nothing. To establish that state *A_N*
+is the fixpoint it must compare *A_N* against *A_{N+1}*, which requires performing run *N+1*. The
+information does not exist until the redundant run has been paid for.
+
+**This is a property of *output* comparison, not of dynamic detection.** C′ reaches the same
+conclusion one run earlier because the inputs to run *N+1* are already known at the end of run *N*.
+C″ reaches it earlier still, because a file that was read and rewritten identically within run *N* is
+evidence of stability without any further run. The previously stated hypothesis that the gap applies
+to "any consecutive-state comparison detector" is **falsified**; see H3′ in
+[RESEARCH-QUESTIONS.md](RESEARCH-QUESTIONS.md).
+
+### Reference implementations to run alongside
+
+Not baselines — the harness re-implements the oracles — but their reported verdicts and diagnostics
+must be recorded per corpus member, because RQ6 is a comparison against what already ships:
+`latexmk` 4.88, latexrun, Tectonic, and (for the amplifying and oscillating members, ported by hand)
+Typst. `labelschanged` should be loaded in the LaTeX baselines so its per-label report is captured.
 
 ## Ground truth
 

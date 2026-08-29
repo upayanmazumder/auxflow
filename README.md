@@ -1,13 +1,15 @@
 # AuxFlow
 
-Static convergence classification for multi-pass document compilation.
+A static applicability test for fixpoint convergence in multi-pass document compilation.
 
 AuxFlow is a compiler and static analyser for a declared subset of LaTeX. It parses a document
 into an instance-level dependency graph of auxiliary facts, computes when each fact stabilises,
 and classifies the document's convergence behaviour — before the typesetting engine runs once.
 
-**Status: bootstrap / design phase. No compiler code has been written yet.** See
-[Current status](#current-status).
+**Status: bootstrap / design phase. No compiler code has been written yet.** A prior-art audit was
+completed on 2026-08-27; it falsified two hypotheses and removed five claimed contributions, and its
+findings govern the specification. See [Current status](#current-status),
+[docs/RELATED-WORK.md](docs/RELATED-WORK.md) and [research/sources/](research/sources/).
 
 ---
 
@@ -37,20 +39,29 @@ Three questions about a document *D* have no answer before execution:
 2. If so, how many engine runs are needed to reach it?
 3. If not, which cross-reference structures are responsible?
 
-Existing tooling answers (1) and (2) only by executing, and does not answer (3) at all — it
-reports that a retry limit was exhausted, without attributing a cause.
+Existing tooling answers (1) and (2) only by executing. It answers (3) unevenly: Typst names the
+fact with a source span and a per-iteration value history, `labelschanged` names the offending label
+instances, Tectonic names the file that changed, and `latexmk` and ConTeXt report only that a cap was
+reached. All of them answer it *after* executing.
 
-Three further observations motivate the work:
+Four further observations motivate the work:
 
-- **Fixed schedules are wrong in both directions.** The conventional `latex, bibtex, latex,
-  latex` sequence over-provisions simple documents and under-provisions ordinary ones.
-- **The engine's own rerun warning is not a sound completion oracle.** LaTeX warns when
-  *references* have changed, but not when a generated list such as a table of contents has.
-  A build that stops when the engine stops complaining can emit a document with no table of
-  contents.
-- **Dynamic detection costs an execution.** A detector that certifies stability by comparing
-  consecutive states must observe one unchanged transition, so it performs one run beyond the
-  last productive one. This is structural, not an implementation defect.
+- **Fixed schedules are wrong in both directions.** The conventional `latex, bibtex, latex, latex`
+  sequence over-provisions simple documents and under-provisions ordinary ones.
+- **Every deployed system caps iteration with a hand-chosen constant and none derives it.**
+  `latexmk` 5, Tectonic 6, ConTeXt 9, Typst 5, `llmk` 5. Five independent implementations, five
+  magic numbers, no analysis.
+- **The engine's own rerun warning is unsound in both directions.** It misses changes to generated
+  lists — `rerunfilecheck`'s documentation states this in as many words — and it fires spuriously on
+  active characters in captions, per `labelschanged`'s documentation.
+- **The deployed convergence oracles disagree, and nothing characterises how.** Engine warning;
+  consecutive-run output checksum; consecutive-run *input* comparison; same-run read-then-written
+  comparison; layout-iteration hash. No published comparison was found.
+
+One earlier motivation has been **withdrawn by the audit**: dynamic detection does *not* necessarily
+cost an extra execution. That is true of output-comparison detectors only. latexrun compares tool
+inputs, and Tectonic compares files the engine read and then rewrote within a single run; both reach
+*N*, not *N+1*.
 
 ## Core idea
 
@@ -63,30 +74,51 @@ written during run *p* is first readable during run *p+1*. Then:
 - classify each component by whether the fact values it carries can influence *how much content
   the document generates*.
 
-That last step is what makes the analysis viable. Ordinary documents are genuinely cyclic — a
+That last step is what makes the analysis non-vacuous. Ordinary documents are genuinely cyclic — a
 table of contents occupies pages, which changes the page numbers recorded in the table of
 contents — yet they converge. Documents in which a fact value controls content generation may
 not converge at all. Separating these two cases is the technical core of the project.
 
-## Key contribution
+**The separation is bought with an unsound abstraction, and the price is known.** Splitting each
+fact into an `exists` component and a `value` component is what keeps ordinary documents acyclic,
+but it severs the edge by which a resolved value's *typeset width* changes a line break and hence a
+page break. Four published non-convergence mechanisms travel along exactly that edge, so AuxFlow
+cannot see them. The alternative — model the extent feedback — makes every document containing one
+`\ref` a single strongly connected component and the analysis vacuous. There is no third option
+without modelling line breaking. AuxFlow takes the unsound branch, declares it, and measures it;
+see [docs/RELATED-WORK.md](docs/RELATED-WORK.md) section 7.4.
 
-- **Instance-level dependency analysis.** Facts are individual instances with source locations,
-  not a fixed set of generic node kinds. This is what makes the analysis a real dataflow
-  problem rather than a lookup table.
-- **Stable-pass propagation.** A per-fact monotone fixpoint over the component condensation.
-- **Cycle classification via SCC plus taint.** Feedback edges are classified by whether a value
-  can reach a content-generating construct.
-- **Early classification of problematic dependency structures**, with the participating facts,
-  their source locations, and the dependency types reported — not merely "cycle detected".
-- **Build-plan generation** from the analysis result.
-- **A controlled comparison against dynamic convergence detection**, including the cases where
-  static analysis provides no benefit.
+## Contribution
 
-**AuxFlow does not claim to have invented static pass-number minimisation.** Computing minimal
-pass numbers from a dependency-graph characterisation is established prior art in the attribute
-grammar literature, dating to Bochmann (CACM, 1976). AuxFlow transplants that technique to a
-domain that violates its preconditions, and the contribution is the machinery that makes the
-transplant possible. See [docs/RELATED-WORK.md](docs/RELATED-WORK.md).
+Stated after the concessions, because there are many. Full derivation in
+[docs/RELATED-WORK.md](docs/RELATED-WORK.md).
+
+**What AuxFlow does not claim.** Static pass numbering is Bochmann (CACM, 1976) and Alblas (1981).
+Bounding fixpoint rounds by a structural graph parameter is Hecht and Ullman (1975) — including the
+"N passes to propagate, one to confirm" decomposition. Instance-level dependency graph plus Tarjan
+SCC plus per-component fixpoint over the condensation is Jones (TOPLAS, 1990). Static analysis of
+circular dependency graphs with a well-definedness obligation is Farrow (1986). Conservative static
+termination analysis where evaluation generates more content to evaluate is Krishnan and Van Wyk
+(SLE, 2012). The fixed-rate versus data-dependent-rate schedulability line is Lee and Messerschmitt
+(1987). Naming the offending facts is anticipated at least six times, and Typst ships byte spans and
+per-iteration value histories today. Checksum verification is universal practice.
+
+**What survives.**
+
+- **A systematised taxonomy of LaTeX non-convergence mechanisms**, stating per mechanism whether a
+  dependency-based static criterion detects it. Nine mechanisms; the audit found no prior
+  systematisation. Four of the nine are provably invisible to AuxFlow's criterion, and that is
+  reported as a result.
+- **A controlled comparison of the five deployed convergence oracles** — verdict, soundness
+  direction, and executions consumed. Nothing comparable was found.
+- **An operational account of a declared LaTeX subset's auxiliary round trip.** No formal semantics
+  of TeX exists; Knuth disclaimed interest in one.
+- **Contingently:** that a static influence analysis from fact values to content-quantity-governing
+  constructs is a usable sufficient condition for the finite-height precondition of
+  circular-attribute-grammar fixpoint theory — i.e. that it decides whether classical fixed-graph
+  fixpoint reasoning applies to a document at all. This is what the classical work assumes or
+  delegates rather than decides. **The claim is blocked** pending full reads of Krishnan and Van Wyk
+  (2012) and Söderberg and Hedin (2013).
 
 ## Compiler architecture
 
@@ -129,12 +161,20 @@ removed without the project ceasing to be a complete compiler.
 
 ## Current status
 
-Bootstrap and design phase. The repository currently contains specifications, research notes and
-scaffolding. `src/` holds package structure and docstrings only — no lexer, no parser, no
-analysis has been implemented.
+Bootstrap and design phase. The repository contains specifications, research notes and scaffolding.
+`src/` holds package structure and docstrings only — no lexer, no parser, no analysis.
 
-The design is fixed and documented; implementation follows
-[docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md).
+A prior-art audit was completed on 2026-08-27. Its evidence is in
+[research/sources/](research/sources/) — eight files, roughly 460 KB of search logs, verbatim quotes
+and per-source anticipation verdicts — indexed by
+[research/prior-art-log.md](research/prior-art-log.md). The audit changed the design's positioning
+substantially and left three open decisions that must close before implementation: how the taint
+criterion is scoped (D13), whether the amplifying class splits (D12), and whether the amplifying
+analysis may be claimed at all (D14, blocked on two paper reads).
+
+**Implementation has not started and should not start until D13 and D14 are resolved.**
+[docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md) describes the phased plan; it predates the
+audit and its ordering must be revisited.
 
 ## Scope
 

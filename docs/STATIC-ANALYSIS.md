@@ -76,6 +76,19 @@ whether the influence is quantitative. This over-approximates, which is the safe
 can classify a benign document as amplifying (a false positive, costing the user a flag) but
 cannot miss a genuine amplifying cycle among modelled constructs.
 
+**The seed rule is where the analysis is unsound, and the unsoundness is in the seeds, not the
+propagation.** A value that is never read in a control construct is never seeded, so its influence on
+pagination through *typeset extent* is invisible. Four published non-convergence mechanisms work
+exactly that way and are not detected: reference width changing a line break; `[!t]` floats with
+roman page numbering; `varioref`-style dynamic textual references; references in margin or foot
+notes. See [NON-CONVERGENCE.md](NON-CONVERGENCE.md) and
+[RELATED-WORK.md](RELATED-WORK.md) section 7.3.
+
+Widening the seed rule to "any value rendered into the document body" would catch them and would
+also make every document containing one `\ref` a single strongly connected component, which is
+vacuous. That trade-off is **open decision D13** in [PROJECT.md](PROJECT.md) and is the most
+consequential unresolved question in the design. It must be argued in the report, not assumed.
+
 ---
 
 ## 3. SCC detection
@@ -196,16 +209,28 @@ A2 is empirical.
 ## Assumptions
 
 - **A1 — auxiliary round trip.** A fact written during run *k* is first readable during run
-  *k+1*. **Faithful.** The document body reads the previous run's auxiliary file and reopens it
-  for writing; generated lists are read at their insertion point from the previous run's file.
+  *k+1*. **Faithful, and now sourced from the LaTeX kernel.** `ltfiles.dtx` shows `\document`
+  executing `\@input{\jobname.aux}` *before* `\immediate\openout\@mainaux\jobname.aux`, so the
+  `\r@…` values live during run *k* are exactly the records written during run *k−1*. Note one
+  asymmetry the same file establishes: the aux read executes `\let\@writefile\@gobbletwo`, so
+  `\newlabel` records survive into memory while `.toc`, `.lof` and `.lot` records are discarded and
+  re-read at their insertion point. The two fact families therefore need different normalisation
+  (open decision D6).
 - **A2 — pagination stability under value substitution.** Replacing an unresolved reference with
-  its resolved value does not alter pagination. **Not faithful.** A short placeholder becoming a
-  longer number can change a line break and therefore a page break. Without A2 the entire
-  document is one strongly connected component and the analysis is vacuous. A2 is the assumption
-  every author already makes implicitly; AuxFlow makes it explicit and tests it — any ground-truth
-  run count exceeding the prediction is an A2 violation and must be reported as one.
+  its resolved value does not alter pagination. **Not faithful, and known false for a published
+  class.** A short placeholder becoming a longer number can change a line break and therefore a
+  page break. Four reproducible counterexamples exist — see N6 and
+  [RELATED-WORK.md](RELATED-WORK.md) section 7.3. Without A2 the entire document is one strongly
+  connected component and the analysis is vacuous, so the choice is between a vacuous analysis and
+  an analysis that is unsound for a named class. AuxFlow takes the second and reports the class.
+  Any ground-truth run count exceeding the prediction is an A2 violation and must be reported as
+  one; any document in the named class that is classified convergent is a *declared* false negative,
+  not a discovered one.
 - **A3 — modelled packages are complete.** A package in the package table produces only the fact
-  kinds recorded for it. Violations surface as prediction misses.
+  kinds recorded for it. Violations surface as prediction misses. A3 is doing more work than it
+  looks: `biblatex`'s same-page `ibid` feedback is a real non-convergence mechanism, and it is safe
+  only because `biblatex` is unmodelled. Modelling it naively — as `CITE_USE` and `BBL` facts without
+  the same-page feedback edge — would introduce a false negative.
 - **A4 — external tool lag.** An external tool consumes the state of run *k* and its output is
   visible in run *k+1*. Exact semantics is open decision D5.
 
@@ -216,8 +241,21 @@ A2 is empirical.
 - **N2.** That an amplifying classification proves divergence. It establishes a *necessary*
   structural condition for the known counterexample class, not a sufficient one.
 - **N3.** Anything about documents outside the subset, beyond G4 and G5.
-- **N4.** Minimality. A certified bound may exceed the true requirement.
+- **N4.** Minimality. A certified bound may exceed the true requirement. This is not a defect to be
+  fixed later: constructing a minimum-pass evaluation order is NP-complete (Räihä and Ukkonen,
+  *SIAM J. Comput.* 10(4):772–786, 1981), and the standard construction can use `2n−1` passes where
+  `n` suffice.
 - **N5.** Anything about engine termination.
+- **N6.** **That the absence of a structural cycle implies convergence.** Four published mechanisms
+  are non-convergent and produce no structural edge, because they act through typeset extent rather
+  than through content quantity. An ARG cycle is neither necessary nor sufficient for
+  non-convergence. This is a declared incompleteness with named corpus members, not an open bug.
+- **N7.** That the analysis is exact rather than approximate. Instance-level pass numbering is
+  Alblas's *pure* multi-pass setting, and deciding pure multi-pass membership is of inherently
+  exponential time complexity (Engelfriet and Filè). Circularity testing for *remote* reference
+  attribute grammars — the class LaTeX's `\ref`/`\pageref` belongs to — is undecidable (Boyland,
+  *JACM* 52(4), 2005). AuxFlow computes a conservative approximation over a restricted subset, and
+  the `UNKNOWN` verdict is theoretically forced rather than an engineering convenience.
 
 ## Empirical claim
 

@@ -1,6 +1,8 @@
 # Benchmark corpus
 
-Ten documents. Each exists to exercise one mechanism; none is filler.
+Fifteen documents. Each exists to exercise one mechanism; none is filler. The last five were added
+by the prior-art audit of 2026-08-27 and four of them are **expected to be misclassified** — see
+[Declared false negatives](#declared-false-negatives).
 
 Every document must compile under a stock engine so that dynamic baselines run on identical
 input. Documents are committed as sources only — build artifacts are never committed.
@@ -16,6 +18,12 @@ input. Documents are committed as sources only — build artifacts are never com
    expected behaviour, never timings.
 4. **The realistic document must contain unreachable files**, otherwise dead-file elimination
    has nothing to eliminate and the corresponding claim cannot be tested.
+5. **Every non-convergence mechanism in [RELATED-WORK.md](RELATED-WORK.md) section 7.3 has a
+   member, including the ones AuxFlow cannot detect.** A corpus containing only detectable
+   mechanisms would produce a flattering and worthless coverage result.
+6. **An expected misclassification is written into `expected.json` before implementation, exactly
+   like any other expectation.** A false negative that was predicted is a result; a false negative
+   that was discovered is a defect.
 
 ## The corpus
 
@@ -31,6 +39,34 @@ input. Documents are committed as sources only — build artifacts are never com
 | `b08_cycle` | A loop bounded by a page reference to a label inside the generated material | **The headline case.** Structure known from the literature not to converge | a cycle containing a STRUCTURAL edge | **AMPLIFYING** |
 | `b09_thesis` | Multi-chapter document with contents, lists, bibliography, cross-references, and **unreachable auxiliary files** | Realism; also the document where AuxFlow is expected to provide no saving | several hundred facts, acyclic after abstraction | CERTIFIED |
 | `b10_opaque` | An unmodelled package and a non-analysable control sequence | The fallback must degrade rather than crash | facts marked unknown | **UNKNOWN** |
+| `b11_width` | A `\pageref` whose resolved width changes a line break, hence a page break, hence the reference. No loop, no conditional | **Declared false negative.** Period-2 oscillation via typeset extent | acyclic in the ARG; no STRUCTURAL edge | **CERTIFIED — which is WRONG.** Expected misclassification |
+| `b12_float` | A `[!t]` float taking most of a page, with roman page numbering | **Declared false negative.** Period-2 oscillation via float placement, which is not modelled at all | acyclic in the ARG | **CERTIFIED — which is WRONG.** Expected misclassification |
+| `b13_varioref` | `varioref`-style dynamic textual references whose length moves the floats they refer to | **Declared false negative** if `varioref` is modelled; `UNKNOWN` if it is not. Either outcome is informative and must be predicted, not observed | depends on the package table | **CERTIFIED (wrong) or UNKNOWN** — state which, in advance |
+| `b14_ifthen` | `\ifthenelse` selecting between differently sized content on a `\pageref` | Period-2 oscillation that the seed rule *does* catch, but for the wrong reason: nothing changes the *quantity* of content, only its size | a cycle containing a STRUCTURAL edge | **AMPLIFYING** — a true positive obtained by over-approximation |
+| `b15_ibid` | Two consecutive citations of one source near a page break, in a citation style that selects a shorter form when the previous citation is on the same page | The mechanism only assumption A3 protects against. Confirms that the opaque-package rule is load-bearing and not decoration | opaque facts | **UNKNOWN** |
+
+### Declared false negatives
+
+`b11`, `b12` and `b13` are non-convergent documents that AuxFlow is expected to classify as
+convergent. They are in the corpus **because** of that, and their `expected.json` records the wrong
+answer as the expected answer, with `"declared_false_negative": true` and a note naming the
+mechanism.
+
+The reason is structural and is not fixable by tuning: all three feed back through the *typeset
+extent* of a resolved value, and [IR.md](IR.md)'s `exists`/`value` split severs that edge by
+construction. Removing the split would make every document containing one `\ref` a single strongly
+connected component and the analysis vacuous. See open decision D13 in [PROJECT.md](PROJECT.md) and
+[RELATED-WORK.md](RELATED-WORK.md) section 7.4.
+
+**If any of `b11`–`b13` is classified `AMPLIFYING` or `UNKNOWN`, that is a surprise and must be
+investigated rather than celebrated.** An analysis that accidentally catches these is an analysis
+whose behaviour is not understood.
+
+### The two highest-value tests remain unchanged
+
+`b08` must be classified `AMPLIFYING` with all three facts named and correct spans. `b05` must
+**not** be classified `AMPLIFYING`. `b11`–`b13` are now a third gate of equal importance: their
+misclassification must be predicted, not discovered.
 
 Ground-truth run counts are deliberately absent from this table. They are produced by the
 harness under the protocol in [EVALUATION.md](EVALUATION.md) and recorded in
@@ -60,6 +96,11 @@ One per document. Hand-written from analysis of the source, before the analyser 
 `b05` carries `"must_not": ["AMPLIFYING"]`, and that single assertion guards against the most
 likely way for the classifier to appear to work while being useless.
 
+`b11`, `b12` and `b13` additionally carry `"declared_false_negative": true` together with
+`"mechanism"` naming the non-convergence mechanism and `"why_undetected"` giving one sentence. The
+harness must report these separately from genuine misses, because a predicted misclassification and
+an unpredicted one are different results and averaging them would hide the interesting one.
+
 ## Directory layout
 
 ```
@@ -71,14 +112,16 @@ bench/
       README.md          one paragraph: what this document tests and why
     b02_backref/
     ...
-    b10_opaque/
+    b15_ibid/
     shared/
       refs.bib           shared bibliography database
       auditthesis.cls    minimal document class used by the larger documents
   baselines/
     fixed.sh             baseline A
     warning.sh           baseline B
-    checksum.sh          baseline C
+    checksum.sh          baseline C   consecutive-output comparison
+    inputs.sh            baseline C'  consecutive-input comparison
+    readwrite.sh         baseline C"  same-run read-then-written comparison
     README.md            what each script does and what it deliberately does not do
   harness/
     run.py               executes a (document, baseline) pair, emits JSONL

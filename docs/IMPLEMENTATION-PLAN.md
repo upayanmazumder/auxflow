@@ -45,9 +45,9 @@ order.
 | 3 | 3, 4 | **CP2.** Front end parses every corpus document. Inclusion cycles detected |
 | 4 | 5, 6 | **CP3.** Symbol tables complete; `auxflow check` finds seeded undefined references, duplicate labels and missing files |
 | 5 | 7 | ARG constructed; DOT output renders; fact and edge counts match hand counts on two documents |
-| 6 | 8, 9 | **CP4.** `b08` classified amplifying with three named facts and correct spans; `b05` **not** amplifying. The headline result |
-| 7 | 10, 11 | **CP5.** Stable-pass numbering and the four-state classifier complete; diagnostics match the specified formats |
-| 8 | 12, 13 | **CP6. MVP complete.** End-to-end `auxflow run` on all ten documents; zero under-predictions |
+| 6 | 8, 9 | **CP4.** `b08` classified amplifying with three named facts and correct spans; `b05` **not** amplifying; `b11`–`b13` classified exactly as their `declared_false_negative` expectations say. The headline result |
+| 7 | 10, 11 | **CP5.** Stable-pass numbering and the classifier complete; diagnostics match the specified formats |
+| 8 | 12, 13 | **CP6. MVP complete.** End-to-end `auxflow run` on all fifteen documents; zero *undeclared* under-predictions |
 | 9 | 14, 15 | Baselines and full measurement; results regenerate from one command |
 | 10 | 16 | Report and demonstration; buffer |
 
@@ -59,9 +59,12 @@ worse than a smaller one.
 
 Two points where the project makes a decision rather than continuing by default.
 
-**Gate 1 — end of week 6.** `b08` classified amplifying and `b05` not. If the classifier cannot
-separate these two documents, the central contribution does not work and the project must be
-reframed around the front end and semantic diagnostics rather than convergence classification.
+**Gate 1 — end of week 6.** `b08` classified amplifying, `b05` not, and `b11`–`b13` misclassified
+*exactly as predicted*. If the classifier cannot separate `b08` from `b05`, the central contribution
+does not work. If `b11`–`b13` behave differently from the prediction, the model is not merely
+incomplete but wrong about its own incompleteness, which is worse. Either way the project must be
+reframed around the front end, the mechanism taxonomy and the oracle comparison rather than around
+convergence classification.
 This is the earliest point at which that is knowable, which is why phases 8 and 9 come before
 the fixpoint.
 
