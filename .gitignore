@@ -34,6 +34,9 @@ htmlcov/
 # Exception: figures deliberately checked in for the paper
 !paper/figures/*.pdf
 
+# Exception: review deliverables (not TeX build output)
+!docs/review1-viva.pdf
+
 # Benchmark output. Raw results are regenerated, not committed, except for
 # explicitly promoted result sets under bench/results/published/
 bench/results/*
