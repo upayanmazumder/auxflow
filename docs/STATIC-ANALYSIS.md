@@ -113,6 +113,13 @@ this later.
 Output: components in reverse topological order — which is exactly the order stable-pass
 numbering needs, so no separate topological sort is required.
 
+Concretely: for an ARG edge `u -> v` (`u` is a dependency of `v`), Tarjan's natural emission
+order places `v`'s component before `u`'s -- this is what "reverse topological order" means
+here. Section 4's recurrence needs the opposite -- each fact's dependencies computed before the
+fact itself -- so the condensation (below) presents components in the reverse of this list.
+That reversal is the "no separate topological sort" referred to above: a single `O(V)` list
+reversal of output Tarjan already produced, not a second graph traversal.
+
 **Complexity.** **O(V + E)** time, **O(V)** space.
 
 **Testing note.** SCC detection is testable on synthetic graphs with no LaTeX involved. It is
