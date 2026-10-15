@@ -1,10 +1,8 @@
 """Phase 1 acceptance: the package is importable and the CLI surface is fixed.
 
-docs/IMPLEMENTATION-PLAN.md phase 1 deliverable: "empty package importable".
-docs/ARCHITECTURE.md fixes the subcommand surface; this test pins it so a
+docs/ARCHITECTURE.md fixes the subcommand surface. This test pins it so a
 later phase cannot silently add or drop a subcommand without updating the
-corresponding doc and plan. Sub-issue #17 acceptance: `import auxflow`
-succeeds and `auxflow --help` lists every subcommand stub without raising.
+corresponding doc and plan.
 """
 
 from __future__ import annotations
@@ -57,9 +55,3 @@ def test_cli_with_no_command_prints_help_and_exits_nonzero(
     exit_code = cli.main([])
     assert exit_code == 1
     assert "auxflow" in capsys.readouterr().out
-
-
-def test_cli_known_subcommand_not_yet_implemented() -> None:
-    # run (phase 13) is the only subcommand not yet implemented.
-    with pytest.raises(NotImplementedError):
-        cli.main(["run", "doc.tex"])

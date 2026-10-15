@@ -2,16 +2,14 @@
 
 Subcommand surface is fixed by docs/ARCHITECTURE.md. Every command up to and
 including `plan` must run without a TeX engine installed; only `run` executes one.
-
-`tokens`, `ast`, `symbols`, `check`, `graph`, `classify`, and `plan` are
-implemented. Only `run` is not yet implemented; see docs/IMPLEMENTATION-PLAN.md.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import sys
-from dataclasses import replace
+from dataclasses import asdict, replace
 from pathlib import Path
 from time import perf_counter
 
@@ -28,7 +26,9 @@ from auxflow.ir import ARG, lower, to_dot
 from auxflow.lexer import tokenize
 from auxflow.parser import Diagnostic, Document, Span, parse
 from auxflow.planner.lower import build_plan
+from auxflow.planner.model import BuildPlan
 from auxflow.planner.serialize import to_json
+from auxflow.runtime.execute import execute
 from auxflow.semantic.diagnostics import check_packages, check_symbols
 from auxflow.semantic.inclusion import check_inclusions
 from auxflow.semantic.resolve import declare, resolve
@@ -63,7 +63,10 @@ def build_parser() -> argparse.ArgumentParser:
             sub.add_argument("--force", action="store_true")
         if name == "plan":
             sub.add_argument("--explain", action="store_true")
+        if name in {"plan", "run"}:
             sub.add_argument("--force", action="store_true")
+        if name == "run":
+            sub.add_argument("--strict", action="store_true")
     return parser
 
 
@@ -215,7 +218,7 @@ def _run_classify(path: str, *, verbose: bool, force: bool) -> int:
     return int(classification.state is State.AMPLIFYING and not force)
 
 
-def _run_plan(path: str, *, explain: bool, force: bool) -> int:
+def _cli_plan(path: str, *, force: bool) -> tuple[BuildPlan, str | None]:
     started = perf_counter()
     forest, parse_diagnostics = _load_forest(path)
     graph, components, classification, stable_pass = _analyze(forest)
@@ -231,13 +234,20 @@ def _run_plan(path: str, *, explain: bool, force: bool) -> int:
     )
     if parse_diagnostics:
         plan = replace(plan, diagnostics=[*parse_diagnostics, *plan.diagnostics])
+    diagnosis = None
     if classification.state is State.AMPLIFYING and not force:
         sources = {
             file_id: Path(file_id).read_text(encoding="utf-8") for file_id in forest.documents
         }
-        report = render(graph, sources, classification, stable_pass)
-        assert report is not None
-        print(report, end="")
+        diagnosis = render(graph, sources, classification, stable_pass)
+        assert diagnosis is not None
+    return plan, diagnosis
+
+
+def _run_plan(path: str, *, explain: bool, force: bool) -> int:
+    plan, diagnosis = _cli_plan(path, force=force)
+    if diagnosis is not None:
+        print(diagnosis, end="")
         return 1
     if explain:
         print(f"auxflow: {plan.classification} plan")
@@ -246,6 +256,15 @@ def _run_plan(path: str, *, explain: bool, force: bool) -> int:
     else:
         print(to_json(plan))
     return 0
+
+
+def _run_run(path: str, *, force: bool, strict: bool) -> int:
+    plan, diagnosis = _cli_plan(path, force=force)
+    if diagnosis is not None:
+        print(diagnosis, end="")
+    report = execute(plan, Path(path).absolute().parent, strict=strict)
+    print(json.dumps(asdict(report), sort_keys=True))
+    return report.exit_code
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -271,10 +290,10 @@ def main(argv: list[str] | None = None) -> int:
         return _run_classify(args.file, verbose=args.verbose, force=args.force)
     if args.command == "plan":
         return _run_plan(args.file, explain=args.explain, force=args.force)
+    if args.command == "run":
+        return _run_run(args.file, force=args.force, strict=args.strict)
 
-    raise NotImplementedError(
-        f"auxflow {args.command}: bootstrap phase, see docs/IMPLEMENTATION-PLAN.md"
-    )
+    raise AssertionError(f"unknown command: {args.command}")
 
 
 if __name__ == "__main__":
