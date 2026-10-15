@@ -69,6 +69,12 @@ def run(cmd: list[str], *, stdin: str | None = None, check: bool = True) -> str:
     return proc.stdout
 
 
+def text_body(value: object) -> str:
+    # Normalise line endings and trailing space for stable body comparison.
+    text = value if isinstance(value, str) else ""
+    return "\n".join(line.rstrip() for line in text.replace("\r\n", "\n").split("\n")).strip()
+
+
 def gh_api(path: str, method: str = "GET", fields: dict | None = None) -> object:
     cmd = ["gh", "api", "-X", method, path]
     for key, value in (fields or {}).items():
@@ -202,12 +208,24 @@ def create_issue(
     store: Store,
     existing: dict[str, dict],
 ) -> dict:
+    def _sync_body(rec: dict) -> dict:
+        # Keep the live issue body in step with the plan artifact.
+        current = gh_api(f"repos/{NWO}/issues/{rec['number']}")
+        if text_body(current.get("body")) != text_body(body):
+            gh_api(
+                f"repos/{NWO}/issues/{rec['number']}",
+                method="PATCH",
+                fields={"body": body},
+            )
+            print(f"update #{rec['number']}  {title}")
+        return rec
+
     if title in store.data["issues"]:
-        return store.data["issues"][title]
+        return _sync_body(store.data["issues"][title])
     if title in existing:
         store.data["issues"][title] = existing[title]
         store.save()
-        return existing[title]
+        return _sync_body(existing[title])
     payload: dict = {"title": title, "body": body, "labels": labels}
     if milestone is not None:
         payload["milestone"] = milestone
@@ -329,6 +347,24 @@ def _set_number(proj: dict, item_id: str, field: str, value: int) -> None:
     )
 
 
+def post_risk_register(plan: dict, store: Store, existing: dict[str, dict]) -> None:
+    rows = plan.get("risk_register", [])
+    if not rows:
+        return
+    run(["gh", "label", "create", "risk", "--repo", NWO, "--color", "b60205", "--force"])
+    lines = [
+        "The eight risks from docs/IMPLEMENTATION-PLAN.md, tracked for the 5-day build.",
+        "",
+        "| # | Risk | Likelihood | Impact | Mitigation |",
+        "|---|---|---|---|---|",
+    ]
+    for n, r in enumerate(rows, 1):
+        lines.append(
+            f"| {n} | {r['risk']} | {r['likelihood']} | {r['impact']} | {r['mitigation']} |"
+        )
+    create_issue("Risk register", "\n".join(lines), ["risk"], None, store, existing)
+
+
 def main(argv: list[str]) -> int:
     plan = yaml.safe_load(PLAN_PATH.read_text())
     store = Store(MAP_PATH)
@@ -364,6 +400,8 @@ def main(argv: list[str]) -> int:
                 existing,
             )
             link_sub_issue(parent, child, store)
+
+    post_risk_register(plan, store, existing)
 
     if "--no-project" not in argv:
         ensure_project(plan, store)

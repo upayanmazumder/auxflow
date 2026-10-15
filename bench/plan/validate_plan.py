@@ -126,6 +126,19 @@ RISK_REGISTER: tuple[tuple[str, ...], ...] = (
     ("assumption a2", "a2", "prediction miss"),
 )
 
+# The seven-step cut order from docs/SCOPE.md. A 5-day solo plan must state what
+# it drops first; each prefix removal leaves a coherent project. One keyword hit
+# in the plan's `deferred` section counts the step represented.
+CUT_ORDER: tuple[tuple[str, ...], ...] = (
+    ("event-driven worker", "worker scaling"),
+    ("distributed execution", "scheduling metadata"),
+    ("index", "long-table"),
+    ("incremental invalidation", "includeonly"),
+    ("dead-file", "dead file"),
+    ("per-fact stability", "stability report"),
+    ("explained-plan", "explain detail", "plan dump"),
+)
+
 
 class HardError(Exception):
     """Unrecoverable problem: the artifact cannot be scored at all."""
@@ -359,6 +372,20 @@ def score(plan: dict[str, Any]) -> dict[str, float]:
         if isinstance(entry, dict) and not text_of(entry.get("mitigation")):
             defects += 0.5
 
+    # --- deferred scope and cut order (5-day reality) -----------------------
+    deferred = plan.get("deferred") if isinstance(plan.get("deferred"), dict) else {}
+    deferred_blob = yaml.safe_dump(deferred, allow_unicode=True).lower()
+    cut_covered = 0
+    for keywords in CUT_ORDER:
+        if any(kw in deferred_blob for kw in keywords):
+            cut_covered += 1
+        else:
+            defects += 1
+    if not [x for x in as_list(deferred.get("should")) if text_of(x)]:
+        defects += 2  # SHOULD-BUILD items (17-22) not represented
+    if not [x for x in as_list(deferred.get("stretch")) if text_of(x)]:
+        defects += 2  # STRETCH items (23-28) not represented
+
     # --- dependency graph integrity ----------------------------------------
     adj: dict[int, set[int]] = {}
     for pid, issue in by_phase.items():
@@ -403,6 +430,7 @@ def score(plan: dict[str, Any]) -> dict[str, float]:
     cli_coverage_pct = 100.0 * cli_covered / len(CLI_SUBCOMMANDS)
     acceptance_coverage_pct = 100.0 * acceptance_covered / len(PHASES)
     risk_coverage_pct = 100.0 * risk_covered / len(RISK_REGISTER)
+    cut_order_coverage_pct = 100.0 * cut_covered / len(CUT_ORDER)
     quality_score = max(0.0, 100.0 - defects)
 
     return {
@@ -414,6 +442,7 @@ def score(plan: dict[str, Any]) -> dict[str, float]:
         "cli_coverage_pct": round(cli_coverage_pct, 2),
         "acceptance_coverage_pct": round(acceptance_coverage_pct, 2),
         "risk_coverage_pct": round(risk_coverage_pct, 2),
+        "cut_order_coverage_pct": round(cut_order_coverage_pct, 2),
         "quality_score": round(quality_score, 3),
     }
 
@@ -437,6 +466,7 @@ def main(argv: list[str]) -> int:
         "cli_coverage_pct",
         "acceptance_coverage_pct",
         "risk_coverage_pct",
+        "cut_order_coverage_pct",
         "quality_score",
     ):
         value = metrics[name]

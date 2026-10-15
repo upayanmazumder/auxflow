@@ -324,6 +324,10 @@
     "[P16] Rehearse the end-to-end demonstration on a corpus member": {
       "number": 74,
       "node_id": "I_kwDOUF-IGc8AAAABXZzoVA"
+    },
+    "Risk register": {
+      "number": 75,
+      "node_id": "I_kwDOUF-IGc8AAAABXZ9zYw"
     }
   },
   "sub_links": [
@@ -469,7 +473,8 @@
       "[P15] Verify the two headline gates and the declared-false-negative gate hold": "PVTI_lAHOCIb45c4BnLikzhA98hg",
       "[P16] Write the evaluation report grounded in the published results": "PVTI_lAHOCIb45c4BnLikzhA98ok",
       "[P16] Regenerate all figures from JSONL via report.py": "PVTI_lAHOCIb45c4BnLikzhA98oo",
-      "[P16] Rehearse the end-to-end demonstration on a corpus member": "PVTI_lAHOCIb45c4BnLikzhA98pA"
+      "[P16] Rehearse the end-to-end demonstration on a corpus member": "PVTI_lAHOCIb45c4BnLikzhA98pA",
+      "Risk register": "PVTI_lAHOCIb45c4BnLikzhA-FLQ"
     }
   }
 }
