@@ -68,6 +68,9 @@ Implemented as an assertion in the planner, written before any other planner cod
 by a property test over randomly generated classifications. It is the reason an analysis bug
 cannot silently corrupt a document: the worst outcome is a plan that is too long.
 
+The conservative floor counts three engine runs. Spell-check, bibliography,
+and index steps do not replace engine runs.
+
 ## Conservative default plan
 
 ```
