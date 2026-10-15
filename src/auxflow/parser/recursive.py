@@ -3,16 +3,16 @@ r"""Hand-written recursive-descent parser, one token of lookahead.
 docs/COMPILER-PIPELINE.md section 2: recover document structure (preamble,
 environments, macro calls, groups, sectioning) from a token stream.
 
-Argument-signature-driven parsing (`\label{}`, `\includegraphics[]{}`, ...)
-is layered on top of `MacroCall` dispatch by a later phase 3 sub-issue; here
-every control sequence other than `\begin`/`\end` and the sectioning
-commands becomes a bare `MacroCall` with no arguments.
+Argument-signature-driven parsing: a control sequence listed in
+auxflow.parser.signatures.SIGNATURES consumes exactly the mandatory/optional
+groups its signature specifies (docs/COMPILER-PIPELINE.md section 2:
+`\label{}` one mandatory, `\includegraphics[]{}` one optional and one
+mandatory); an unlisted control sequence becomes a bare `MacroCall` with no
+arguments.
 
-Malformed input (an unterminated group or environment) never raises: the
-cursor accumulates a `Diagnostic` and the enclosing node closes at end of
-input, so callers always get a tree back. That is what lets a later phase 3
-sub-issue add malformed-input test coverage without changing this module's
-control flow.
+Malformed input (an unterminated group, environment, or optional argument)
+never raises: the cursor accumulates a `Diagnostic` and the enclosing node
+closes at end of input, so callers always get a tree back.
 """
 
 from __future__ import annotations
@@ -24,6 +24,7 @@ from auxflow.lexer.catcode import CatCode
 from auxflow.lexer.tokens import Token
 from auxflow.parser.diagnostics import Diagnostic
 from auxflow.parser.nodes import (
+    Argument,
     Comment,
     Document,
     Environment,
@@ -35,6 +36,7 @@ from auxflow.parser.nodes import (
     Text,
     VerbatimBlock,
 )
+from auxflow.parser.signatures import SIGNATURES
 from auxflow.parser.spans import Span
 
 _SECTIONING_LEVELS: dict[str, str] = {
@@ -136,9 +138,7 @@ def _parse_nodes(cursor: _Cursor, stop: Callable[[_Cursor], bool]) -> list[Node]
                 nodes.append(_parse_sectioning(cursor))
                 continue
             flush_text()
-            cs_tok = cursor.advance()
-            span = Span(cursor.file_id, cs_tok.offset, cs_tok.offset + len(cs_tok.text))
-            nodes.append(MacroCall(span, cs_tok.text, ()))
+            nodes.append(_parse_macro_call(cursor))
             continue
 
         if tok.catcode == CatCode.BEGIN_GROUP:
@@ -252,3 +252,60 @@ def _parse_sectioning(cursor: _Cursor) -> Sectioning | MacroCall:
     title_group = _parse_group(cursor)
     span = Span(cursor.file_id, cs_tok.offset, title_group.span.end)
     return Sectioning(span, level, title_group.children)  # type: ignore[arg-type]
+
+
+def _at_close_bracket(cursor: _Cursor) -> bool:
+    tok = cursor.peek()
+    return tok is not None and tok.catcode == CatCode.OTHER and tok.text == "]"
+
+
+def _parse_optional_arg(cursor: _Cursor) -> Argument | None:
+    """Read a `[...]` optional argument. Braces nested inside are handled by
+    the ordinary `_parse_group` recursion in `_parse_nodes`, so a `]`
+    inside a nested `{...}` is never mistaken for the closing bracket."""
+    tok = cursor.peek()
+    if tok is None or tok.catcode != CatCode.OTHER or tok.text != "[":
+        return None
+    open_tok = cursor.advance()  # '['
+    children = _parse_nodes(cursor, _at_close_bracket)
+    close_tok = cursor.peek()
+    if close_tok is not None and close_tok.catcode == CatCode.OTHER and close_tok.text == "]":
+        cursor.advance()
+    else:
+        cursor.diagnostics.append(
+            Diagnostic(
+                Span(cursor.file_id, open_tok.offset, open_tok.offset + 1),
+                "unterminated optional argument: '[' has no matching ']'",
+            )
+        )
+    return Argument("optional", tuple(children))
+
+
+def _parse_mandatory_arg(cursor: _Cursor) -> Argument | None:
+    tok = cursor.peek()
+    if tok is None or tok.catcode != CatCode.BEGIN_GROUP:
+        return None
+    group = _parse_group(cursor)
+    return Argument("mandatory", group.children)
+
+
+def _parse_macro_call(cursor: _Cursor) -> MacroCall:
+    cs_tok = cursor.advance()
+    signature = SIGNATURES.get(cs_tok.text)
+    args: list[Argument] = []
+    end = cs_tok.offset + len(cs_tok.text)
+
+    if signature is not None:
+        for kind in signature.args:
+            if kind == "optional":
+                arg = _parse_optional_arg(cursor)
+                if arg is None:
+                    continue  # genuinely absent; optional arguments may be omitted
+            else:
+                arg = _parse_mandatory_arg(cursor)
+                if arg is None:
+                    break  # malformed usage: stop consuming, keep what parsed so far
+            args.append(arg)
+            end = cursor.end_offset()
+
+    return MacroCall(Span(cursor.file_id, cs_tok.offset, end), cs_tok.text, tuple(args))
