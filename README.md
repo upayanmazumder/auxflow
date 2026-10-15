@@ -212,6 +212,13 @@ Full boundary in [docs/SCOPE.md](docs/SCOPE.md).
 | [docs/FUTURE-INFRASTRUCTURE.md](docs/FUTURE-INFRASTRUCTURE.md) | Stretch-only distribution work |
 | [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md) | Phased plan with hours and risk |
 | [docs/SCOPE.md](docs/SCOPE.md) | Scope lock |
+| [docs/AGENT-PROMPT.md](docs/AGENT-PROMPT.md) | Standing prompt for an implementation agent working the plan stage by stage |
+
+The phased plan is also filed on GitHub as [Project #8](https://github.com/users/upayanmazumder/projects/8):
+7 milestones, 16 phase issues, 58 sub-issues, a native dependency DAG, and tracking issues for
+the risk register, deferred scope, and open decisions. `bench/plan/` holds the machine-readable
+source (`implementation-plan.yaml`), its validator, the idempotent poster, and a reconciliation
+check that proves GitHub matches the artifact.
 
 Raw notes and unprocessed evidence live in [research/](research/), kept deliberately separate
 from the specifications above.
