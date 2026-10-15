@@ -134,6 +134,10 @@ Prediction misses are reported, never suppressed. Under assumption A2 they shoul
 certified documents; each one is evidence about where A2 breaks, which is a finding rather than
 an embarrassment.
 
+The executor attaches one `PredictionMiss(document, predicted, observed)` to
+the execution report and logs the same values once. It also records a miss
+when the document reaches the cap after exceeding a certified prediction.
+
 ## What verification does not do
 
 - It does not modify the plan for future invocations. Any model improvement is offline and
