@@ -431,14 +431,15 @@ issues:
   - analysis
   body: 'Detect strongly connected components of the ARG using Tarjan''s algorithm implemented iteratively
     with an explicit stack (a recursive version exhausts the interpreter stack on the realistic corpus
-    member), per docs/STATIC-ANALYSIS.md section 3. Output components in reverse topological order so
-    stable-pass numbering needs no separate topological sort, and build the condensation for phase 10.
-    Classify each non-trivial SCC (|C|>1, or |C|==1 with a self-loop): AMPLIFYING if any internal edge
-    is STRUCTURAL, UNKNOWN_CYCLE if any fact is opaque, else BENIGN. O(V+E) time, O(V) space. This phase
-    is testable on synthetic graphs with no LaTeX involved and should be built before taint. Both phases
-    9 and 10 depend on it. Acceptance: iterative Tarjan returns the correct strongly connected components
-    on synthetic graphs including a known multi-node cycle and a self-loop, with no recursion and the
-    condensation emitted in reverse topological order.'
+    member), per docs/STATIC-ANALYSIS.md section 3. Tarjan''s raw output is in reverse topological order
+    (sinks first); the condensation reverses that list once to give the forward topological order (predecessors
+    first) phase 10''s longest-path recurrence needs, which is a single O(V) list reversal, not a second
+    traversal. Classify each non-trivial SCC (|C|>1, or |C|==1 with a self-loop): AMPLIFYING if any internal
+    edge is STRUCTURAL, UNKNOWN_CYCLE if any fact is opaque, else BENIGN. O(V+E) time, O(V) space. This
+    phase is testable on synthetic graphs with no LaTeX involved and should be built before taint. Both
+    phases 9 and 10 depend on it. Acceptance: iterative Tarjan returns the correct strongly connected components
+    on synthetic graphs including a known multi-node cycle and a self-loop, with no recursion, and the
+    condensation is emitted in forward topological order (predecessor components first).'
   sub_issues:
   - title: Iterative (non-recursive) Tarjan SCC over the ARG
     body: 'Implement Tarjan''s SCC algorithm with an explicit work stack and index/lowlink arrays; no
@@ -449,9 +450,10 @@ issues:
     - task
     - analysis
   - title: Build the condensation graph in topological order
-    body: 'From the Tarjan output construct the condensation (DAG of components) with inter- component
-      edges, available in reverse topological order for phase 10 consumption. Acceptance: synthetic graph
-      with two cycles connected by a bridge yields a 2-plus-node condensation whose topological order
+    body: 'From the Tarjan output (reverse topological order) construct the condensation (DAG of components)
+      with inter-component edges, presented in forward topological order (predecessor components first)
+      for phase 10 consumption -- a single O(V) reversal of Tarjan''s list, not a second traversal. Acceptance:
+      synthetic graph with two cycles connected by a bridge yields a 2-plus-node condensation whose order
       places predecessor components first; unit test asserts no intra-component edges remain in the condensation.'
     labels:
     - task
