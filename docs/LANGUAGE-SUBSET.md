@@ -120,21 +120,22 @@ produce it. This table is the justification for the subset's contents.
 | Dependency chain | citation to bibliography state to list entry to pagination to page reference | b04, b06 |
 | Generated-state dependency | `\tableofcontents` with sectioning | b05 |
 | External tool dependency | `\cite` with `\bibliography` | b06 |
-| Multiple interacting lists | `\tableofcontents`, `\listoffigures`, `\listoftables` | b07 |
-| Benign cycle | any generated list plus `\pageref` | b05, b07 |
+| Multiple interacting lists | `\tableofcontents`, `\listoffigures`, `\listoftables` | b09 |
+| Benign cycle | any generated list plus `\pageref` | b05, b09 |
 | Amplifying cycle | `\forloop` bounded by `\pageref`, generating `\newpage` | b08 |
-| Opaque fallback | unmodelled package, `\csname` | b10 |
+| Opaque fallback | changing generated auxiliary state, `biblatex` | b10, b15 |
 | Conditional on a reference value | `\ifthenelse` selecting differently sized content on `\pageref` | b14 |
 | Extent feedback — **not modelled** | resolved reference width changing a line break | b11 |
 | Float placement feedback — **not modelled** | `[!t]` float with roman page numbering | b12 |
 | Dynamic textual reference — **not modelled** | `varioref`-style reference whose length moves its float | b13 |
+| Footnote extent feedback — **not modelled** | page reference in a footnote changes its own page placement | b07 |
+| Nondeterministic generated state — **out of model** | fresh auxiliary value each engine run | b10 |
 | Same-page citation feedback — **refused, not modelled** | `biblatex` `ibid` across a page break | b15 |
 
-The last four rows are mechanisms the subset **deliberately does not model**, and the reason is in
-[RELATED-WORK.md](RELATED-WORK.md) section 7.4: modelling them requires an account of typeset extent
-and hence of line breaking, which is out of scope, and the alternative of treating every rendered
-value as pagination-affecting makes the analysis vacuous. They are listed here so that the subset's
-boundary is stated in terms of *convergence mechanisms* and not only in terms of syntax.
+The `b07` and `b11`–`b13` cases recognise reference syntax but do not model typeset extent.
+Modelling that extent requires line breaking, which is out of scope. Treating every rendered value
+as pagination-affecting makes the analysis vacuous. The `b15` package remains opaque, so it is
+refused instead. These cases state the subset boundary in terms of convergence mechanisms.
 
 ## Non-goals for the subset
 

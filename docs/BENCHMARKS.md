@@ -1,7 +1,7 @@
 # Benchmark corpus
 
-Fifteen documents. Each exists to exercise one mechanism; none is filler. The last five were added
-by the prior-art audit of 2026-08-27 and four of them are **expected to be misclassified** — see
+Fifteen documents. Each tests a distinct mechanism or a required realistic case.
+Four documents are expected to be misclassified. See
 [Declared false negatives](#declared-false-negatives).
 
 Every document must compile under a stock engine so that dynamic baselines run on identical
@@ -11,9 +11,8 @@ input. Documents are committed as sources only — build artifacts are never com
 
 1. **One mechanism per document.** If two documents test the same dependency structure, one of
    them is redundant.
-2. **Expectations are hand-derived and written before implementation.** `expected.json` is the
-   test oracle. Back-filling it from program output would make every subsequent result
-   circular.
+2. **Expectations are hand-derived before the analyser runs on a corpus member.** `expected.json`
+   is the test oracle. Back-filling it from program output makes results circular.
 3. **No performance figures in benchmark metadata.** `expected.json` records structure and
    expected behaviour, never timings.
 4. **The realistic document must contain unreachable files**, otherwise dead-file elimination
@@ -35,37 +34,36 @@ input. Documents are committed as sources only — build artifacts are never com
 | `b04_chain` | Chained dependencies without generated lists | Forces stable-pass to exceed two by chaining rather than by list feedback | a path of length 3 | CERTIFIED |
 | `b05_toc` | Table of contents with many sections, no references | The generated-list path. **Also the document on which engine-warning detection is unsound.** | list extent feeding pagination | CERTIFIED, and explicitly **not** amplifying |
 | `b06_bib` | Table of contents, bibliography, page references | The external-tool edge and the deepest ordinary cascade | tool edge then list edge then layout | CERTIFIED |
-| `b07_mixed` | Contents, figure list, table list, bibliography | Several interacting list mechanisms at once | multiple list extents sharing one pagination fact | CERTIFIED or BENIGN_CYCLIC |
+| `b07_footnote` | A page reference in a footnote changes its own page placement | **Declared false negative.** Extent feedback in a footnote (M7) | acyclic in the ARG; no STRUCTURAL edge | **CERTIFIED — which is WRONG.** Expected misclassification |
 | `b08_cycle` | A loop bounded by a page reference to a label inside the generated material | **The headline case.** Structure known from the literature not to converge | a cycle containing a STRUCTURAL edge | **AMPLIFYING** |
-| `b09_thesis` | Multi-chapter document with contents, lists, bibliography, cross-references, and **unreachable auxiliary files** | Realism; also the document where AuxFlow is expected to provide no saving | several hundred facts, acyclic after abstraction | CERTIFIED |
-| `b10_opaque` | An unmodelled package and a non-analysable control sequence | The fallback must degrade rather than crash | facts marked unknown | **UNKNOWN** |
+| `b09_thesis` | Multi-chapter document with contents, lists, bibliography, cross-references, **unreachable auxiliary files**, and an active-character caption | Realism and the engine-warning false positive (M9); also no expected saving | several hundred facts, acyclic after abstraction | CERTIFIED |
+| `b10_random` | A generated auxiliary record contains a fresh pdfTeX random value each run | Out-of-model nondeterministic generated state (M8); the fallback must degrade rather than crash | opaque facts | **UNKNOWN** |
 | `b11_width` | A `\pageref` whose resolved width changes a line break, hence a page break, hence the reference. No loop, no conditional | **Declared false negative.** Period-2 oscillation via typeset extent | acyclic in the ARG; no STRUCTURAL edge | **CERTIFIED — which is WRONG.** Expected misclassification |
 | `b12_float` | A `[!t]` float taking most of a page, with roman page numbering | **Declared false negative.** Period-2 oscillation via float placement, which is not modelled at all | acyclic in the ARG | **CERTIFIED — which is WRONG.** Expected misclassification |
-| `b13_varioref` | `varioref`-style dynamic textual references whose length moves the floats they refer to | **Declared false negative** if `varioref` is modelled; `UNKNOWN` if it is not. Either outcome is informative and must be predicted, not observed | depends on the package table | **CERTIFIED (wrong) or UNKNOWN** — state which, in advance |
+| `b13_varioref` | `varioref`-style dynamic textual references whose length moves the floats they refer to | **Declared false negative.** Narrow syntax recognition does not model typeset extent (M6) | acyclic in the ARG; no STRUCTURAL edge | **CERTIFIED — which is WRONG.** Expected misclassification |
 | `b14_ifthen` | `\ifthenelse` selecting between differently sized content on a `\pageref` | Period-2 oscillation that the seed rule *does* catch, but for the wrong reason: nothing changes the *quantity* of content, only its size | a cycle containing a STRUCTURAL edge | **AMPLIFYING** — a true positive obtained by over-approximation |
 | `b15_ibid` | Two consecutive citations of one source near a page break, in a citation style that selects a shorter form when the previous citation is on the same page | The mechanism only assumption A3 protects against. Confirms that the opaque-package rule is load-bearing and not decoration | opaque facts | **UNKNOWN** |
 
 ### Declared false negatives
 
-`b11`, `b12` and `b13` are non-convergent documents that AuxFlow is expected to classify as
-convergent. They are in the corpus **because** of that, and their `expected.json` records the wrong
-answer as the expected answer, with `"declared_false_negative": true` and a note naming the
-mechanism.
+`b07`, `b11`, `b12`, and `b13` are non-convergent documents that AuxFlow is expected to classify
+as convergent. They are in the corpus **because** of that. Their `expected.json` files record
+the wrong answer as the expected answer, with `"declared_false_negative": true` and a note
+naming the mechanism.
 
-The reason is structural and is not fixable by tuning: all three feed back through the *typeset
+The reason is structural and is not fixable by tuning: all four feed back through the *typeset
 extent* of a resolved value, and [IR.md](IR.md)'s `exists`/`value` split severs that edge by
 construction. Removing the split would make every document containing one `\ref` a single strongly
 connected component and the analysis vacuous. See open decision D13 in [PROJECT.md](PROJECT.md) and
 [RELATED-WORK.md](RELATED-WORK.md) section 7.4.
 
-**If any of `b11`–`b13` is classified `AMPLIFYING` or `UNKNOWN`, that is a surprise and must be
-investigated rather than celebrated.** An analysis that accidentally catches these is an analysis
-whose behaviour is not understood.
+**If any of `b07` or `b11`–`b13` is classified `AMPLIFYING` or `UNKNOWN`, investigate it.**
+An analysis that accidentally catches these has unexplained behaviour.
 
 ### The two highest-value tests remain unchanged
 
 `b08` must be classified `AMPLIFYING` with all three facts named and correct spans. `b05` must
-**not** be classified `AMPLIFYING`. `b11`–`b13` are now a third gate of equal importance: their
+**not** be classified `AMPLIFYING`. `b07` and `b11`–`b13` form the third gate: their
 misclassification must be predicted, not discovered.
 
 Ground-truth run counts are deliberately absent from this table. They are produced by the
@@ -96,7 +94,7 @@ One per document. Hand-written from analysis of the source, before the analyser 
 `b05` carries `"must_not": ["AMPLIFYING"]`, and that single assertion guards against the most
 likely way for the classifier to appear to work while being useless.
 
-`b11`, `b12` and `b13` additionally carry `"declared_false_negative": true` together with
+`b07`, `b11`, `b12`, and `b13` additionally carry `"declared_false_negative": true` with
 `"mechanism"` naming the non-convergence mechanism and `"why_undetected"` giving one sentence. The
 harness must report these separately from genuine misses, because a predicted misclassification and
 an unpredicted one are different results and averaging them would hide the interesting one.
