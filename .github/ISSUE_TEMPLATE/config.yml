@@ -1,0 +1,6 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Implementation plan
+    url: https://github.com/upayanmazumder/auxflow/milestones
+    about: Phase and sub-issue work is already filed. Check open milestones and
+      issues labelled "phase" or "task" before opening a new one.

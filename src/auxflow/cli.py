@@ -9,14 +9,14 @@ Not yet implemented -- see docs/IMPLEMENTATION-PLAN.md.
 from __future__ import annotations
 
 COMMANDS = (
-    "tokens",    # phase 1  token stream
-    "ast",       # phase 3  pretty-printed AST forest
-    "symbols",   # phase 4  symbol table dump
-    "check",     # phase 5  semantic diagnostics, non-zero exit on error
-    "graph",     # phase 6  ARG as Graphviz DOT
+    "tokens",  # phase 1  token stream
+    "ast",  # phase 3  pretty-printed AST forest
+    "symbols",  # phase 4  symbol table dump
+    "check",  # phase 5  semantic diagnostics, non-zero exit on error
+    "graph",  # phase 6  ARG as Graphviz DOT
     "classify",  # phase 10 convergence classification with diagnosis
-    "plan",      # phase 12 BuildPlan as JSON
-    "run",       # phase 13 execute the plan with verification
+    "plan",  # phase 12 BuildPlan as JSON
+    "run",  # phase 13 execute the plan with verification
 )
 
 

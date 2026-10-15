@@ -26,8 +26,16 @@ import yaml
 def proj_items(number: int) -> list[dict]:
     out = P.run(
         [
-            "gh", "project", "item-list", str(number),
-            "--owner", P.OWNER, "--format", "json", "--limit", "500",
+            "gh",
+            "project",
+            "item-list",
+            str(number),
+            "--owner",
+            P.OWNER,
+            "--format",
+            "json",
+            "--limit",
+            "500",
         ]
     )
     return json.loads(out).get("items", [])
@@ -85,8 +93,7 @@ def main() -> int:
         )
         linked = P.graphql(q, o=P.OWNER, n=P.REPO)
         child_numbers = {
-            node["number"]
-            for node in linked["data"]["repository"]["issue"]["subIssues"]["nodes"]
+            node["number"] for node in linked["data"]["repository"]["issue"]["subIssues"]["nodes"]
         }
         for sub in issue.get("sub_issues", []):
             title = f"[P{issue['phase']}] {sub['title']}"
@@ -109,11 +116,7 @@ def main() -> int:
             d["number"]
             for d in P.gh_api(f"repos/{P.NWO}/issues/{rec['number']}/dependencies/blocked_by")
         }
-        want = {
-            phase_recs[dp]["number"]
-            for dp in issue.get("depends_on", [])
-            if dp in phase_recs
-        }
+        want = {phase_recs[dp]["number"] for dp in issue.get("depends_on", []) if dp in phase_recs}
         if got != want:
             drift.append(f"#{rec['number']} blocked_by {sorted(got)} != DAG {sorted(want)}")
 

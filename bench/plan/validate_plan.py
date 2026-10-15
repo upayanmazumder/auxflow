@@ -214,9 +214,7 @@ def score(plan: dict[str, Any]) -> dict[str, float]:
 
     # --- index the phase issues --------------------------------------------
     milestone_keys = {
-        text_of(m.get("key")) or text_of(m.get("title"))
-        for m in milestones
-        if isinstance(m, dict)
+        text_of(m.get("key")) or text_of(m.get("title")) for m in milestones if isinstance(m, dict)
     }
     milestone_keys.discard("")
 
@@ -303,11 +301,7 @@ def score(plan: dict[str, Any]) -> dict[str, float]:
                 defects += 1
 
     # --- milestones ---------------------------------------------------------
-    good_milestones = [
-        m
-        for m in milestones
-        if isinstance(m, dict) and text_of(m.get("title"))
-    ]
+    good_milestones = [m for m in milestones if isinstance(m, dict) and text_of(m.get("title"))]
     if len(good_milestones) < MIN_MILESTONES:
         defects += 2 * (MIN_MILESTONES - len(good_milestones))
     for m in good_milestones:
@@ -331,8 +325,7 @@ def score(plan: dict[str, Any]) -> dict[str, float]:
 
     # --- checkpoints and decision gates must be visible ---------------------
     milestone_blob = "\n".join(
-        text_of(m.get("title")) + "\n" + text_of(m.get("description"))
-        for m in good_milestones
+        text_of(m.get("title")) + "\n" + text_of(m.get("description")) for m in good_milestones
     )
     plan_blob = (
         milestone_blob
@@ -350,9 +343,7 @@ def score(plan: dict[str, Any]) -> dict[str, float]:
     # --- total-effort anchor: the per-phase hours must sum to the doc total --
     if covered_phases == len(PHASES):
         plan_hours = sum(
-            issue["hours"]
-            for issue in by_phase.values()
-            if isinstance(issue.get("hours"), int)
+            issue["hours"] for issue in by_phase.values() if isinstance(issue.get("hours"), int)
         )
         if plan_hours != TOTAL_HOURS:
             defects += 3
@@ -360,10 +351,7 @@ def score(plan: dict[str, Any]) -> dict[str, float]:
     # --- risk register: the eight documented risks must be carried -----------
     register = as_list(plan.get("risk_register"))
     register_blob = "\n".join(
-        " ".join(
-            text_of(entry.get(k))
-            for k in ("risk", "likelihood", "impact", "mitigation")
-        )
+        " ".join(text_of(entry.get(k)) for k in ("risk", "likelihood", "impact", "mitigation"))
         for entry in register
         if isinstance(entry, dict)
     ).lower()
@@ -398,9 +386,7 @@ def score(plan: dict[str, Any]) -> dict[str, float]:
         decisions = as_list(raw_decisions.get("items"))
     else:
         decisions = as_list(raw_decisions)
-    dec_by_id = {
-        text_of(d.get("id")).upper(): d for d in decisions if isinstance(d, dict)
-    }
+    dec_by_id = {text_of(d.get("id")).upper(): d for d in decisions if isinstance(d, dict)}
     decisions_covered = 0
     for did in OPEN_DECISIONS:
         entry = dec_by_id.get(did)

@@ -96,9 +96,9 @@ class Store:
         self.data: dict = {
             "labels": [],
             "milestones": {},  # key -> number
-            "issues": {},      # title -> {number, node_id}
-            "sub_links": [],   # list of "parent#child"
-            "project": {},     # number, id, url, fields, items(title->item_id)
+            "issues": {},  # title -> {number, node_id}
+            "sub_links": [],  # list of "parent#child"
+            "project": {},  # number, id, url, fields, items(title->item_id)
         }
         if path.is_file():
             self.data.update(json.loads(path.read_text()))
@@ -109,7 +109,7 @@ class Store:
 
 def repo_node_id() -> str:
     data = graphql(
-        'query($o:String!,$n:String!){repository(owner:$o,name:$n){id}}',
+        "query($o:String!,$n:String!){repository(owner:$o,name:$n){id}}",
         o=OWNER,
         n=REPO,
     )
@@ -121,9 +121,7 @@ def load_existing_issues() -> dict[str, dict]:
     result: dict[str, dict] = {}
     page = 1
     while True:
-        batch = gh_api(
-            f"repos/{NWO}/issues?state=all&per_page=100&page={page}"
-        )
+        batch = gh_api(f"repos/{NWO}/issues?state=all&per_page=100&page={page}")
         if not batch:
             break
         for item in batch:
@@ -151,8 +149,15 @@ def ensure_labels(plan: dict, store: Store) -> None:
         color = AREA_COLORS.get(name, "ededed")
         run(
             [
-                "gh", "label", "create", name,
-                "--repo", NWO, "--color", color, "--force",
+                "gh",
+                "label",
+                "create",
+                name,
+                "--repo",
+                NWO,
+                "--color",
+                color,
+                "--force",
             ]
         )
         store.data["labels"].append(name)
@@ -266,9 +271,7 @@ def post_dependencies(plan: dict, phase_recs: dict[int, dict]) -> None:
             continue
         existing_blockers = {
             d["number"]
-            for d in gh_api(
-                f"repos/{NWO}/issues/{blocked['number']}/dependencies/blocked_by"
-            )
+            for d in gh_api(f"repos/{NWO}/issues/{blocked['number']}/dependencies/blocked_by")
         }
         for dep_phase in issue.get("depends_on", []):
             blocker = phase_recs.get(dep_phase)
@@ -276,9 +279,13 @@ def post_dependencies(plan: dict, phase_recs: dict[int, dict]) -> None:
                 continue
             run(
                 [
-                    "gh", "api", "-X", "POST",
+                    "gh",
+                    "api",
+                    "-X",
+                    "POST",
                     f"repos/{NWO}/issues/{blocked['number']}/dependencies/blocked_by",
-                    "-F", f"issue_id={issue_db_id(blocker['number'], id_cache)}",
+                    "-F",
+                    f"issue_id={issue_db_id(blocker['number'], id_cache)}",
                 ]
             )
             print(f"dep  #{blocked['number']} blocked_by #{blocker['number']}")
@@ -296,6 +303,7 @@ def link_sub_issue(parent: dict, child: dict, store: Store) -> None:
     store.data["sub_links"].append(key)
     store.save()
     print(f"  sub-issue #{child['number']} -> #{parent['number']}")
+
 
 VIEW_LAYOUT = {"Board": "BOARD_LAYOUT", "Roadmap": "ROADMAP_LAYOUT", "Table": "TABLE_LAYOUT"}
 
@@ -315,7 +323,7 @@ def ensure_views(plan: dict, proj: dict) -> None:
             continue
         if default is not None:
             graphql(
-                'mutation($v:ID!,$n:String!){updateProjectV2View(input:{viewId:$v,name:$n})'
+                "mutation($v:ID!,$n:String!){updateProjectV2View(input:{viewId:$v,name:$n})"
                 "{projectV2View{id}}}",
                 v=default["id"],
                 n=name,
@@ -326,7 +334,7 @@ def ensure_views(plan: dict, proj: dict) -> None:
             continue
         layout = VIEW_LAYOUT.get(name, "BOARD_LAYOUT")
         graphql(
-            'mutation($p:ID!,$n:String!){createProjectV2View(input:{projectId:$p,name:$n,'
+            "mutation($p:ID!,$n:String!){createProjectV2View(input:{projectId:$p,name:$n,"
             f"layout:{layout}}})"
             "{projectV2View{id}}}",
             p=proj["id"],
@@ -340,10 +348,15 @@ def ensure_project(plan: dict, store: Store) -> None:
     if not proj.get("number"):
         out = run(
             [
-                "gh", "project", "create",
-                "--owner", OWNER,
-                "--title", plan["project"]["name"],
-                "--format", "json",
+                "gh",
+                "project",
+                "create",
+                "--owner",
+                OWNER,
+                "--title",
+                plan["project"]["name"],
+                "--format",
+                "json",
             ]
         )
         created = json.loads(out)
@@ -366,8 +379,14 @@ def ensure_project(plan: dict, store: Store) -> None:
     existing_fields = json.loads(
         run(
             [
-                "gh", "project", "field-list", str(proj["number"]),
-                "--owner", OWNER, "--format", "json",
+                "gh",
+                "project",
+                "field-list",
+                str(proj["number"]),
+                "--owner",
+                OWNER,
+                "--format",
+                "json",
             ]
         )
     )["fields"]
@@ -378,9 +397,18 @@ def ensure_project(plan: dict, store: Store) -> None:
             continue
         out = run(
             [
-                "gh", "project", "field-create", str(proj["number"]),
-                "--owner", OWNER, "--name", name, "--data-type", dtype,
-                "--format", "json",
+                "gh",
+                "project",
+                "field-create",
+                str(proj["number"]),
+                "--owner",
+                OWNER,
+                "--name",
+                name,
+                "--data-type",
+                dtype,
+                "--format",
+                "json",
             ]
         )
         proj["fields"][name] = json.loads(out)["id"]
@@ -400,8 +428,16 @@ def ensure_project(plan: dict, store: Store) -> None:
         if not item_id:
             out = run(
                 [
-                    "gh", "project", "item-add", str(proj["number"]),
-                    "--owner", OWNER, "--url", url, "--format", "json",
+                    "gh",
+                    "project",
+                    "item-add",
+                    str(proj["number"]),
+                    "--owner",
+                    OWNER,
+                    "--url",
+                    url,
+                    "--format",
+                    "json",
                 ]
             )
             item_id = json.loads(out)["id"]
@@ -421,9 +457,17 @@ def ensure_project(plan: dict, store: Store) -> None:
 def _set_text(proj: dict, item_id: str, field: str, value: str) -> None:
     run(
         [
-            "gh", "project", "item-edit",
-            "--project-id", proj["id"], "--id", item_id,
-            "--field-id", proj["fields"][field], "--text", value,
+            "gh",
+            "project",
+            "item-edit",
+            "--project-id",
+            proj["id"],
+            "--id",
+            item_id,
+            "--field-id",
+            proj["fields"][field],
+            "--text",
+            value,
         ]
     )
 
@@ -431,9 +475,17 @@ def _set_text(proj: dict, item_id: str, field: str, value: str) -> None:
 def _set_number(proj: dict, item_id: str, field: str, value: int) -> None:
     run(
         [
-            "gh", "project", "item-edit",
-            "--project-id", proj["id"], "--id", item_id,
-            "--field-id", proj["fields"][field], "--number", str(value),
+            "gh",
+            "project",
+            "item-edit",
+            "--project-id",
+            proj["id"],
+            "--id",
+            item_id,
+            "--field-id",
+            proj["fields"][field],
+            "--number",
+            str(value),
         ]
     )
 
@@ -483,15 +535,17 @@ def post_decisions(plan: dict, store: Store, existing: dict[str, dict]) -> None:
         return
     run(["gh", "label", "create", "decision", "--repo", NWO, "--color", "0e8a16", "--force"])
     run(["gh", "label", "create", "blocker", "--repo", NWO, "--color", "b60205", "--force"])
-    lines = [d.get("note", ""), "", "| ID | Status | Blocks impl. | Question | Resolve by |",
-             "|---|---|---|---|---|"]
+    lines = [
+        d.get("note", ""),
+        "",
+        "| ID | Status | Blocks impl. | Question | Resolve by |",
+        "|---|---|---|---|---|",
+    ]
     for it in items:
         blocks = "YES" if it.get("blocks_implementation") else "-"
         phase = it.get("resolve_by_phase")
         resolve = "before Phase 1" if phase == 0 else f"phase {phase}"
-        lines.append(
-            f"| {it['id']} | {it['status']} | {blocks} | {it['question']} | {resolve} |"
-        )
+        lines.append(f"| {it['id']} | {it['status']} | {blocks} | {it['question']} | {resolve} |")
     blockers = [it["id"] for it in items if it.get("blocks_implementation")]
     labels = ["decision"] + (["blocker"] if blockers else [])
     title = "Open decisions" + (f" (blocks impl.: {', '.join(blockers)})" if blockers else "")

@@ -1,0 +1,36 @@
+name: Plan validate
+
+# Keeps the implementation-plan artifact honest: scores it against ground truth
+# transcribed from docs/IMPLEMENTATION-PLAN.md and docs/SCOPE.md. Deterministic,
+# no network. See bench/plan/validate_plan.py.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "bench/plan/**"
+      - "docs/IMPLEMENTATION-PLAN.md"
+      - "docs/SCOPE.md"
+  pull_request:
+    paths:
+      - "bench/plan/**"
+      - "docs/IMPLEMENTATION-PLAN.md"
+      - "docs/SCOPE.md"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install pyyaml
+      - name: Score the plan artifact
+        run: |
+          set -euo pipefail
+          out="$(bash autoresearch.sh)"
+          echo "$out"
+          defects="$(echo "$out" | grep '^METRIC plan_defects=' | cut -d= -f2)"
+          echo "plan_defects=$defects"
+          awk -v d="$defects" 'BEGIN { exit !(d == 0) }'
