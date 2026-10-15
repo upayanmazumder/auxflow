@@ -328,6 +328,10 @@
     "Risk register": {
       "number": 75,
       "node_id": "I_kwDOUF-IGc8AAAABXZ9zYw"
+    },
+    "Deferred scope and cut order": {
+      "number": 76,
+      "node_id": "I_kwDOUF-IGc8AAAABXaCRbg"
     }
   },
   "sub_links": [
@@ -474,7 +478,8 @@
       "[P16] Write the evaluation report grounded in the published results": "PVTI_lAHOCIb45c4BnLikzhA98ok",
       "[P16] Regenerate all figures from JSONL via report.py": "PVTI_lAHOCIb45c4BnLikzhA98oo",
       "[P16] Rehearse the end-to-end demonstration on a corpus member": "PVTI_lAHOCIb45c4BnLikzhA98pA",
-      "Risk register": "PVTI_lAHOCIb45c4BnLikzhA-FLQ"
+      "Risk register": "PVTI_lAHOCIb45c4BnLikzhA-FLQ",
+      "Deferred scope and cut order": "PVTI_lAHOCIb45c4BnLikzhA-Jao"
     }
   }
 }

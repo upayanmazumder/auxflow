@@ -365,6 +365,26 @@ def post_risk_register(plan: dict, store: Store, existing: dict[str, dict]) -> N
     create_issue("Risk register", "\n".join(lines), ["risk"], None, store, existing)
 
 
+def post_deferred(plan: dict, store: Store, existing: dict[str, dict]) -> None:
+    d = plan.get("deferred") or {}
+    if not d:
+        return
+    run(["gh", "label", "create", "deferred", "--repo", NWO, "--color", "fef2c0", "--force"])
+    lines = [d.get("note", ""), ""]
+    for heading, key in (
+        ("## SHOULD build (after the core)", "should"),
+        ("## STRETCH (after MUST item 16)", "stretch"),
+        ("## Cut order (drop first -> last if time runs short)", "cut_order"),
+    ):
+        lines.append(heading)
+        for item in d.get(key, []):
+            lines.append(f"- {item}")
+        lines.append("")
+    create_issue(
+        "Deferred scope and cut order", "\n".join(lines), ["deferred"], None, store, existing
+    )
+
+
 def main(argv: list[str]) -> int:
     plan = yaml.safe_load(PLAN_PATH.read_text())
     store = Store(MAP_PATH)
@@ -402,6 +422,7 @@ def main(argv: list[str]) -> int:
             link_sub_issue(parent, child, store)
 
     post_risk_register(plan, store, existing)
+    post_deferred(plan, store, existing)
 
     if "--no-project" not in argv:
         ensure_project(plan, store)
