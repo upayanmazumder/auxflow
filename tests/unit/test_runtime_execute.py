@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 from auxflow.planner.model import BuildPlan, Step
-from auxflow.runtime.execute import execute
+from auxflow.runtime.execute import PredictionMiss, execute
 
 _ENGINE = r"""#!/usr/bin/env python3
 from pathlib import Path
@@ -32,7 +32,7 @@ elif mode == "included":
     Path(f"{jobname}.aux").write_text("\\@input{chapter.aux}\n")
     Path("chapter.aux").write_text(f"\\newlabel{{x}}{{{{{min(run, 2)}}}{{1}}}}\n")
 else:
-    value = 1 if mode == "stable" else run
+    value = 1 if mode == "stable" else min(run, 2) if mode == "one-extra" else run
     Path(f"{jobname}.aux").write_text(f"\\newlabel{{x}}{{{{{value}}}{{1}}}}\n")
 print(f"engine pass {run}")
 """
@@ -76,6 +76,7 @@ def test_early_fixpoint_stops_before_remaining_planned_steps(
     assert report.status == "CONVERGED"
     assert report.stop_condition == "aux_fixpoint"
     assert report.runs == 2
+    assert report.prediction_miss is None
     assert (tmp_path / "engine.count").read_text() == "2"
 
 
@@ -92,7 +93,7 @@ def test_included_auxiliary_file_changes_delay_fixpoint(
 
 
 def test_never_stable_reaches_cap_with_failure_report(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     source = _setup(tmp_path, monkeypatch, "changing")
 
@@ -104,6 +105,26 @@ def test_never_stable_reaches_cap_with_failure_report(
     assert report.exit_code == 1
     assert "suspected non-convergence" in report.message
     assert (tmp_path / "engine.count").read_text() == "6"
+    assert report.prediction_miss == PredictionMiss(str(source), 3, 6)
+    assert [r.message for r in caplog.records if r.message.startswith("prediction miss:")] == [
+        f"prediction miss: document={source} predicted=3 observed=6"
+    ]
+
+
+def test_one_extension_run_records_exactly_one_prediction_miss(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    source = _setup(tmp_path, monkeypatch, "one-extra")
+
+    report = execute(_plan(source, runs=2), tmp_path)
+
+    assert report.status == "CONVERGED"
+    assert report.stop_condition == "aux_fixpoint"
+    assert report.runs == 3
+    assert report.prediction_miss == PredictionMiss(str(source), 2, 3)
+    assert [r.message for r in caplog.records if r.message.startswith("prediction miss:")] == [
+        f"prediction miss: document={source} predicted=2 observed=3"
+    ]
 
 
 def test_single_run_with_empty_auxiliary_state_meets_planned_count(

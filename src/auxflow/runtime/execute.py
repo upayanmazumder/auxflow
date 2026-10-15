@@ -2,8 +2,9 @@ r"""Execute a BuildPlan and compare normalized state after each engine run."""
 
 from __future__ import annotations
 
+import logging
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Literal
 
@@ -15,6 +16,14 @@ Outcome = Literal[
 ]
 StopCondition = Literal["planned_count", "aux_fixpoint", "cap"]
 _OBSERVED_SUFFIXES = (".aux", ".toc", ".lof", ".lot", ".bbl", ".ind")
+_LOG = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class PredictionMiss:
+    document: str
+    predicted: int
+    observed: int
 
 
 @dataclass(frozen=True)
@@ -23,10 +32,27 @@ class ExecReport:
     stop_condition: StopCondition | None
     runs: int
     message: str
+    prediction_miss: PredictionMiss | None = None
 
     @property
     def exit_code(self) -> int:
         return 0 if self.status == "CONVERGED" else 1
+
+
+def _report_after_extension(plan: BuildPlan, engine_step: Step, report: ExecReport) -> ExecReport:
+    """Log one miss when execution exceeds the certified bound."""
+    predicted = plan.predicted_runs
+    if predicted is None or report.runs <= predicted:
+        return report
+    document = engine_step.args[-1] if engine_step.args else engine_step.jobname
+    miss = PredictionMiss(document, predicted, report.runs)
+    _LOG.warning(
+        "prediction miss: document=%s predicted=%d observed=%d",
+        miss.document,
+        miss.predicted,
+        miss.observed,
+    )
+    return replace(report, prediction_miss=miss)
 
 
 def _input_path(step: Step, directory: Path) -> Path | None:
@@ -148,13 +174,21 @@ def execute(plan: BuildPlan, directory: Path, *, strict: bool = False) -> ExecRe
         except (OSError, ValueError) as error:
             return ExecReport("tool_error", None, runs, str(error))
         if current == previous:
-            return ExecReport(
-                "CONVERGED", "aux_fixpoint", runs, f"auxiliary state stable at run {runs}"
+            return _report_after_extension(
+                plan,
+                last_engine,
+                ExecReport(
+                    "CONVERGED", "aux_fixpoint", runs, f"auxiliary state stable at run {runs}"
+                ),
             )
         previous = current
-    return ExecReport(
-        "cap_exceeded",
-        "cap",
-        runs,
-        f"suspected non-convergence: auxiliary state changed through run {runs}",
+    return _report_after_extension(
+        plan,
+        last_engine,
+        ExecReport(
+            "cap_exceeded",
+            "cap",
+            runs,
+            f"suspected non-convergence: auxiliary state changed through run {runs}",
+        ),
     )
