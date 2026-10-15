@@ -548,7 +548,7 @@ def post_decisions(plan: dict, store: Store, existing: dict[str, dict]) -> None:
         lines.append(f"| {it['id']} | {it['status']} | {blocks} | {it['question']} | {resolve} |")
     blockers = [it["id"] for it in items if it.get("blocks_implementation")]
     labels = ["decision"] + (["blocker"] if blockers else [])
-    title = "Open decisions" + (f" (blocks impl.: {', '.join(blockers)})" if blockers else "")
+    title = "Open decisions"
     create_issue(title, "\n".join(lines), labels, None, store, existing)
 
 

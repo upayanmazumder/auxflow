@@ -140,10 +140,14 @@ CUT_ORDER: tuple[tuple[str, ...], ...] = (
 )
 
 # The open/blocked decisions from docs/PROJECT.md that gate the build. The docs
-# state implementation MUST NOT start until D13 and D14 resolve, so a faithful
-# rollout surfaces each as pre-work and marks the two blockers blocking.
+# originally stated implementation MUST NOT start until D13 and D14 resolve.
+# Both are now resolved before any analysis code was written: D13 (narrow taint
+# criterion) and D14 (split -- claimed against Krishnan & Van Wyk, read in full
+# via the open-access dissertation; not claimed against Soderberg & Hedin, no
+# open-access copy found). A faithful rollout surfaces each decision as
+# pre-work; no decision currently blocks Phase 1.
 OPEN_DECISIONS: tuple[str, ...] = ("D4", "D5", "D6", "D7", "D10", "D11", "D12", "D13", "D14")
-BLOCKING_DECISIONS: frozenset[str] = frozenset({"D13", "D14"})
+BLOCKING_DECISIONS: frozenset[str] = frozenset()
 
 
 class HardError(Exception):

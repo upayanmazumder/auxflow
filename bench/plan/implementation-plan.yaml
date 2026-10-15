@@ -961,8 +961,9 @@ deferred:
   - 6. Per-fact stability report.
   - 7. Explained-plan detail, reducing --explain to a plain plan dump.
 decisions:
-  note: 'Open decisions from docs/PROJECT.md that gate the build. The docs are explicit: implementation
-    must not start until D13 and D14 are resolved. Resolve the two blockers before Phase 1; close each
+  note: 'Open decisions from docs/PROJECT.md that gate the build. The docs were explicit: implementation
+    must not start until D13 and D14 are resolved. Both are now resolved: D13 narrow taint criterion;
+    D14 split (claimed against Krishnan & Van Wyk, not claimed against Soderberg & Hedin). Close each
     phase-tied decision before its phase.'
   items:
   - id: D4
@@ -1013,18 +1014,21 @@ decisions:
     mitigation: Small honest refinement (SHOULD item 22); the second class is largely undetectable, hence
       a decision not a foregone conclusion.
   - id: D13
-    status: OPEN
+    status: RESOLVED
     question: Whether the taint criterion is 'quantity of generated content' (narrow) or 'any layout-determining
       measurement' (wide).
     resolve_by_phase: 0
-    blocks_implementation: true
-    mitigation: Most consequential decision. Narrow misses mechanisms M3/M4/M6/M7; wide makes every document
-      with one ref one SCC and the analysis vacuous. Currently narrow; must be argued explicitly before
-      implementation starts.
+    blocks_implementation: false
+    mitigation: 'Resolved: narrow. Wide makes every document with one ref a single SCC and the
+      analysis vacuous; narrow is unsound for a named, corpus-covered class (M3/M4/M6/M7), each
+      reported as a measured false negative. See docs/PROJECT.md D13 and RELATED-WORK.md section 7.4.'
   - id: D14
-    status: BLOCKED
+    status: RESOLVED (split)
     question: Whether the amplifying analysis may be claimed as a contribution at all.
     resolve_by_phase: 0
-    blocks_implementation: true
-    mitigation: Blocked pending full reads of Krishnan & Van Wyk (SLE 2012) and Soderberg & Hedin (SLE
-      2013). No novelty claim about it may appear until then.
+    blocks_implementation: false
+    mitigation: 'Resolved against Krishnan & Van Wyk (SLE 2012), read in full via the open-access
+      Krishnan PhD dissertation (hdl.handle.net/11299/144010, ch. 5): different formal object
+      (grammar-level rewrite ordering vs. instance-level value reachability). Not resolved against
+      Soderberg & Hedin (SLE 2013): no open-access copy exists; no novelty claim against that paper
+      may appear in any report. See docs/PROJECT.md D14 and RELATED-WORK.md section 3.'

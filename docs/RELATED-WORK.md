@@ -146,12 +146,27 @@ Söderberg and Hedin 2013 names AuxFlow's exact configuration — circular attri
 with tree changes — and gives a well-definedness account for it.
 
 **AuxFlow's remaining differentiator against this line is a matter of formulation, and it is
-narrow.** Krishnan and Van Wyk reason about *rewriting*: how many new trees a production can create.
-AuxFlow reasons about *influence*: whether a value can reach a construct that governs content
-quantity. Krishnan and Van Wyk themselves note that theirs is the first to use "the structure of the
-equations and not just the attribute dependencies", which is adjacent to but not the same as a taint
-analysis. **Whether even this survives is contingent on reading both papers in full.** Until that is
-done, no novelty claim about the amplifying analysis may appear in a report.
+narrow, but it survives against Krishnan and Van Wyk.** Krishnan and Van Wyk reason about
+*rewriting*: a grammar-level analysis — SCCs over a static non-terminal graph `G_NT`, proved
+terminating by a recursive path ordering on production symbols (Dershowitz' First Termination
+Theorem). AuxFlow reasons about *influence*: an instance-level analysis — SCCs over a
+per-document value-dependency graph (the ARG), with taint propagated by reachability from a
+control-construct read to `CONTENT_VOLUME`. **Krishnan and Van Wyk 2012 was read in full** (via
+Krishnan's PhD dissertation, "Composable Semantics Using Higher-Order Attribute Grammars",
+University of Minnesota, 2012, open access at `https://hdl.handle.net/11299/144010`, chapter 5 —
+the dissertation the SLE paper is drawn from, confirmed by the dissertation's own citation of the
+SLE 2012 paper as prior work of the same author). The two analyses operate on different formal
+objects (a static grammar specification versus one document's fact graph) via different proof
+techniques (term-rewriting order theory versus reachability), so the differentiator holds. **A
+novelty claim against Krishnan and Van Wyk 2012 may appear in a report.**
+
+**Söderberg and Hedin 2013 is not read in full and no claim may be made against it.** No
+open-access copy exists; Lund University's research portal and the author's own publication page
+link only to the paywalled Springer chapter. The abstract (SOURCED above) describes a
+generalised *evaluation algorithm* for interdependent circular and higher-order attributes —
+possibly a well-definedness result rather than a classification criterion, but this cannot be
+confirmed without the full text. This is recorded as an open risk, not a cleared one: a report
+must name it as unverified prior art rather than silently omitting it.
 
 ---
 
@@ -465,7 +480,7 @@ element is anticipated and must not be claimed.
 | 4 | Instance-level fact representation | Alblas 1981 *pure* multi-pass; Engelfriet and Filè 1981; Jones 1990 (instance-level attribute dependency graph) | Per-instance rather than per-kind numbering is a named 1981 class | Applied to document facts | **HIGH**, and AuxFlow inherits an exponential decision problem it must address by restriction |
 | 5 | `stable_pass` propagation | Bochmann 1976; Alblas 1981; Hecht and Ullman 1975; Ullman's "depth+1 to propagate, 1 to notice" | Total | Different graph | **HIGH** |
 | 6 | SCC detection | Tarjan 1972; Sharir 1981; Jones 1990 | Total | none | **HIGH** |
-| 7 | Cycle classification (benign vs amplifying) | Farrow 1986; Krishnan and Van Wyk 2012; US8181129B2; SDF 1987 | Find SCCs, classify by a semantic property of the circulating values, diagnose the bad ones | The *criterion*: influence on the quantity of generated content, in a setting where the graph is not invariant | **HIGH** for the shape; **MEDIUM** for the criterion, contingent on reading Krishnan and Van Wyk and Söderberg and Hedin in full |
+| 7 | Cycle classification (benign vs amplifying) | Farrow 1986; Krishnan and Van Wyk 2012; US8181129B2; SDF 1987 | Find SCCs, classify by a semantic property of the circulating values, diagnose the bad ones | The *criterion*: influence on the quantity of generated content, in a setting where the graph is not invariant | **HIGH** for the shape; **MEDIUM-LOW** for the criterion against Krishnan and Van Wyk (read in full — different formal object and proof technique, see section 3); **MEDIUM** against Söderberg and Hedin (abstract only, unread, open risk) |
 | 8 | Non-convergence diagnosis | Alblas 1981 ("indicate […] the attributes that cause the rejection"); Rodeh and Sagiv 1999; Magnusson and Hedin's robust evaluator; Typst; `labelschanged`; Tectonic; Mädje's "guilty locate call" | Naming the offending facts is anticipated at least six times | Doing it **before** any execution | **HIGH** for the output; **LOW-MEDIUM** for pre-execution derivation |
 | 9 | Source-level explanation (spans, chains) | Typst ships byte spans, per-iteration value histories and a "created here" secondary span | Total, for the output | AuxFlow reports a *chain*, and reports it statically | **HIGH** for the output form |
 | 10 | Static build-plan generation | Farrow 1986 (evaluation order fixed at generation time); Bochmann 1976; Miller 1998 (graph-structural bound on Make passes) | Deriving a schedule statically from a dependency graph | Applied to an external engine's run count | **HIGH** |
@@ -477,8 +492,9 @@ element is anticipated and must not be claimed.
 | 16 | Kubernetes scheduling | Standard practice | Total | none | **HIGH** — not a contribution, and not in this repository |
 | 17 | KEDA scaling | Standard practice | Total | none | **HIGH** — not a contribution, and not in this repository |
 
-**Three rows out of seventeen carry low novelty risk: 12, 13 and 14.** One row (7) is genuinely
-contingent. Everything else is anticipated.
+**Three rows out of seventeen carry low novelty risk: 12, 13 and 14.** Row 7 was contingent; the
+Krishnan and Van Wyk half is now resolved by a full read (section 3) and the risk downgraded. The
+Söderberg and Hedin half remains contingent and unresolved. Everything else is anticipated.
 
 ---
 
@@ -493,8 +509,11 @@ decide termination of content generation, but in a *rewriting* formulation over 
 rather than an *influence* formulation over instance data. So the gap is: a static, conservative,
 domain-specific sufficient condition for the finite-height half of the classical convergence
 obligation, in a setting where fact values can change how much structure exists.
-**Status: contingent.** It survives only if Krishnan and Van Wyk 2012 and Söderberg and Hedin 2013,
-read in full, do not already provide it. Until then, no claim.
+**Status: partially cleared.** It survives against Krishnan and Van Wyk 2012, read in full
+(section 3): their analysis is a grammar-level rewriting proof over a fixed grammar, not an
+influence formulation over instance data. It remains contingent against Söderberg and Hedin 2013,
+not read in full — no open-access copy exists. The strong claim below may be made with that one
+caveat stated.
 
 **G2 — a controlled comparison of convergence oracles for document compilation.** Five deployed
 systems use five different oracles (engine warning; output checksum across runs; input checksum
@@ -529,7 +548,7 @@ observation; the one-extra-run observation; the benign/amplifying *examples*.
 > statement of which mechanisms a dependency-based static criterion can and cannot detect, and a
 > controlled comparison of the convergence oracles deployed in current tools.
 
-### Strong — only if the experiments validate it, and only after Krishnan and Van Wyk 2012 and Söderberg and Hedin 2013 are read in full
+### Strong — the experiments must still validate it; the Söderberg and Hedin 2013 comparison remains an open risk (not read in full)
 
 > For a declared subset of LaTeX, a static influence analysis from auxiliary fact values to
 > constructs governing the quantity of generated content is a usable sufficient condition for the
@@ -577,7 +596,7 @@ Ten, categorised. Each entry states what AuxFlow does with it: **extends**, **ad
 | 3 | Farrow, "Automatic generation of fixed-point-finding evaluators for circular, but well-defined, attribute grammars", *SIGPLAN Notices* 21(7):85–98, 1986 | `10.1145/13310.13320` | Static analysis of circular dependency graphs; well-definedness constraints; an algorithm identifying which parts carry the convergence obligation | The whole skeleton of cycle handling | **extends** — AuxFlow attempts to discharge what Farrow allocates, in a variable-graph setting. **Read in full before any claim.** |
 | 4 | Jones, "Efficient evaluation of circular attribute grammars", *TOPLAS* 12(3):429–462, 1990 | `10.1145/78969.78971` | SCC partition, condensation, topological order, one fixpoint per component | The analysis architecture, wholesale | **compares against** — adopted verbatim as standard technique |
 | 5 | Magnusson and Hedin, "Circular reference attributed grammars — their evaluation and applications", *SCP* 68(1):21–37, 2007 | `10.1016/j.scico.2005.06.005` | States the finite-height + monotonicity convergence condition exactly, and admits nobody checks it | The formal statement of what `BENIGN_CYCLIC` approximates | **extends** — AuxFlow supplies a domain-specific check for the condition they decline to check |
-| 6 | Krishnan and Van Wyk, "Termination Analysis for Higher-Order Attribute Grammars", SLE 2012, LNCS 7745:44–63 | `10.1007/978-3-642-36089-3_4` | Conservative static analysis deciding termination when evaluation generates new content to evaluate; explicitly distinguished from circularity analysis | The nearest neighbour of the taint analysis | **compares against**, possibly **adapts**. **The single most important paper to read fully.** |
+| 6 | Krishnan and Van Wyk, "Termination Analysis for Higher-Order Attribute Grammars", SLE 2012, LNCS 7745:44–63 | `10.1007/978-3-642-36089-3_4` | Conservative static analysis deciding termination when evaluation generates new content to evaluate; explicitly distinguished from circularity analysis | The nearest neighbour of the taint analysis | **compares against**. **Read in full (via Krishnan's PhD dissertation, open access, `https://hdl.handle.net/11299/144010`, ch. 5); see section 3 for the resolved comparison.** |
 
 ### Document compilation foundation
 
