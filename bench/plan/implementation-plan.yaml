@@ -390,10 +390,14 @@ issues:
       -> LABEL_NUMBER/LABEL_PAGE value facts with CONTENT_VOLUME->LABEL_PAGE LAYOUT lag 0; \ref -> REF_USE
       with LABEL_NUMBER->REF_USE AUX_ROUNDTRIP lag 1; \pageref -> PAGEREF_USE AUX_ROUNDTRIP lag 1; sectioning
       -> TOC_ENTRY; \caption -> LOF/LOT; \cite -> CITE_USE->BBL TOOL lag 1; \bibliography -> BBL; \value
-      in control -> COUNTER_READ. Opaque nodes mark the file''s facts unknown. Acceptance: a document
-      with a label, reference, section, caption, citation, bibliography and counter read lowers to
-      distinct instance facts and typed edges. The final exists/value split and worked-example
-      edge structure are checked in the next sub-issue.'
+      in control -> COUNTER_READ. Before lowering, extend parser elaboration to retain the condition
+      and body of \forloop/\whiledo as ControlConstruct nodes and record \newcommand/\renewcommand
+      bodies as unexpanded MacroDef tokens. Unsupported control sequences become Opaque markers
+      without expansion. Opaque nodes mark the file''s facts unknown. Acceptance: a document with
+      a label, reference, section, caption, citation, bibliography and counter read lowers to
+      distinct instance facts and typed edges; the b08 loop retains its page-reference bound
+      and page-emitting body. The final exists/value split and worked-example edge structure
+      are checked in the next sub-issue.'
     labels:
     - task
     - ir
