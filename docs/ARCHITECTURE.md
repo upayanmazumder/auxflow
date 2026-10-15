@@ -124,7 +124,7 @@ demonstrable and independently testable.
 | `auxflow check FILE` | 1 | semantic diagnostics, exit non-zero on error |
 | `auxflow graph FILE -o G.dot` | 1 | ARG in Graphviz DOT |
 | `auxflow classify FILE [-v] [--force]` | 1 | classification with diagnosis |
-| `auxflow plan FILE [--explain]` | 1 | BuildPlan as JSON |
+| `auxflow plan FILE [--explain] [--force]` | 1 | BuildPlan JSON or explained steps |
 | `auxflow run FILE` | 2 | execute the plan with verification |
 
 `auxflow ast FILE` reads reachable `\input` and `\include` files. It resolves
@@ -143,6 +143,11 @@ condensation, and stable-pass, then prints the matching report block.
 Exit status is 1 only for `AMPLIFYING` without `--force`; every other
 state, and `AMPLIFYING` with `--force`, exits 0. `-v`/`--verbose` is
 required to print a `BENIGN_CYCLIC` report; it is silent otherwise.
+
+`auxflow plan FILE` emits a JSON BuildPlan with source diagnostics and step
+reasons. `--explain` prints the step order and each reason instead of JSON.
+For `AMPLIFYING`, it prints the diagnosis and exits 1 without a plan.
+`--force` emits a capped, conservative plan instead.
 
 Every command up to and including `plan` runs without a TeX engine installed. This is a hard
 requirement, and it is what makes the compiler independently gradeable.
