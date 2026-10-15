@@ -17,6 +17,7 @@ def _lower(source: str):
 
 def test_modelled_constructs_create_distinct_facts_and_typed_edges() -> None:
     graph = _lower(
+        "\\tableofcontents\\listoffigures"
         "\\section{One}\\label{a}\\ref{a}\\pageref{a}"
         "\\begin{figure}\\caption{Plot}\\end{figure}"
         "\\cite{paper}\\bibliography{refs}"
@@ -82,3 +83,35 @@ def test_macro_definition_body_is_not_lowered_and_marks_facts_opaque() -> None:
     assert labels == ["visible"]
     assert any(fact.kind is FactKind.OPAQUE for fact in graph.facts.values())
     assert all(fact.opaque for fact in graph.facts.values())
+
+
+def test_backward_reference_worked_example_matches_ir_md_exactly() -> None:
+    r"""docs/IR.md "Backward reference, no generated lists": \chapter without
+    \tableofcontents produces no TOC_ENTRY/LIST_EXTENT/CONTENT_VOLUME -- a
+    sectioning construct always writes a potential list entry (matching real
+    LaTeX's unconditional \addcontentsline), but it only affects pagination
+    when a generated list (\tableofcontents) is actually present to
+    typeset it. The document needs exactly LABEL_NUMBER(c:one).value and
+    REF_USE(c:one), linked by one AUX_ROUNDTRIP lag-1 edge.
+    """
+    graph = _lower("\\chapter{One}\\label{c:one}\\chapter{Two} Refer to Chapter~\\ref{c:one}.")
+
+    kinds = {(fact.kind, fact.component) for fact in graph.facts.values()}
+    assert kinds == {
+        (FactKind.LABEL_NUMBER, "value"),
+        (FactKind.LABEL_PAGE, "value"),
+        (FactKind.REF_USE, "value"),
+    }
+    assert len(graph.edges) == 1
+    edge = graph.edges[0]
+    label_number = next(f for f in graph.facts.values() if f.kind is FactKind.LABEL_NUMBER)
+    ref_use = next(f for f in graph.facts.values() if f.kind is FactKind.REF_USE)
+    assert edge.source == label_number.fact_id
+    assert edge.destination == ref_use.fact_id
+    assert edge.dependency_type is DepType.AUX_ROUNDTRIP
+    assert edge.pass_lag == 1
+    # LABEL_PAGE exists per \label's rule but has no edges: no generated
+    # list means CONTENT_VOLUME is never instantiated for this document.
+    label_page = next(f for f in graph.facts.values() if f.kind is FactKind.LABEL_PAGE)
+    assert label_page.dependencies == ()
+    assert not any(f.kind is FactKind.CONTENT_VOLUME for f in graph.facts.values())

@@ -26,6 +26,19 @@ Syntax-directed, one AST traversal, one rule per modelled construct.
 `CONTENT_VOLUME` is a single synthetic fact per document, representing pagination. Its source
 location points at the first construct that made pagination sensitive to auxiliary state.
 
+**Sectioning and `\caption` are gated by their list macro.** A `\chapter`/`\section`/`\caption`
+always writes a potential list entry in real LaTeX (`\addcontentsline`), but that entry only
+affects pagination once the corresponding list is actually typeset. `TOC_ENTRY`, `LOF_ENTRY`
+and `LOT_ENTRY` facts -- and the `LIST_EXTENT`/`CONTENT_VOLUME` facts they would feed -- are
+therefore produced **only when `\tableofcontents`, `\listoffigures` or `\listoftables`
+(respectively) is present somewhere in the document forest**. A document with sectioning but no
+`\tableofcontents` has no generated list at all, so `CONTENT_VOLUME` is never instantiated.
+`\label` still always produces `LABEL_NUMBER(k).value` and `LABEL_PAGE(k).value` per the table
+above, but the `CONTENT_VOLUME → LABEL_PAGE(k)` edge exists only when some construct elsewhere
+in the document instantiates `CONTENT_VOLUME`; otherwise `LABEL_PAGE(k)` is a standalone fact
+with no incoming edge. This is exactly IR.md's "backward reference, no generated lists" worked
+example: a document with only `\label`/`\ref` lowers to two facts and one edge.
+
 **Complexity.** One traversal of *n* source tokens plus construction of *V* facts and *E* edges:
 **O(n + V + E)**. Space **O(V + E)**.
 
