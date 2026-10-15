@@ -12,10 +12,12 @@ from __future__ import annotations
 from auxflow.lexer import tokenize
 from auxflow.parser import (
     Comment,
+    ControlConstruct,
     Document,
     Environment,
     Group,
     MacroCall,
+    MacroDef,
     Preamble,
     Sectioning,
     Text,
@@ -211,3 +213,70 @@ def test_parse_returns_a_document_with_whole_source_span() -> None:
     assert isinstance(result.document, Document)
     assert result.document.span.start == 0
     assert result.document.span.end == 3
+
+
+def test_forloop_retains_page_reference_in_condition_and_page_break_in_body() -> None:
+    source = r"\forloop{n}{0}{\value{n} < \pageref{l}}{~\newpage}"
+    result = _parse(source)
+    assert result.diagnostics == ()
+    (loop,) = result.document.children
+    assert isinstance(loop, ControlConstruct)
+    assert loop.kind == "forloop"
+    assert (loop.span.file_id, loop.span.start, loop.span.end) == ("t.tex", 0, len(source))
+    assert isinstance(loop.condition, tuple)
+    assert isinstance(loop.body, tuple)
+    value, _space, pageref = loop.condition
+    assert isinstance(value, MacroCall) and value.name == "\\value"
+    assert isinstance(pageref, MacroCall) and pageref.name == "\\pageref"
+    assert pageref.args[0].content[0].text == "l"  # type: ignore[union-attr]
+    assert isinstance(loop.body[1], MacroCall)
+    assert loop.body[1].name == "\\newpage"
+
+
+def test_whiledo_preserves_nested_group_structure() -> None:
+    source = r"\whiledo{{\pageref{x}}}{a{b}\newpage}"
+    result = _parse(source)
+    assert result.diagnostics == ()
+    (loop,) = result.document.children
+    assert isinstance(loop, ControlConstruct)
+    assert loop.kind == "whiledo"
+    assert (loop.span.start, loop.span.end) == (0, len(source))
+    (condition_group,) = loop.condition
+    assert isinstance(condition_group, Group)
+    (pageref,) = condition_group.children
+    assert isinstance(pageref, MacroCall) and pageref.name == "\\pageref"
+    assert isinstance(loop.body[1], Group)
+    assert isinstance(loop.body[2], MacroCall) and loop.body[2].name == "\\newpage"
+
+
+def test_macro_def_body_is_unexpanded_tokens_including_nested_braces() -> None:
+    source = r"\newcommand{\pages}[1]{pre{#1}\pageref{x}\newpage}"
+    result = _parse(source)
+    assert result.diagnostics == ()
+    (definition,) = result.document.children
+    assert isinstance(definition, MacroDef)
+    assert (definition.span.file_id, definition.span.start, definition.span.end) == (
+        "t.tex",
+        0,
+        len(source),
+    )
+    assert definition.name == r"\pages"
+    assert definition.arity == 1
+    assert definition.opaque
+    assert "".join(tok.text for tok in definition.body_tokens) == r"pre{#1}\pageref{x}\newpage"
+    assert [tok.text for tok in definition.body_tokens if tok.text.startswith("\\")] == [
+        r"\pageref",
+        r"\newpage",
+    ]
+
+
+def test_renewcommand_without_arity_remains_nonopaque_for_plain_body() -> None:
+    source = r"\renewcommand{\word}{plain {text} \unknown}"
+    result = _parse(source)
+    assert result.diagnostics == ()
+    (definition,) = result.document.children
+    assert isinstance(definition, MacroDef)
+    assert definition.name == r"\word"
+    assert definition.arity == 0
+    assert not definition.opaque
+    assert "".join(tok.text for tok in definition.body_tokens) == r"plain {text} \unknown"

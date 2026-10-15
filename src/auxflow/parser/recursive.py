@@ -7,8 +7,8 @@ Argument-signature-driven parsing: a control sequence listed in
 auxflow.parser.signatures.SIGNATURES consumes exactly the mandatory/optional
 groups its signature specifies (docs/COMPILER-PIPELINE.md section 2:
 `\label{}` one mandatory, `\includegraphics[]{}` one optional and one
-mandatory); an unlisted control sequence becomes a bare `MacroCall` with no
-arguments.
+mandatory); loops and macro definitions have dedicated parsers. Other
+unlisted control sequences become bare `MacroCall` nodes with no arguments.
 
 Malformed input (an unterminated group, environment, or optional argument)
 never raises: the cursor accumulates a `Diagnostic` and the enclosing node
@@ -26,10 +26,12 @@ from auxflow.parser.diagnostics import Diagnostic
 from auxflow.parser.nodes import (
     Argument,
     Comment,
+    ControlConstruct,
     Document,
     Environment,
     Group,
     MacroCall,
+    MacroDef,
     Node,
     Preamble,
     Sectioning,
@@ -44,6 +46,26 @@ _SECTIONING_LEVELS: dict[str, str] = {
     "\\section": "section",
     "\\subsection": "subsection",
 }
+
+# A definition containing one of these constructs cannot be analysed without
+# expanding it. Comments and verbatim tokens are deliberately not inspected.
+_MODELLED_CONTROL_SEQUENCES = (
+    SIGNATURES.keys()
+    | _SECTIONING_LEVELS.keys()
+    | {
+        "\\begin",
+        "\\end",
+        "\\tableofcontents",
+        "\\listoffigures",
+        "\\listoftables",
+        "\\forloop",
+        "\\whiledo",
+        "\\newcommand",
+        "\\renewcommand",
+        "\\newpage",
+        "\\clearpage",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -137,6 +159,14 @@ def _parse_nodes(cursor: _Cursor, stop: Callable[[_Cursor], bool]) -> list[Node]
                 flush_text()
                 nodes.append(_parse_sectioning(cursor))
                 continue
+            if tok.text in ("\\forloop", "\\whiledo"):
+                flush_text()
+                nodes.append(_parse_control_construct(cursor))
+                continue
+            if tok.text in ("\\newcommand", "\\renewcommand"):
+                flush_text()
+                nodes.append(_parse_macro_def(cursor))
+                continue
             flush_text()
             nodes.append(_parse_macro_call(cursor))
             continue
@@ -187,6 +217,132 @@ def _parse_group(cursor: _Cursor) -> Group:
             )
         )
     return Group(Span(cursor.file_id, open_tok.offset, end), tuple(children))
+
+
+def _parse_raw_group(cursor: _Cursor) -> tuple[Token, ...] | None:
+    """Consume a balanced group without interpreting any tokens inside it."""
+    tok = cursor.peek()
+    if tok is None or tok.catcode != CatCode.BEGIN_GROUP:
+        return None
+    opening = cursor.advance()
+    openings = [opening]
+    content: list[Token] = []
+    while (tok := cursor.peek()) is not None:
+        cursor.advance()
+        if tok.catcode == CatCode.BEGIN_GROUP:
+            openings.append(tok)
+        elif tok.catcode == CatCode.END_GROUP:
+            openings.pop()
+            if not openings:
+                return tuple(content)
+        content.append(tok)
+    for unmatched in reversed(openings):
+        cursor.diagnostics.append(
+            Diagnostic(
+                Span(cursor.file_id, unmatched.offset, unmatched.offset + 1),
+                "unterminated group: '{' has no matching '}'",
+            )
+        )
+    return tuple(content)
+
+
+def _missing_group(cursor: _Cursor, command: Token, label: str) -> None:
+    cursor.diagnostics.append(
+        Diagnostic(
+            Span(cursor.file_id, command.offset, command.offset + len(command.text)),
+            f"{command.text} requires a braced {label}",
+        )
+    )
+
+
+def _parse_control_construct(cursor: _Cursor) -> ControlConstruct:
+    command = cursor.advance()
+    groups: list[Group] = []
+    labels = (
+        ("counter", "start", "condition", "body")
+        if command.text == "\\forloop"
+        else ("condition", "body")
+    )
+    for label in labels:
+        tok = cursor.peek()
+        if tok is None or tok.catcode != CatCode.BEGIN_GROUP:
+            _missing_group(cursor, command, label)
+            break
+        groups.append(_parse_group(cursor))
+
+    condition_index = 2 if command.text == "\\forloop" else 0
+    condition = groups[condition_index].children if len(groups) > condition_index else ()
+    body = groups[condition_index + 1].children if len(groups) > condition_index + 1 else ()
+    end = cursor.end_offset() if groups else command.offset + len(command.text)
+    return ControlConstruct(
+        Span(cursor.file_id, command.offset, end),
+        "forloop" if command.text == "\\forloop" else "whiledo",
+        condition,
+        body,
+    )
+
+
+def _parse_macro_def(cursor: _Cursor) -> MacroDef:
+    command = cursor.advance()
+    name = ""
+    name_tokens = _parse_raw_group(cursor)
+    if name_tokens is None:
+        _missing_group(cursor, command, "name")
+        return MacroDef(
+            Span(cursor.file_id, command.offset, cursor.end_offset()), name, 0, (), False
+        )
+    if len(name_tokens) == 1 and name_tokens[0].catcode == CatCode.CONTROL_SEQUENCE:
+        name = name_tokens[0].text
+    else:
+        cursor.diagnostics.append(
+            Diagnostic(
+                Span(cursor.file_id, command.offset, cursor.end_offset()),
+                f"{command.text} requires a control sequence name",
+            )
+        )
+
+    arity = 0
+    tok = cursor.peek()
+    if tok is not None and tok.catcode == CatCode.OTHER and tok.text == "[":
+        opening = cursor.advance()
+        arity_tokens: list[Token] = []
+        while (tok := cursor.peek()) is not None and not _at_close_bracket(cursor):
+            arity_tokens.append(cursor.advance())
+        if tok is None:
+            cursor.diagnostics.append(
+                Diagnostic(
+                    Span(cursor.file_id, opening.offset, opening.offset + 1),
+                    "unterminated optional argument: '[' has no matching ']'",
+                )
+            )
+        else:
+            cursor.advance()
+        digits = "".join(t.text for t in arity_tokens)
+        if len(digits) == 1 and digits in "0123456789":
+            arity = int(digits)
+        else:
+            cursor.diagnostics.append(
+                Diagnostic(
+                    Span(cursor.file_id, opening.offset, cursor.end_offset()),
+                    f"{command.text} requires a numeric arity from 0 to 9",
+                )
+            )
+
+    body_tokens = _parse_raw_group(cursor)
+    if body_tokens is None:
+        _missing_group(cursor, command, "body")
+        body_tokens = ()
+    opaque = any(
+        token.catcode == CatCode.CONTROL_SEQUENCE and token.text in _MODELLED_CONTROL_SEQUENCES
+        for token in body_tokens
+    )
+    return MacroDef(
+        Span(cursor.file_id, command.offset, cursor.end_offset()),
+        name,
+        arity,
+        body_tokens,
+        opaque,
+    )
 
 
 def _read_braced_name(cursor: _Cursor) -> str | None:

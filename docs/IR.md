@@ -19,6 +19,10 @@ be a graph:
 It also abstracts: prose, formatting, macro bodies and everything else irrelevant to convergence
 are discarded, while source spans are retained so that results can be explained.
 
+Lowering assigns a separate ID to each modelled construct instance. It adds
+incoming dependencies once when it completes the graph. Unsupported control
+sequences and opaque macro bodies mark the document's facts opaque.
+
 **A design failure to avoid.** An earlier version of this design used fact *kinds* as nodes —
 one node for "labels", one for "table of contents entries". That graph is a fixed eight-node
 lattice, identical for every document, and computing its height is a lookup table, not an
