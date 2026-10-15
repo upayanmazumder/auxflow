@@ -206,20 +206,26 @@ issues:
   labels:
   - phase
   - ast
-  body: 'Build the typed AST layer over parser events in src/auxflow/ast/. Define the node kinds (Document,
-    Preamble, DocumentClass, UsePackage, Include(kind), Sectioning(level), Environment(name), MacroCall(name,
-    args), Group, Text, Comment, VerbatimBlock, MacroDef(name, arity, body_tokens), CounterOp, ControlConstruct,
-    Opaque) with a mandatory Span(file_id, start, end) on every node. Assemble per-file ASTs into a multi-file
-    forest and build the inclusion graph from \input/\include edges with DFS cycle detection. MacroDef
-    bodies stay unexpanded tokens; modelled constructs inside a body mark it opaque. Acceptance: `auxflow
-    ast FILE` pretty-prints the forest; every node carries a non-null span; inclusion cycles are detected
-    and reported.'
+  body: 'Assemble per-file ASTs (built by phase 3''s parser, which already defines Document, Preamble,
+    DocumentClass, UsePackage, Include(kind), Sectioning(level), Environment(name), MacroCall(name,
+    args), Group, Text, Comment and VerbatimBlock in auxflow.parser.nodes with a mandatory Span on
+    every node -- phase 3 could not have produced "one AST per file" otherwise) into a multi-file
+    forest, and build the inclusion graph from \input/\include edges with DFS cycle detection. Complete
+    the COMPILER-PIPELINE.md section 3 node-kind list by adding MacroDef(name, arity, body_tokens),
+    CounterOp, ControlConstruct and Opaque to the same module. MacroDef bodies stay unexpanded tokens;
+    modelled constructs inside a body mark it opaque. Acceptance: `auxflow ast FILE` pretty-prints the
+    forest; every node carries a non-null span; inclusion cycles are detected and reported.'
   sub_issues:
-  - title: Define AST node classes with mandatory Span in ast/nodes.py
-    body: 'Implement all node kinds listed in COMPILER-PIPELINE.md section 3 in src/auxflow/ast/nodes.py.
-      Each node constructor must require a Span(file_id, start, end); construction without a span raises.
-      MacroDef stores body_tokens unexpanded and an opaque flag. Acceptance: instantiating every node
-      kind sets a non-null span; a unit test asserts span presence on each class.'
+  - title: Add the remaining AST node classes (MacroDef, CounterOp, ControlConstruct, Opaque) to auxflow.parser.nodes
+    body: 'Document, Preamble, DocumentClass, UsePackage, Include, Sectioning, Environment, MacroCall,
+      Group, Text, Comment and VerbatimBlock already exist in auxflow.parser.nodes (phase 3), each
+      with a mandatory Span field enforced by the dataclass constructor itself (a missing span raises
+      TypeError). This sub-issue completes the COMPILER-PIPELINE.md section 3 node-kind list in the
+      same module: MacroDef(name, arity, body_tokens, opaque), CounterOp(op, counter), ControlConstruct(kind,
+      condition, body), Opaque(reason). No separate ast/nodes.py: COMPILER-PIPELINE.md section 2 states
+      the node classes belong to phase 3''s own data structures, and phase 4 cannot retroactively supply
+      a prerequisite phase 3 already needed to produce its output. Acceptance: instantiating every node
+      kind (all sixteen) sets a non-null span; a unit test asserts span presence on each class.'
     labels:
     - task
     - ast

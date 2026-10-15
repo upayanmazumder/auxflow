@@ -129,10 +129,6 @@
       "number": 25,
       "node_id": "I_kwDOUF-IGc8AAAABXZx3gQ"
     },
-    "[P4] Define AST node classes with mandatory Span in ast/nodes.py": {
-      "number": 26,
-      "node_id": "I_kwDOUF-IGc8AAAABXZx6eQ"
-    },
     "[P4] Implement visitor traversal and pretty printer in ast/visitor.py and ast/printer.py": {
       "number": 27,
       "node_id": "I_kwDOUF-IGc8AAAABXZx9SQ"
@@ -336,6 +332,10 @@
     "Open decisions": {
       "number": 77,
       "node_id": "I_kwDOUF-IGc8AAAABXaIUaw"
+    },
+    "[P4] Add the remaining AST node classes (MacroDef, CounterOp, ControlConstruct, Opaque) to auxflow.parser.nodes": {
+      "number": 89,
+      "node_id": "I_kwDOUF-IGc8AAAABXb2GMQ"
     }
   },
   "sub_links": [
@@ -348,7 +348,6 @@
     "3#23",
     "3#24",
     "3#25",
-    "4#26",
     "4#27",
     "4#28",
     "4#29",
@@ -396,7 +395,8 @@
     "15#71",
     "16#72",
     "16#73",
-    "16#74"
+    "16#74",
+    "4#89"
   ],
   "project": {
     "number": 8,
