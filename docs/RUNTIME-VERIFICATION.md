@@ -55,6 +55,11 @@ argument-free command as auxiliary-file boilerplate. It carries no value.
 The normaliser retains unrecognised commands as opaque canonical records.
 This prevents a changing unknown record from appearing stable.
 
+The executor reads the root `.aux` file and follows its `\@input` references
+to included `.aux` files. It also reads the matching `.toc`, `.lof`, `.lot`,
+`.bbl` and `.ind` files when present. The final engine step must request
+verification. The executor refuses an unverified final step before execution.
+
 ## When it is observed
 
 After every engine run in the plan, and after every extension run. Observation is cheap relative
