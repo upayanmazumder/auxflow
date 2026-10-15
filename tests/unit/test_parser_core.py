@@ -169,6 +169,19 @@ def test_unknown_macro_is_a_bare_macro_call_with_no_args() -> None:
     assert isinstance(group, Group)
 
 
+def test_text_before_a_macro_call_is_flushed_in_order() -> None:
+    # Regression: a bare macro call used to skip flushing pending text,
+    # corrupting node order and merging text from before and after the call.
+    result = _parse("a\\foo b")
+    before, macro, after = result.document.children
+    assert isinstance(before, Text)
+    assert before.text == "a"
+    assert isinstance(macro, MacroCall)
+    assert macro.name == "\\foo"
+    assert isinstance(after, Text)
+    assert after.text == " b"
+
+
 # --- comments and verbatim pass through as their own node kinds ------------
 
 

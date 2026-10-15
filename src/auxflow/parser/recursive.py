@@ -135,6 +135,7 @@ def _parse_nodes(cursor: _Cursor, stop: Callable[[_Cursor], bool]) -> list[Node]
                 flush_text()
                 nodes.append(_parse_sectioning(cursor))
                 continue
+            flush_text()
             cs_tok = cursor.advance()
             span = Span(cursor.file_id, cs_tok.offset, cs_tok.offset + len(cs_tok.text))
             nodes.append(MacroCall(span, cs_tok.text, ()))
