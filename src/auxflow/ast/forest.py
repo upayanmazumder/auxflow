@@ -20,6 +20,7 @@ from pathlib import Path
 
 from auxflow.ast.visitor import walk
 from auxflow.parser.nodes import Document, MacroCall, Text
+from auxflow.parser.spans import Span
 
 _INCLUDE_MACROS: dict[str, str] = {"\\input": "input", "\\include": "include"}
 
@@ -29,6 +30,7 @@ class InclusionEdge:
     source: str
     target: str
     kind: str  # "input" | "include"
+    span: Span
 
 
 @dataclass(frozen=True)
@@ -75,7 +77,12 @@ def inclusion_edges(file_id: str, document: Document) -> list[InclusionEdge]:
                 filename = target if Path(target).suffix else f"{target}.tex"
                 resolved = os.path.normpath(os.path.join(os.path.dirname(file_id), filename))
                 edges.append(
-                    InclusionEdge(source=file_id, target=resolved, kind=_INCLUDE_MACROS[node.name])
+                    InclusionEdge(
+                        source=file_id,
+                        target=resolved,
+                        kind=_INCLUDE_MACROS[node.name],
+                        span=node.span,
+                    )
                 )
     return edges
 
