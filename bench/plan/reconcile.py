@@ -100,6 +100,23 @@ def main() -> int:
                     f"#{parent['number']}: {title}"
                 )
 
+    # native 'blocked by' dependencies must equal the artifact DAG
+    for issue in plan["issues"]:
+        rec = phase_recs.get(issue["phase"])
+        if not rec:
+            continue
+        got = {
+            d["number"]
+            for d in P.gh_api(f"repos/{P.NWO}/issues/{rec['number']}/dependencies/blocked_by")
+        }
+        want = {
+            phase_recs[dp]["number"]
+            for dp in issue.get("depends_on", [])
+            if dp in phase_recs
+        }
+        if got != want:
+            drift.append(f"#{rec['number']} blocked_by {sorted(got)} != DAG {sorted(want)}")
+
     # tracking issues
     for title in ("Risk register", "Deferred scope and cut order"):
         if title not in issues_map:

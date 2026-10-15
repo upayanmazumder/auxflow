@@ -251,6 +251,39 @@ def create_issue(
     return rec
 
 
+def issue_db_id(number: int, cache: dict[int, int]) -> int:
+    if number not in cache:
+        cache[number] = gh_api(f"repos/{NWO}/issues/{number}")["id"]
+    return cache[number]
+
+
+def post_dependencies(plan: dict, phase_recs: dict[int, dict]) -> None:
+    """Wire each phase issue's depends_on as a native 'blocked by' dependency."""
+    id_cache: dict[int, int] = {}
+    for issue in plan["issues"]:
+        blocked = phase_recs.get(issue["phase"])
+        if not blocked:
+            continue
+        existing_blockers = {
+            d["number"]
+            for d in gh_api(
+                f"repos/{NWO}/issues/{blocked['number']}/dependencies/blocked_by"
+            )
+        }
+        for dep_phase in issue.get("depends_on", []):
+            blocker = phase_recs.get(dep_phase)
+            if not blocker or blocker["number"] in existing_blockers:
+                continue
+            run(
+                [
+                    "gh", "api", "-X", "POST",
+                    f"repos/{NWO}/issues/{blocked['number']}/dependencies/blocked_by",
+                    "-F", f"issue_id={issue_db_id(blocker['number'], id_cache)}",
+                ]
+            )
+            print(f"dep  #{blocked['number']} blocked_by #{blocker['number']}")
+
+
 def link_sub_issue(parent: dict, child: dict, store: Store) -> None:
     key = f"{parent['number']}#{child['number']}"
     if key in store.data["sub_links"]:
@@ -446,6 +479,8 @@ def main(argv: list[str]) -> int:
             existing,
         )
         phase_recs[issue["phase"]] = rec
+
+    post_dependencies(plan, phase_recs)
 
     # sub-issues + native links
     for issue in plan["issues"]:
