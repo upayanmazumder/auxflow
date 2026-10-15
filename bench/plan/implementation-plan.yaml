@@ -728,7 +728,8 @@ issues:
   body: 'Author the fifteen-document benchmark corpus with hand-written expectations, the seven baselines
     (A, B, C, C'', C'''', D, E), the measurement harness, and ground-truth computation. Each corpus member
     exercises one non-convergence mechanism from RELATED-WORK.md section 7.3, including the four AuxFlow
-    cannot detect (b11-b13 declared false negatives). expected.json is the oracle and is written before
+    cannot detect. b11-b13 are declared false negatives (expected CERTIFIED, which is wrong); the fourth
+    undetectable member, b15_ibid, is expected UNKNOWN. expected.json is the oracle and is written before
     the analyser produces any output, so results are not circular. Ground truth N* is computed by normalised
     auxiliary-state equivalence plus rendered-text equality against a reference run count MAX=8. Acceptance:
     bench/ directory layout from BENCHMARKS.md exists; every document compiles under the pinned TeX Live
@@ -737,12 +738,12 @@ issues:
   - title: Author the fifteen-member corpus with hand-written expected.json oracle files
     body: 'Create bench/corpus/b01_plain .. b15_ibid, each with main.tex, expected.json and a one-paragraph
       README.md. One mechanism per document per BENCHMARKS.md design rule 1. Every non-convergence mechanism
-      in RELATED-WORK.md 7.3 gets a member, including the four AuxFlow cannot detect. b11-b13 carry declared_false_negative:true
-      with mechanism and why_undetected; b05 and others carry must_not:["AMPLIFYING"]. b09_thesis must
-      contain unreachable auxiliary files. Expectations are hand-derived before implementation; never
-      back-filled from program output. bench/corpus/shared/ holds refs.bib and auditthesis.cls. Acceptance:
-      all 15 expected.json validate against the schema shown in BENCHMARKS.md and every main.tex compiles
-      under a stock engine.'
+      in RELATED-WORK.md 7.3 gets a member, including the four AuxFlow cannot detect: b11-b13 carry declared_false_negative:true
+      (expected CERTIFIED, which is wrong) while b15_ibid is expected UNKNOWN with mechanism and why_undetected;
+      b05 and others carry must_not:["AMPLIFYING"]. b09_thesis must contain unreachable auxiliary files.
+      Expectations are hand-derived before implementation; never back-filled from program output. bench/corpus/shared/
+      holds refs.bib and auditthesis.cls. Acceptance: all 15 expected.json validate against the schema
+      shown in BENCHMARKS.md and every main.tex compiles under a stock engine.'
     labels:
     - task
     - benchmarks
