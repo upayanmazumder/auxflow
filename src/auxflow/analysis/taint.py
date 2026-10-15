@@ -6,7 +6,11 @@ fact values can influence how much content the document generates.
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 from auxflow.ir.graph import ARG
+from auxflow.ir.model import DepEdge, DepType, FactKind
+from auxflow.parser.spans import Span
 
 
 def seed_facts(arg: ARG) -> set[int]:
@@ -68,3 +72,47 @@ def propagate_taint(arg: ARG, seeds: set[int]) -> tuple[set[int], int]:
                 push_count += 1
 
     return taint, push_count
+
+
+def insert_structural_edges(arg: ARG, taint: set[int]) -> ARG:
+    r"""For each tainted fact, add a STRUCTURAL edge `f -> CONTENT_VOLUME`.
+
+    `STRUCTURAL` is the load-bearing edge type and is never produced by
+    lowering (phase 7); this is the only place it is ever added. `reason`
+    embeds the tainted fact's own source span verbatim, matching
+    docs/STATIC-ANALYSIS.md section 2's literal reason string.
+
+    If the document has no `CONTENT_VOLUME` fact at all (no generated list
+    and no `\\newpage`/`\\clearpage`, see `auxflow.ir.graph.lower`), there is
+    no content-generating construct for a tainted value to reach, so no
+    edges are added -- this is not an error, just a document where nothing
+    the taint analysis saw can amplify.
+    """
+    volume = next(
+        (f.fact_id for f in arg.facts.values() if f.kind is FactKind.CONTENT_VOLUME), None
+    )
+    if volume is None or not taint:
+        return arg
+
+    new_edges = [
+        DepEdge(
+            source=fact_id,
+            destination=volume,
+            pass_lag=1,
+            dependency_type=DepType.STRUCTURAL,
+            reason=(
+                f"value at {_span_text(arg.facts[fact_id].source_location)} reaches a"
+                " content-generating construct"
+            ),
+        )
+        for fact_id in sorted(taint)
+    ]
+    facts = dict(arg.facts)
+    facts[volume] = replace(
+        facts[volume], dependencies=facts[volume].dependencies + tuple(sorted(taint))
+    )
+    return ARG(facts=facts, edges=[*arg.edges, *new_edges])
+
+
+def _span_text(span: Span) -> str:
+    return f"{span.file_id}:{span.start}-{span.end}"
