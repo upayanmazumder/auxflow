@@ -50,6 +50,11 @@ result is a **set**, compared by equality.
 The exclusion list must be small, committed, and justified per entry. It is the obvious place
 for an evaluation to go quietly wrong, so every exclusion needs a written reason.
 
+The committed exclusion list contains only `\relax`. TeX writes this
+argument-free command as auxiliary-file boilerplate. It carries no value.
+The normaliser retains unrecognised commands as opaque canonical records.
+This prevents a changing unknown record from appearing stable.
+
 ## When it is observed
 
 After every engine run in the plan, and after every extension run. Observation is cheap relative
