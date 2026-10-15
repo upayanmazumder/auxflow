@@ -6,7 +6,9 @@ binds references and citations after every declaration is available.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Literal
 
 from auxflow.ast import Forest, walk
@@ -39,6 +41,8 @@ _COUNTER_KINDS: dict[str, Literal["definition", "read", "write"]] = {
     "setcounter": "write",
     "value": "read",
 }
+
+_BIB_ENTRY = re.compile(r"(?m)^[ \t]*@([A-Za-z]+)\s*[({]\s*([^,\s]+)\s*,")
 
 
 @dataclass
@@ -127,7 +131,8 @@ def declare(forest: Forest) -> SymbolTables:
 
 
 def resolve(forest: Forest, tables: SymbolTables) -> SymbolTables:
-    """Bind reference uses after declarations, across all files in the forest."""
+    """Bind uses across files and mark cited keys found in bibliography databases."""
+    databases: set[Path] = set()
     for document in forest.documents.values():
         for node in walk(document):
             if not isinstance(node, MacroCall):
@@ -144,4 +149,20 @@ def resolve(forest: Forest, tables: SymbolTables) -> SymbolTables:
                     cite_key = cite_key.strip()
                     if cite_key:
                         tables.cites.insert(cite_key, node.span)
+            elif node.name == "\\bibliography":
+                for name in key.split(","):
+                    name = name.strip()
+                    if name:
+                        filename = name if Path(name).suffix else f"{name}.bib"
+                        databases.add(Path(node.span.file_id).parent / filename)
+    if not tables.cites.entries:
+        return tables
+    for database in databases:
+        if not database.is_file():
+            continue
+        for entry_type, key in _BIB_ENTRY.findall(database.read_text(encoding="utf-8")):
+            if entry_type.lower() not in {"comment", "preamble", "string"}:
+                citation = tables.cites.lookup(key)
+                if citation is not None:
+                    citation.present = True
     return tables

@@ -82,6 +82,10 @@ The resolution pass binds `\ref` and `\pageref` uses to declared labels, even
 across files. It records each `\cite` key with its source span. Uses with no
 definition remain unbound for phase 6 diagnostics.
 
+For cited keys, the resolution pass reads each named `\bibliography` database
+relative to its source file. It marks a key present when a BibTeX entry
+declaration names that key. Missing databases leave cited keys absent.
+
 - **Algorithm** — two-phase traversal: declare, then resolve. A single phase would misreport
   forward references as undefined.
 - **Compiler-design relevance** — symbol tables and scope resolution. The multi-file aspect is
