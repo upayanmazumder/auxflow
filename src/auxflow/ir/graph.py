@@ -141,7 +141,17 @@ def _nodes(document: Document) -> Iterator[tuple[Node, str | None, str | None]]:
 
 
 def lower(forest: Forest, tables: SymbolTables) -> ARG:
-    """Create distinct facts for each modelled construct and its dependencies."""
+    """Create distinct facts for each modelled construct and its dependencies.
+
+    A generated list (`\\tableofcontents`/`\\listoffigures`/`\\listoftables`) is
+    what makes pagination sensitive to auxiliary state -- see docs/IR.md's
+    "backward reference, no generated lists" example, which has neither a
+    LABEL_PAGE->CONTENT_VOLUME nor a CONTENT_VOLUME->LABEL_PAGE edge for a
+    document containing only \\label/\\ref. Sectioning and \\caption always
+    write a potential list entry (matching real LaTeX's unconditional
+    \\addcontentsline), but that entry only affects CONTENT_VOLUME when the
+    corresponding list-producing macro is actually present to typeset it.
+    """
     builder = _Builder()
     label_numbers: dict[str, int] = {}
     label_pages: dict[str, int] = {}
@@ -151,6 +161,17 @@ def lower(forest: Forest, tables: SymbolTables) -> ARG:
     list_extents: dict[str, int] = {}
     volume: int | None = None
     opaque = any(entry.opaque for entry in tables.files.entries.values())
+
+    list_gates = {"toc": False, "lof": False, "lot": False}
+    _GATE_MACRO = {
+        "\\tableofcontents": "toc",
+        "\\listoffigures": "lof",
+        "\\listoftables": "lot",
+    }
+    for document in forest.documents.values():
+        for node, _environment, _control_role in _nodes(document):
+            if isinstance(node, MacroCall) and node.name in _GATE_MACRO:
+                list_gates[_GATE_MACRO[node.name]] = True
 
     def content_volume(span: Span) -> int:
         nonlocal volume
@@ -171,6 +192,8 @@ def lower(forest: Forest, tables: SymbolTables) -> ARG:
     def list_entry(
         kind: FactKind, list_kind: str, span: Span, *, source: int | None = None
     ) -> None:
+        if not list_gates[list_kind]:
+            return
         key = f"{span.file_id}:{span.start}"
         metadata: dict[str, str | int | bool] = {"list_kind": list_kind}
         if source is not None:
@@ -244,13 +267,6 @@ def lower(forest: Forest, tables: SymbolTables) -> ARG:
                     page = builder.fact(FactKind.LABEL_PAGE, key, "value", node.span)
                     label_numbers.setdefault(key, number)
                     label_pages.setdefault(key, page)
-                    builder.edge(
-                        content_volume(node.span),
-                        page,
-                        0,
-                        DepType.LAYOUT,
-                        f"pagination sets page of label {key}",
-                    )
                 elif node.name in {"\\ref", "\\pageref"} and key:
                     is_page = node.name == "\\pageref"
                     use = builder.fact(
@@ -306,6 +322,17 @@ def lower(forest: Forest, tables: SymbolTables) -> ARG:
                         metadata={"reason": "unsupported control sequence"},
                     )
 
+    if volume is not None:
+        # A generated list exists somewhere, so pagination is sensitive to
+        # auxiliary state and every label's page component is affected.
+        for key, page in label_pages.items():
+            builder.edge(
+                volume,
+                page,
+                0,
+                DepType.LAYOUT,
+                f"pagination sets page of label {key}",
+            )
     for key, use, is_page in pending_refs:
         source = (label_pages if is_page else label_numbers).get(key)
         if source is not None:
