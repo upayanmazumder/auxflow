@@ -33,3 +33,38 @@ def seed_facts(arg: ARG) -> set[int]:
         for fact_id, fact in arg.facts.items()
         if fact.metadata.get("control_role") == "condition"
     }
+
+
+def propagate_taint(arg: ARG, seeds: set[int]) -> tuple[set[int], int]:
+    """Forward reachability from `seeds` along value-carrying edges.
+
+    docs/STATIC-ANALYSIS.md section 2: "for each edge (f -> g) in ARG with
+    g.component == 'value': if g not in taint: taint.add(g); worklist.push(g)".
+    `taint` only ever grows (each fact enters the worklist at most once),
+    so it is monotonic over the finite powerset lattice of facts and the
+    loop terminates even on a cyclic value-edge graph.
+
+    Returns `(taint, push_count)`. `push_count` -- the number of times any
+    fact was ever pushed onto the worklist, including the initial seeds --
+    is exposed so callers (and tests) can directly verify the
+    push-at-most-once invariant: `push_count <= len(arg.facts)`.
+    """
+    adjacency: dict[int, list[int]] = {fact_id: [] for fact_id in arg.facts}
+    for edge in arg.edges:
+        adjacency[edge.source].append(edge.destination)
+
+    taint = set(seeds)
+    worklist = list(seeds)
+    push_count = len(seeds)
+
+    while worklist:
+        f = worklist.pop()
+        for g in adjacency[f]:
+            if arg.facts[g].component != "value":
+                continue
+            if g not in taint:
+                taint.add(g)
+                worklist.append(g)
+                push_count += 1
+
+    return taint, push_count
