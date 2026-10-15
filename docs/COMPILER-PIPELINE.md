@@ -70,6 +70,10 @@ Phases 1–12 require no TeX engine. Phase 13 is the only one that executes anyt
 | `FileTable` | file id | path, includer, reachability, opacity |
 | `CounterTable` | counter name | definitions, reads, writes, spans |
 
+`LabelTable` keeps the first definition for each key. Later definitions set its
+duplicate flag and retain their spans. `RefTable` keeps uses separate from
+definitions until the resolution pass binds them.
+
 - **Algorithm** — two-phase traversal: declare, then resolve. A single phase would misreport
   forward references as undefined.
 - **Compiler-design relevance** — symbol tables and scope resolution. The multi-file aspect is
