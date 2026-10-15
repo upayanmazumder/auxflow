@@ -989,12 +989,15 @@ decisions:
     mitigation: Provisional set in IR.md; freeze before IR generation (phase 7), justified by corpus documents
       that need each kind.
   - id: D5
-    status: OPEN
+    status: 'RESOLVED: TOOL-edge effective lag is 0 for stable-pass purposes.'
     question: Pass-lag semantics for external tools (bibtex edge as lag-1 vs separate scheduling node).
     resolve_by_phase: 8
     blocks_implementation: false
-    mitigation: Resolve with a targeted experiment in phase 8; affects predicted counts for bibliography
-      documents.
+    mitigation: Resolved in phase 10 while matching docs/IR.md's bibliography-cascade worked example
+      (BBL.exists stable_pass=1, not 2). The DepEdge.pass_lag field stays 1 since bibtex genuinely
+      needs the prior run's .aux, but auxflow.analysis.stable_pass treats a TOOL edge's lag as 0 in
+      the stable_pass recurrence specifically, matching the documented "external tool runs after run
+      1" timing. Affects predicted counts for bibliography documents; verified against the worked example.
   - id: D6
     status: OPEN
     question: State-equivalence definition for ground truth (leaning normalised auxiliary state).
