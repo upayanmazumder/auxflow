@@ -3,8 +3,8 @@
 Subcommand surface is fixed by docs/ARCHITECTURE.md. Every command up to and
 including `plan` must run without a TeX engine installed; only `run` executes one.
 
-`tokens` (phase 2) and `ast` (phase 4) are implemented. Every other
-subcommand is not yet implemented -- see docs/IMPLEMENTATION-PLAN.md.
+`tokens` (phase 2), `ast` (phase 4), and `symbols` (phase 5) are implemented.
+Other subcommands are not yet implemented; see docs/IMPLEMENTATION-PLAN.md.
 """
 
 from __future__ import annotations
@@ -13,10 +13,11 @@ import argparse
 import sys
 from pathlib import Path
 
-from auxflow.ast import build_forest, print_tree
+from auxflow.ast import Forest, build_forest, print_tree
 from auxflow.ast.forest import inclusion_edges
 from auxflow.lexer import tokenize
-from auxflow.parser import parse
+from auxflow.parser import Diagnostic, Document, Span, parse
+from auxflow.semantic.resolve import declare, resolve
 
 COMMANDS = (
     "tokens",  # phase 2  token stream
@@ -31,13 +32,7 @@ COMMANDS = (
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """Build the top-level parser and its subcommand stubs.
-
-    Matches the command-line surface table in docs/ARCHITECTURE.md exactly:
-    one subcommand per compiler phase, `FILE` positional on every command,
-    plus `graph -o` and `plan --explain`. No handler executes real logic yet;
-    that is phases 2-13, not phase 1.
-    """
+    """Build one subcommand per compiler phase with its documented arguments."""
     parser = argparse.ArgumentParser(
         prog="auxflow",
         description="Static convergence classification for multi-pass document compilation.",
@@ -63,9 +58,10 @@ def _run_tokens(path: str) -> int:
     return 0
 
 
-def _run_ast(path: str) -> int:
+def _load_forest(path: str) -> tuple[Forest, list[Diagnostic]]:
     root = str(Path(path).absolute())
-    documents = {}
+    documents: dict[str, Document] = {}
+    diagnostics: list[Diagnostic] = []
     pending = [root]
     while pending:
         file_id = pending.pop()
@@ -75,18 +71,74 @@ def _run_ast(path: str) -> int:
             source = f.read()
         result = parse(tokenize(source, file_id=file_id), file_id=file_id)
         documents[file_id] = result.document
-        for diagnostic in result.diagnostics:
-            span = diagnostic.span
-            print(f"warning: {diagnostic.message} ({span.file_id}:{span.start}-{span.end})")
+        diagnostics.extend(result.diagnostics)
         for edge in inclusion_edges(file_id, result.document):
             if edge.target not in documents and Path(edge.target).is_file():
                 pending.append(edge.target)
-    forest = build_forest(documents)
+    return build_forest(documents), diagnostics
+
+
+def _print_parse_diagnostics(diagnostics: list[Diagnostic]) -> None:
+    for diagnostic in diagnostics:
+        span = diagnostic.span
+        print(f"warning: {diagnostic.message} ({span.file_id}:{span.start}-{span.end})")
+
+
+def _run_ast(path: str) -> int:
+    forest, diagnostics = _load_forest(path)
+    _print_parse_diagnostics(diagnostics)
     for file_id, document in forest.documents.items():
         print(f"=== {file_id} ===")
         print(print_tree(document))
     for cycle in forest.cycles:
         print(f"warning: inclusion cycle: {' -> '.join(cycle)}")
+    return 0
+
+
+def _span(span: Span) -> str:
+    return f"{span.file_id}:{span.start}-{span.end}"
+
+
+def _run_symbols(path: str) -> int:
+    forest, diagnostics = _load_forest(path)
+    _print_parse_diagnostics(diagnostics)
+    tables = resolve(forest, declare(forest))
+
+    print("LabelTable:")
+    for key, entry in sorted(tables.labels.entries.items()):
+        print(
+            f"  {key}: {_span(entry.span)} counter={entry.counter_kind} duplicate={entry.duplicate}"
+        )
+
+    print("RefTable:")
+    for key, uses in sorted(tables.refs.entries.items()):
+        for use in uses:
+            definition = _span(use.definition.span) if use.definition else "UNRESOLVED"
+            print(f"  {key}: {use.kind} {_span(use.span)} -> {definition}")
+
+    print("CiteTable:")
+    for key, citation in sorted(tables.cites.entries.items()):
+        spans = ", ".join(_span(span) for span in citation.spans)
+        print(f"  {key}: present={citation.present} spans={spans}")
+
+    print("PackageTable:")
+    for name, package in sorted(tables.packages.entries.items()):
+        facts = ", ".join(sorted(package.fact_kinds)) or "-"
+        print(f"  {name}: modelled={package.modelled} facts={facts} tool={package.tool or '-'}")
+
+    print("FileTable:")
+    for file_id, file_entry in sorted(tables.files.entries.items()):
+        print(
+            f"  {file_id}: path={file_entry.path} includer={file_entry.includer or '-'}"
+            f" reachable={file_entry.reachable} opaque={file_entry.opaque}"
+        )
+
+    print("CounterTable:")
+    for name, counter in sorted(tables.counters.entries.items()):
+        definitions = ", ".join(_span(span) for span in counter.definitions) or "-"
+        reads = ", ".join(_span(span) for span in counter.reads) or "-"
+        writes = ", ".join(_span(span) for span in counter.writes) or "-"
+        print(f"  {name}: definitions={definitions} reads={reads} writes={writes}")
     return 0
 
 
@@ -103,6 +155,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "ast":
         return _run_ast(args.file)
+    if args.command == "symbols":
+        return _run_symbols(args.file)
 
     raise NotImplementedError(
         f"auxflow {args.command}: bootstrap phase, see docs/IMPLEMENTATION-PLAN.md"
