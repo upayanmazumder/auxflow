@@ -55,10 +55,13 @@ def main() -> int:
     drift: list[str] = []
 
     # milestones
-    gh_ms = {m["title"] for m in P.gh_api(f"repos/{P.NWO}/milestones?state=all")}
+    gh_ms = {m["title"]: m for m in P.gh_api(f"repos/{P.NWO}/milestones?state=all")}
     for m in plan["milestones"]:
-        if m["title"] not in gh_ms:
+        live = gh_ms.get(m["title"])
+        if live is None:
             drift.append(f"milestone missing on GitHub: {m['title']}")
+        elif P.text_body(live.get("description")) != P.text_body(m.get("description")):
+            drift.append(f"milestone description out of sync: {m['title']}")
 
     # phase issues: existence, milestone, labels, body
     phase_recs: dict[int, dict] = {}

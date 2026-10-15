@@ -47,8 +47,8 @@ order.
 | 5 | 7 | ARG constructed; DOT output renders; fact and edge counts match hand counts on two documents |
 | 6 | 8, 9 | **CP4.** `b08` classified amplifying with three named facts and correct spans; `b05` **not** amplifying; `b11`–`b13` classified exactly as their `declared_false_negative` expectations say. The headline result |
 | 7 | 10, 11 | **CP5.** Stable-pass numbering and the classifier complete; diagnostics match the specified formats |
-| 8 | 12, 13 | **CP6. MVP complete.** End-to-end `auxflow run` on all fifteen documents; zero *undeclared* under-predictions |
-| 9 | 14, 15 | Baselines and full measurement; results regenerate from one command |
+| 8 | 12, 13 | **CP6. MVP complete.** End-to-end `auxflow run` on representative certified, unknown, and amplifying fixtures; bounded extension verified |
+| 9 | 14, 15 | Author the corpus, run every certified member, record prediction misses, measure baselines; results regenerate from one command |
 | 10 | 16 | Report and demonstration; buffer |
 
 **The MVP exists at the end of week 8**, leaving two weeks for evaluation and write-up. That

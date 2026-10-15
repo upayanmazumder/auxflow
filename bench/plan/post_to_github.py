@@ -166,17 +166,25 @@ def ensure_labels(plan: dict, store: Store) -> None:
 
 
 def ensure_milestones(plan: dict, store: Store) -> dict[str, int]:
-    existing = {m["title"]: m["number"] for m in gh_api(f"repos/{NWO}/milestones?state=all")}
+    existing = {m["title"]: m for m in gh_api(f"repos/{NWO}/milestones?state=all")}
     key_to_number: dict[str, int] = {}
     for ms in plan["milestones"]:
         title = ms["title"]
+        description = ms.get("description", "")
         if title in existing:
-            number = existing[title]
+            number = existing[title]["number"]
+            if text_body(existing[title].get("description")) != text_body(description):
+                gh_api(
+                    f"repos/{NWO}/milestones/{number}",
+                    method="PATCH",
+                    fields={"description": description},
+                )
+                print(f"update milestone  {title}")
         else:
             created = gh_api(
                 f"repos/{NWO}/milestones",
                 method="POST",
-                fields={"title": title, "description": ms.get("description", "")},
+                fields={"title": title, "description": description},
             )
             number = created["number"]
             print(f"milestone  {title}")

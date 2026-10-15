@@ -66,7 +66,8 @@ milestones:
 - key: cp6
   title: CP6 — MVP complete (Day 4)
   description: 'Day 4. Build planner with the safety invariant and runtime verification. Checkpoint: end-to-end
-    auxflow run on all fifteen documents with zero undeclared under-predictions.'
+    auxflow run on representative certified, unknown, and amplifying fixtures, including bounded extension.
+    Run the full corpus after it is authored in phase 14.'
   phases:
   - 12
   - 13
@@ -695,8 +696,9 @@ issues:
     runs up to max_runs and record a prediction miss (document, predicted, observed), never suppressed.
     Honour the documented stop conditions (planned_count, aux_fixpoint, cap) and failure states (tool_error,
     missing_input, cap_exceeded, opaque_abort, amplifying_refused), surfacing engine logs unmodified.
-    Expose `auxflow run`. Acceptance: `auxflow run` converges on every certified corpus member with zero
-    undeclared under-predictions and the bounded extension policy stops at max_runs.'
+    Expose `auxflow run`. Acceptance: `auxflow run` converges on a certified fixture, refuses an amplifying
+    fixture without --force, and the bounded extension policy stops at max_runs. Run every certified
+    corpus member after the corpus is authored in phase 14.'
   sub_issues:
   - title: Implement auxiliary-state normalisation into canonical record sets
     body: 'Parse each auxiliary file into the canonical records from RUNTIME-VERIFICATION.md: ("label",key,number,page),
@@ -752,7 +754,8 @@ issues:
     the analyser produces any output, so results are not circular. Ground truth N* is computed by normalised
     auxiliary-state equivalence plus rendered-text equality against a reference run count MAX=8. Acceptance:
     bench/ directory layout from BENCHMARKS.md exists; every document compiles under the pinned TeX Live
-    image; baselines are readable shell scripts; harness emits one JSONL record per repetition.'
+    image; baselines are readable shell scripts; harness emits one JSONL record per repetition. Run every
+    certified corpus member with `auxflow run` and record prediction misses without retuning the model.'
   sub_issues:
   - title: Author the fifteen-member corpus with hand-written expected.json oracle files
     body: 'Create bench/corpus/b01_plain .. b15_ibid, each with main.tex, expected.json and a one-paragraph
