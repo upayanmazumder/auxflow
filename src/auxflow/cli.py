@@ -3,8 +3,9 @@
 Subcommand surface is fixed by docs/ARCHITECTURE.md. Every command up to and
 including `plan` must run without a TeX engine installed; only `run` executes one.
 
-`tokens`, `ast`, `symbols`, `check`, and `graph` are implemented. Other
-subcommands are not yet implemented; see docs/IMPLEMENTATION-PLAN.md.
+`tokens`, `ast`, `symbols`, `check`, `graph`, and `classify` are
+implemented. Other subcommands are not yet implemented; see
+docs/IMPLEMENTATION-PLAN.md.
 """
 
 from __future__ import annotations
@@ -13,6 +14,13 @@ import argparse
 import sys
 from pathlib import Path
 
+from auxflow.analysis.classify import State, classify
+from auxflow.analysis.classify_cycles import classify_components
+from auxflow.analysis.condensation import build_condensation
+from auxflow.analysis.report import render
+from auxflow.analysis.scc import tarjan
+from auxflow.analysis.stable_pass import compute_stable_pass
+from auxflow.analysis.taint import insert_structural_edges, propagate_taint, seed_facts
 from auxflow.ast import Forest, build_forest, print_tree
 from auxflow.ast.forest import inclusion_edges
 from auxflow.ir import lower, to_dot
@@ -47,6 +55,9 @@ def build_parser() -> argparse.ArgumentParser:
         sub.add_argument("file", metavar="FILE")
         if name == "graph":
             sub.add_argument("-o", dest="output", metavar="G.dot")
+        if name == "classify":
+            sub.add_argument("-v", "--verbose", action="store_true")
+            sub.add_argument("--force", action="store_true")
         if name == "plan":
             sub.add_argument("--explain", action="store_true")
 
@@ -178,6 +189,27 @@ def _run_graph(path: str, output: str | None) -> int:
     return 0
 
 
+def _run_classify(path: str, *, verbose: bool, force: bool) -> int:
+    forest, parse_diagnostics = _load_forest(path)
+    _print_parse_diagnostics(parse_diagnostics)
+    sources = {file_id: Path(file_id).read_text(encoding="utf-8") for file_id in forest.documents}
+
+    graph = lower(forest, resolve(forest, declare(forest)))
+    seeds = seed_facts(graph)
+    taint, _ = propagate_taint(graph, seeds)
+    graph = insert_structural_edges(graph, taint)
+    components = tarjan(graph)
+    condensation = build_condensation(graph, components)
+    labels = classify_components(graph, components)
+    stable_pass = compute_stable_pass(graph, condensation, labels)
+    classification = classify(graph, components, labels, stable_pass)
+
+    report = render(graph, sources, classification, stable_pass, verbose=verbose)
+    if report is not None:
+        print(report, end="")
+    return int(classification.state is State.AMPLIFYING and not force)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -197,6 +229,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_check(args.file)
     if args.command == "graph":
         return _run_graph(args.file, args.output)
+    if args.command == "classify":
+        return _run_classify(args.file, verbose=args.verbose, force=args.force)
 
     raise NotImplementedError(
         f"auxflow {args.command}: bootstrap phase, see docs/IMPLEMENTATION-PLAN.md"

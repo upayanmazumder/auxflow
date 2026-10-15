@@ -123,7 +123,7 @@ demonstrable and independently testable.
 | `auxflow symbols FILE` | 1 | symbol table dump |
 | `auxflow check FILE` | 1 | semantic diagnostics, exit non-zero on error |
 | `auxflow graph FILE -o G.dot` | 1 | ARG in Graphviz DOT |
-| `auxflow classify FILE` | 1 | classification with diagnosis |
+| `auxflow classify FILE [-v] [--force]` | 1 | classification with diagnosis |
 | `auxflow plan FILE [--explain]` | 1 | BuildPlan as JSON |
 | `auxflow run FILE` | 2 | execute the plan with verification |
 
@@ -137,6 +137,12 @@ fixed order, with keys sorted within each table.
 
 `auxflow check FILE` reads the same forest and prints diagnostics with source
 spans and severity. Errors produce exit status 1. Warnings alone produce 0.
+
+`auxflow classify FILE` runs declaration, resolution, lowering, taint, SCC,
+condensation, and stable-pass, then prints the matching report block.
+Exit status is 1 only for `AMPLIFYING` without `--force`; every other
+state, and `AMPLIFYING` with `--force`, exits 0. `-v`/`--verbose` is
+required to print a `BENIGN_CYCLIC` report; it is silent otherwise.
 
 Every command up to and including `plan` runs without a TeX engine installed. This is a hard
 requirement, and it is what makes the compiler independently gradeable.
