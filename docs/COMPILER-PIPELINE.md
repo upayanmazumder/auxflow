@@ -74,6 +74,10 @@ Phases 1–12 require no TeX engine. Phase 13 is the only one that executes anyt
 duplicate flag and retain their spans. `RefTable` keeps uses separate from
 definitions until the resolution pass binds them.
 
+The declaration pass scans every file before it binds any use. It records
+labels, packages, files and counter operations. An unknown package stays
+unmodelled. The pass treats `graphicx` as modelled with no auxiliary facts.
+
 - **Algorithm** — two-phase traversal: declare, then resolve. A single phase would misreport
   forward references as undefined.
 - **Compiler-design relevance** — symbol tables and scope resolution. The multi-file aspect is
