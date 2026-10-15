@@ -484,7 +484,9 @@
       "[P16] Rehearse the end-to-end demonstration on a corpus member": "PVTI_lAHOCIb45c4BnLikzhA98pA",
       "Risk register": "PVTI_lAHOCIb45c4BnLikzhA-FLQ",
       "Deferred scope and cut order": "PVTI_lAHOCIb45c4BnLikzhA-Jao",
-      "Open decisions (blocks impl.: D13, D14)": "PVTI_lAHOCIb45c4BnLikzhA-Pk0"
+      "Open decisions (blocks impl.: D13, D14)": "PVTI_lAHOCIb45c4BnLikzhA-Pk0",
+      "Open decisions": "PVTI_lAHOCIb45c4BnLikzhA-Pk0",
+      "[P4] Add the remaining AST node classes (MacroDef, CounterOp, ControlConstruct, Opaque) to auxflow.parser.nodes": "PVTI_lAHOCIb45c4BnLikzhBAA-8"
     }
   }
 }
