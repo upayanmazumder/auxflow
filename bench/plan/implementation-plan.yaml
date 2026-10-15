@@ -423,7 +423,9 @@ issues:
     Classify each non-trivial SCC (|C|>1, or |C|==1 with a self-loop): AMPLIFYING if any internal edge
     is STRUCTURAL, UNKNOWN_CYCLE if any fact is opaque, else BENIGN. O(V+E) time, O(V) space. This phase
     is testable on synthetic graphs with no LaTeX involved and should be built before taint. Both phases
-    9 and 10 depend on it.'
+    9 and 10 depend on it. Acceptance: iterative Tarjan returns the correct strongly connected components
+    on synthetic graphs including a known multi-node cycle and a self-loop, with no recursion and the
+    condensation emitted in reverse topological order.'
   sub_issues:
   - title: Iterative (non-recursive) Tarjan SCC over the ARG
     body: 'Implement Tarjan''s SCC algorithm with an explicit work stack and index/lowlink arrays; no
@@ -466,7 +468,9 @@ issues:
     such a construct, or in a page-emitting construct (\newpage/\clearpage) under such control. Propagation
     is deliberately coarse (over- approximating, safe direction) and monotonic over the powerset lattice,
     so it terminates; each fact enters the worklist at most once, O(V+E) time O(V) space. The unsoundness
-    lives in the seed rule, not the propagation. Depends only on phase 8.'
+    lives in the seed rule, not the propagation. Depends only on phase 8. Acceptance: content-quantity
+    taint inserts STRUCTURAL edges so b08''s amplifying cycle gains a STRUCTURAL edge while b05''s table-of-contents
+    cycle does not.'
   sub_issues:
   - title: Seed set computation from control constructs
     body: 'Compute the seed set: facts whose value is read inside a ControlConstruct condition or bound,
@@ -509,7 +513,8 @@ issues:
     + max bounded pred, default 0), flagged as heuristic / open decision D7 and never tuned to the corpus;
     a singleton gets 1 if no preds, None if any pred is unbounded, else 1 + max(stable_pass[g] + lag(g,f)
     - 1). Let P be the max bounded stable_pass (0 if none); derived predicted_runs = P + 1. Longest-path
-    over a DAG, O(V+E) time O(V) space. Depends only on phase 8.'
+    over a DAG, O(V+E) time O(V) space. Depends only on phase 8. Acceptance: per-fact stable_pass numbers
+    are computed over the condensation and the derived run count equals P + 1 on a certified fixture.'
   sub_issues:
   - title: Singleton-component stable-pass recurrence
     body: 'For single-member components implement stable_pass: 1 when preds empty, None when any predecessor
@@ -610,7 +615,9 @@ issues:
     (predicted_runs when certified, else the conservative default). Set verify_after on the final engine
     step in every classification. Amplifying refuses with no steps unless --force. Enforce the safety
     invariant: the emitted plan is never shorter than the conservative default unless CERTIFIED. Expose
-    `auxflow plan --explain` with a per-step reason traceable to a fact or classification.'
+    `auxflow plan --explain` with a per-step reason traceable to a fact or classification. Acceptance:
+    the safety-invariant property test passes, `auxflow plan --explain` prints a per-step reason traceable
+    to a fact or classification, and an amplifying document refuses to plan without --force.'
   sub_issues:
   - title: Write the safety invariant assertion and its property test FIRST
     body: 'Before any other planner code, add the assertion that the emitted plan length is never shorter
@@ -669,7 +676,8 @@ issues:
     runs up to max_runs and record a prediction miss (document, predicted, observed), never suppressed.
     Honour the documented stop conditions (planned_count, aux_fixpoint, cap) and failure states (tool_error,
     missing_input, cap_exceeded, opaque_abort, amplifying_refused), surfacing engine logs unmodified.
-    Expose `auxflow run`.'
+    Expose `auxflow run`. Acceptance: `auxflow run` converges on every certified corpus member with zero
+    undeclared under-predictions and the bounded extension policy stops at max_runs.'
   sub_issues:
   - title: Implement auxiliary-state normalisation into canonical record sets
     body: 'Parse each auxiliary file into the canonical records from RUNTIME-VERIFICATION.md: ("label",key,number,page),
@@ -885,3 +893,43 @@ issues:
     labels:
     - task
     - documentation
+risk_register:
+- risk: Parser scope creep toward real-world documents
+  likelihood: HIGH
+  impact: HIGH
+  mitigation: Default-deny language subset; the fallback rule is implemented in phase 1, before the parser
+    exists.
+- risk: Recursive Tarjan overflowing the interpreter stack
+  likelihood: MED
+  impact: MED
+  mitigation: Iterative Tarjan with an explicit stack from the start; the realistic corpus document is
+    large enough to trigger recursion limits.
+- risk: The ARG collapsing into a fixed lattice
+  likelihood: MED
+  impact: HIGH
+  mitigation: Instance-level facts are specified in IR.md; fact and edge counts are asserted against hand
+    counts in phase 7.
+- risk: Benign-cycle bound mispredicting the run count
+  likelihood: MED
+  impact: MED
+  mitigation: Open decision D7 carries a specified conservative fallback; prediction misses are reported,
+    not hidden.
+- risk: Ground-truth criterion chosen badly
+  likelihood: MED
+  impact: HIGH
+  mitigation: Open decision D6 must close before any measurement; PDF byte equality is already rejected
+    on evidence in favour of normalised auxiliary-state equivalence.
+- risk: Evaluation squeezed into the last week
+  likelihood: MED
+  impact: HIGH
+  mitigation: MVP complete at week 8 (day 4 here), leaving a two-week margin for evaluation and write-up.
+- risk: Infrastructure work displacing compiler work
+  likelihood: LOW
+  impact: HIGH
+  mitigation: Infrastructure is not in the repository at all; the cut order removes stretch items first
+    and never the core.
+- risk: Assumption A2 failing broadly
+  likelihood: LOW
+  impact: MED
+  mitigation: Prediction misses are a reported metric at Gate 2, so the failure is measurable rather than
+    invisible.
