@@ -139,6 +139,12 @@ CUT_ORDER: tuple[tuple[str, ...], ...] = (
     ("explained-plan", "explain detail", "plan dump"),
 )
 
+# The open/blocked decisions from docs/PROJECT.md that gate the build. The docs
+# state implementation MUST NOT start until D13 and D14 resolve, so a faithful
+# rollout surfaces each as pre-work and marks the two blockers blocking.
+OPEN_DECISIONS: tuple[str, ...] = ("D4", "D5", "D6", "D7", "D10", "D11", "D12", "D13", "D14")
+BLOCKING_DECISIONS: frozenset[str] = frozenset({"D13", "D14"})
+
 
 class HardError(Exception):
     """Unrecoverable problem: the artifact cannot be scored at all."""
@@ -386,6 +392,23 @@ def score(plan: dict[str, Any]) -> dict[str, float]:
     if not [x for x in as_list(deferred.get("stretch")) if text_of(x)]:
         defects += 2  # STRETCH items (23-28) not represented
 
+    # --- open decisions that gate the build (docs/PROJECT.md) ---------------
+    decisions = as_list(plan.get("decisions"))
+    dec_by_id = {
+        text_of(d.get("id")).upper(): d for d in decisions if isinstance(d, dict)
+    }
+    decisions_covered = 0
+    for did in OPEN_DECISIONS:
+        entry = dec_by_id.get(did)
+        if entry is None:
+            defects += 1  # a build-gating decision is unrepresented
+            continue
+        decisions_covered += 1
+        if not text_of(entry.get("question")):
+            defects += 0.5
+        if did in BLOCKING_DECISIONS and not entry.get("blocks_implementation"):
+            defects += 2  # D13/D14 must be flagged as blocking Phase 1
+
     # --- dependency graph integrity ----------------------------------------
     adj: dict[int, set[int]] = {}
     for pid, issue in by_phase.items():
@@ -431,6 +454,7 @@ def score(plan: dict[str, Any]) -> dict[str, float]:
     acceptance_coverage_pct = 100.0 * acceptance_covered / len(PHASES)
     risk_coverage_pct = 100.0 * risk_covered / len(RISK_REGISTER)
     cut_order_coverage_pct = 100.0 * cut_covered / len(CUT_ORDER)
+    decisions_coverage_pct = 100.0 * decisions_covered / len(OPEN_DECISIONS)
     quality_score = max(0.0, 100.0 - defects)
 
     return {
@@ -443,6 +467,7 @@ def score(plan: dict[str, Any]) -> dict[str, float]:
         "acceptance_coverage_pct": round(acceptance_coverage_pct, 2),
         "risk_coverage_pct": round(risk_coverage_pct, 2),
         "cut_order_coverage_pct": round(cut_order_coverage_pct, 2),
+        "decisions_coverage_pct": round(decisions_coverage_pct, 2),
         "quality_score": round(quality_score, 3),
     }
 
@@ -467,6 +492,7 @@ def main(argv: list[str]) -> int:
         "acceptance_coverage_pct",
         "risk_coverage_pct",
         "cut_order_coverage_pct",
+        "decisions_coverage_pct",
         "quality_score",
     ):
         value = metrics[name]
