@@ -127,6 +127,11 @@ demonstrable and independently testable.
 | `auxflow plan FILE [--explain]` | 1 | BuildPlan as JSON |
 | `auxflow run FILE` | 2 | execute the plan with verification |
 
+`auxflow ast FILE` reads reachable `\input` and `\include` files. It resolves
+relative names from each source file and adds `.tex` when a name has no suffix.
+The output lists each file once and reports inclusion cycles.
+Phase 5 reports missing inclusions as semantic diagnostics.
+
 Every command up to and including `plan` runs without a TeX engine installed. This is a hard
 requirement, and it is what makes the compiler independently gradeable.
 
