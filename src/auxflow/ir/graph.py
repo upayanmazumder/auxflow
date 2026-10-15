@@ -168,16 +168,31 @@ def lower(forest: Forest, tables: SymbolTables) -> ARG:
             )
         return extent
 
-    def list_entry(kind: FactKind, list_kind: str, span: Span) -> None:
+    def list_entry(
+        kind: FactKind, list_kind: str, span: Span, *, source: int | None = None
+    ) -> None:
         key = f"{span.file_id}:{span.start}"
-        entry = builder.fact(kind, key, "exists", span, metadata={"list_kind": list_kind})
+        metadata: dict[str, str | int | bool] = {"list_kind": list_kind}
+        if source is not None:
+            metadata["origin"] = "bibliography"
+        exists = builder.fact(kind, key, "exists", span, metadata=metadata)
         builder.edge(
-            entry,
+            exists,
             list_extent(list_kind, span),
             0,
             DepType.LAYOUT,
             f"{list_kind} entry adds list content",
         )
+        value = builder.fact(kind, key, "value", span, metadata=metadata)
+        builder.edge(
+            content_volume(span),
+            value,
+            0,
+            DepType.LAYOUT,
+            f"pagination sets {list_kind} entry page",
+        )
+        if source is not None:
+            builder.edge(source, exists, 1, DepType.LAYOUT, "bibliography body adds a toc entry")
 
     for document in forest.documents.values():
         for node, environment, control_role in _nodes(document):
@@ -257,9 +272,10 @@ def lower(forest: Forest, tables: SymbolTables) -> ARG:
                                 builder.fact(FactKind.CITE_USE, cite_key, "value", node.span)
                             )
                 elif node.name == "\\bibliography" and key:
-                    bibliography.append(
-                        builder.fact(FactKind.BBL, key, "value", node.span, producer="bibtex")
-                    )
+                    exists = builder.fact(FactKind.BBL, key, "exists", node.span, producer="bibtex")
+                    builder.fact(FactKind.BBL, key, "value", node.span, producer="bibtex")
+                    bibliography.append(exists)
+                    list_entry(FactKind.TOC_ENTRY, "toc", node.span, source=exists)
                 elif node.name == "\\value" and key and control_role:
                     builder.fact(
                         FactKind.COUNTER_READ,
