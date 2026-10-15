@@ -64,9 +64,8 @@ def test_unsupported_macro_marks_document_facts_opaque() -> None:
 
 
 def test_b08_control_bound_produces_page_reference_and_counter_read_facts() -> None:
-    graph = _lower(
-        "\\newcounter{n}\\forloop{n}{0}{\\value{n}<\\pageref{last}}{~\\newpage}\\label{last}"
-    )
+    source = "\\newcounter{n}\\forloop{n}{0}{\\value{n}<\\pageref{last}}{~\\newpage}\\label{last}"
+    graph = _lower(source)
 
     page_uses = [fact for fact in graph.facts.values() if fact.kind is FactKind.PAGEREF_USE]
     counter_reads = [fact for fact in graph.facts.values() if fact.kind is FactKind.COUNTER_READ]
@@ -74,6 +73,22 @@ def test_b08_control_bound_produces_page_reference_and_counter_read_facts() -> N
     assert page_uses[0].metadata["control_role"] == "condition"
     assert counter_reads[0].metadata["control_role"] == "condition"
     assert not any(fact.kind is FactKind.OPAQUE for fact in graph.facts.values())
+
+    # docs/IR.md "Amplifying cycle": \newpage (a page-emission primitive)
+    # makes CONTENT_VOLUME exist even though no generated list is present;
+    # LABEL_PAGE(last) <-> PAGEREF_USE(last) <-> CONTENT_VOLUME closes once
+    # taint (phase 9) adds the STRUCTURAL edge.
+    volume = [fact for fact in graph.facts.values() if fact.kind is FactKind.CONTENT_VOLUME]
+    label_page = next(f for f in graph.facts.values() if f.kind is FactKind.LABEL_PAGE)
+    assert len(volume) == 1
+    assert volume[0].source_location.start == source.index("\\newpage")
+    assert volume[0].fact_id in label_page.dependencies
+    assert any(
+        e.source == volume[0].fact_id
+        and e.destination == label_page.fact_id
+        and e.dependency_type is DepType.LAYOUT
+        for e in graph.edges
+    )
 
 
 def test_macro_definition_body_is_not_lowered_and_marks_facts_opaque() -> None:

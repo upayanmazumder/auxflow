@@ -143,13 +143,15 @@ def _nodes(document: Document) -> Iterator[tuple[Node, str | None, str | None]]:
 def lower(forest: Forest, tables: SymbolTables) -> ARG:
     """Create distinct facts for each modelled construct and its dependencies.
 
-    A generated list (`\\tableofcontents`/`\\listoffigures`/`\\listoftables`) is
-    what makes pagination sensitive to auxiliary state -- see docs/IR.md's
-    "backward reference, no generated lists" example, which has neither a
-    LABEL_PAGE->CONTENT_VOLUME nor a CONTENT_VOLUME->LABEL_PAGE edge for a
-    document containing only \\label/\\ref. Sectioning and \\caption always
-    write a potential list entry (matching real LaTeX's unconditional
-    \\addcontentsline), but that entry only affects CONTENT_VOLUME when the
+    A generated list (`\\tableofcontents`/`\\listoffigures`/`\\listoftables`) or a
+    page-emission primitive (`\\newpage`/`\\clearpage`) is what makes pagination
+    sensitive to auxiliary state -- see docs/IR.md's "backward reference, no
+    generated lists" example, which has neither of these and so has no
+    CONTENT_VOLUME fact at all, versus the "amplifying cycle" example, which
+    has `\\newpage` but no generated list and still requires CONTENT_VOLUME to
+    exist (it is the fact that closes the cycle). Sectioning and `\\caption`
+    always write a potential list entry (matching real LaTeX's unconditional
+    `\\addcontentsline`), but that entry only affects CONTENT_VOLUME when the
     corresponding list-producing macro is actually present to typeset it.
     """
     builder = _Builder()
@@ -168,16 +170,27 @@ def lower(forest: Forest, tables: SymbolTables) -> ARG:
         "\\listoffigures": "lof",
         "\\listoftables": "lot",
     }
+    _VOLUME_TRIGGERS = frozenset({*_GATE_MACRO, "\\newpage", "\\clearpage"})
+    earliest_trigger_span: Span | None = None
     for document in forest.documents.values():
         for node, _environment, _control_role in _nodes(document):
             if isinstance(node, MacroCall) and node.name in _GATE_MACRO:
                 list_gates[_GATE_MACRO[node.name]] = True
+            if (
+                isinstance(node, MacroCall)
+                and node.name in _VOLUME_TRIGGERS
+                and (earliest_trigger_span is None or node.span.start < earliest_trigger_span.start)
+            ):
+                earliest_trigger_span = node.span
 
     def content_volume(span: Span) -> int:
         nonlocal volume
         if volume is None:
             volume = builder.fact(FactKind.CONTENT_VOLUME, None, "value", span)
         return volume
+
+    if earliest_trigger_span is not None:
+        content_volume(earliest_trigger_span)
 
     def list_extent(kind: str, span: Span) -> int:
         extent = list_extents.get(kind)
