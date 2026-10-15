@@ -125,6 +125,18 @@ def main() -> int:
         drift.append("tracking issue missing: Open decisions")
 
     # project items + phase field values
+
+    # project views
+    proj_for_views = store.data.get("project", {})
+    if proj_for_views.get("id"):
+        gh_views = P.graphql(
+            "query($id:ID!){node(id:$id){... on ProjectV2{views(first:20){nodes{name}}}}}",
+            id=proj_for_views["id"],
+        )["data"]["node"]["views"]["nodes"]
+        have_views = {v["name"] for v in gh_views}
+        for name in [str(v) for v in plan["project"].get("views", [])]:
+            if name not in have_views:
+                drift.append(f"project view missing: {name}")
     proj = store.data.get("project", {})
     if proj.get("number"):
         items = proj_items(proj["number"])

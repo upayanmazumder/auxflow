@@ -297,6 +297,43 @@ def link_sub_issue(parent: dict, child: dict, store: Store) -> None:
     store.save()
     print(f"  sub-issue #{child['number']} -> #{parent['number']}")
 
+VIEW_LAYOUT = {"Board": "BOARD_LAYOUT", "Roadmap": "ROADMAP_LAYOUT", "Table": "TABLE_LAYOUT"}
+
+
+def ensure_views(plan: dict, proj: dict) -> None:
+    wanted = [str(v) for v in plan["project"].get("views", [])]
+    if not wanted:
+        return
+    existing = graphql(
+        "query($id:ID!){node(id:$id){... on ProjectV2{views(first:20){nodes{id name layout}}}}}",
+        id=proj["id"],
+    )["data"]["node"]["views"]["nodes"]
+    by_name = {v["name"]: v for v in existing}
+    default = by_name.get("View 1")
+    for name in wanted:
+        if name in by_name:
+            continue
+        if default is not None:
+            graphql(
+                'mutation($v:ID!,$n:String!){updateProjectV2View(input:{viewId:$v,name:$n})'
+                "{projectV2View{id}}}",
+                v=default["id"],
+                n=name,
+            )
+            by_name[name] = default
+            print(f"project view  renamed default -> {name}")
+            default = None
+            continue
+        layout = VIEW_LAYOUT.get(name, "BOARD_LAYOUT")
+        graphql(
+            'mutation($p:ID!,$n:String!){createProjectV2View(input:{projectId:$p,name:$n,'
+            f"layout:{layout}}})"
+            "{projectV2View{id}}}",
+            p=proj["id"],
+            n=name,
+        )
+        print(f"project view  {name}")
+
 
 def ensure_project(plan: dict, store: Store) -> None:
     proj = store.data["project"]
@@ -321,6 +358,8 @@ def ensure_project(plan: dict, store: Store) -> None:
         )
         store.save()
         print(f"project  #{proj['number']}  {proj['url']}")
+
+    ensure_views(plan, proj)
 
     # custom fields
     want_fields = {"Phase": "TEXT", "Risk": "TEXT", "Estimate": "NUMBER"}
