@@ -1,0 +1,69 @@
+# AuxFlow implementation plan — machine-readable GitHub rollout.
+#
+# This file is the single source the GitHub poster reads to create the project,
+# milestones, phase issues, and sub-issues. It is scored by validate_plan.py
+# against ground truth in docs/IMPLEMENTATION-PLAN.md and docs/SCOPE.md.
+#
+# Schedule is compressed to a 5-day solo build (see `schedule_days`). Effort
+# estimates (`hours`), dependencies (`depends_on`), and risk come from the
+# authoritative plan and do not change with the calendar.
+#
+# STARTER BASELINE: intentionally partial. Phases 4-16, most sub-issues, extra
+# milestones, and the project board are still to be filled in.
+
+schedule_days: 5
+
+project:
+  name: AuxFlow Implementation
+  fields:
+    - Status
+  views:
+    - Board
+
+milestones:
+  - key: d1
+    title: "Day 1 — Front end start"
+    description: "Tooling, planner safety assertion, and the lexer."
+    phases: [1, 2]
+
+issues:
+  - phase: 1
+    title: "Phase 1 — Project and tooling setup"
+    hours: 6
+    risk: LOW
+    depends_on: []
+    milestone: d1
+    labels: [phase, setup]
+    body: >-
+      Stand up the repository, CI (lint, type check, tests), and an importable
+      empty package. Write the planner safety assertion first so no planner
+      build can ever emit an unsafe plan.
+    sub_issues:
+      - title: "CI pipeline: ruff, mypy, pytest"
+      - title: "Write the planner safety assertion before the parser exists"
+
+  - phase: 2
+    title: "Phase 2 — Lexer"
+    hours: 14
+    risk: LOW
+    depends_on: [1]
+    milestone: d1
+    labels: [phase, lexer]
+    body: >-
+      Category-code tokenizer covering codes 0-15 with comment and verbatim
+      handling. Ship `auxflow tokens` and a round-trip property test.
+    sub_issues:
+      - title: "Category-code table and tokenizer core"
+
+  - phase: 3
+    title: "Phase 3 — Parser"
+    hours: 22
+    risk: HIGH
+    depends_on: [2]
+    milestone: d1
+    labels: [phase, parser]
+    body: >-
+      Recursive-descent parser with an argument-signature table and recovery on
+      malformed input. The hardest phase; default-deny the language subset.
+    sub_issues:
+      - title: "Argument-signature table"
