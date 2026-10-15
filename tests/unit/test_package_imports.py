@@ -60,6 +60,6 @@ def test_cli_with_no_command_prints_help_and_exits_nonzero(
 
 
 def test_cli_known_subcommand_not_yet_implemented() -> None:
-    # tokens (phase 2) is implemented; ast (phase 4) is not yet.
+    # tokens (phase 2) and ast (phase 4) are implemented; symbols (phase 5) is not yet.
     with pytest.raises(NotImplementedError):
-        cli.main(["ast", "doc.tex"])
+        cli.main(["symbols", "doc.tex"])

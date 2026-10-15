@@ -3,8 +3,8 @@
 Subcommand surface is fixed by docs/ARCHITECTURE.md. Every command up to and
 including `plan` must run without a TeX engine installed; only `run` executes one.
 
-`tokens` is implemented (phase 2). Every other subcommand is not yet
-implemented -- see docs/IMPLEMENTATION-PLAN.md.
+`tokens` (phase 2) and `ast` (phase 4) are implemented. Every other
+subcommand is not yet implemented -- see docs/IMPLEMENTATION-PLAN.md.
 """
 
 from __future__ import annotations
@@ -12,7 +12,9 @@ from __future__ import annotations
 import argparse
 import sys
 
+from auxflow.ast import build_forest, print_tree
 from auxflow.lexer import tokenize
+from auxflow.parser import parse
 
 COMMANDS = (
     "tokens",  # phase 2  token stream
@@ -59,6 +61,24 @@ def _run_tokens(path: str) -> int:
     return 0
 
 
+def _run_ast(path: str) -> int:
+    with open(path, encoding="utf-8") as f:
+        source = f.read()
+    tokens = tokenize(source, file_id=path)
+    result = parse(tokens, file_id=path)
+    for diagnostic in result.diagnostics:
+        span = diagnostic.span
+        print(f"warning: {diagnostic.message} ({span.file_id}:{span.start}-{span.end})")
+    forest = build_forest({path: result.document})
+    for file_id, document in forest.documents.items():
+        print(f"=== {file_id} ===")
+        print(print_tree(document))
+    if forest.cycles:
+        for cycle in forest.cycles:
+            print(f"warning: inclusion cycle: {' -> '.join(cycle)}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -69,6 +89,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "tokens":
         return _run_tokens(args.file)
+
+    if args.command == "ast":
+        return _run_ast(args.file)
 
     raise NotImplementedError(
         f"auxflow {args.command}: bootstrap phase, see docs/IMPLEMENTATION-PLAN.md"
