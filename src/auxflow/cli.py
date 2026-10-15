@@ -11,8 +11,10 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
 from auxflow.ast import build_forest, print_tree
+from auxflow.ast.forest import inclusion_edges
 from auxflow.lexer import tokenize
 from auxflow.parser import parse
 
@@ -62,20 +64,29 @@ def _run_tokens(path: str) -> int:
 
 
 def _run_ast(path: str) -> int:
-    with open(path, encoding="utf-8") as f:
-        source = f.read()
-    tokens = tokenize(source, file_id=path)
-    result = parse(tokens, file_id=path)
-    for diagnostic in result.diagnostics:
-        span = diagnostic.span
-        print(f"warning: {diagnostic.message} ({span.file_id}:{span.start}-{span.end})")
-    forest = build_forest({path: result.document})
+    root = str(Path(path).absolute())
+    documents = {}
+    pending = [root]
+    while pending:
+        file_id = pending.pop()
+        if file_id in documents:
+            continue
+        with open(file_id, encoding="utf-8") as f:
+            source = f.read()
+        result = parse(tokenize(source, file_id=file_id), file_id=file_id)
+        documents[file_id] = result.document
+        for diagnostic in result.diagnostics:
+            span = diagnostic.span
+            print(f"warning: {diagnostic.message} ({span.file_id}:{span.start}-{span.end})")
+        for edge in inclusion_edges(file_id, result.document):
+            if edge.target not in documents and Path(edge.target).is_file():
+                pending.append(edge.target)
+    forest = build_forest(documents)
     for file_id, document in forest.documents.items():
         print(f"=== {file_id} ===")
         print(print_tree(document))
-    if forest.cycles:
-        for cycle in forest.cycles:
-            print(f"warning: inclusion cycle: {' -> '.join(cycle)}")
+    for cycle in forest.cycles:
+        print(f"warning: inclusion cycle: {' -> '.join(cycle)}")
     return 0
 
 

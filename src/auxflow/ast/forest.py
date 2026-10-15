@@ -14,7 +14,9 @@ node reached again closes a cycle.
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
+from pathlib import Path
 
 from auxflow.ast.visitor import walk
 from auxflow.parser.nodes import Document, MacroCall, Text
@@ -63,15 +65,25 @@ def _target_of(call: MacroCall) -> str | None:
     return "".join(n.text for n in call.args[0].content if isinstance(n, Text))
 
 
+def inclusion_edges(file_id: str, document: Document) -> list[InclusionEdge]:
+    """Resolve each inclusion against its source file, adding .tex when absent."""
+    edges: list[InclusionEdge] = []
+    for node in walk(document):
+        if isinstance(node, MacroCall) and node.name in _INCLUDE_MACROS:
+            target = _target_of(node)
+            if target:
+                filename = target if Path(target).suffix else f"{target}.tex"
+                resolved = os.path.normpath(os.path.join(os.path.dirname(file_id), filename))
+                edges.append(
+                    InclusionEdge(source=file_id, target=resolved, kind=_INCLUDE_MACROS[node.name])
+                )
+    return edges
+
+
 def _find_edges(documents: dict[str, Document]) -> list[InclusionEdge]:
     edges: list[InclusionEdge] = []
     for file_id, document in documents.items():
-        for node in walk(document):
-            if isinstance(node, MacroCall) and node.name in _INCLUDE_MACROS:
-                target = _target_of(node)
-                if target:
-                    kind = _INCLUDE_MACROS[node.name]
-                    edges.append(InclusionEdge(source=file_id, target=target, kind=kind))
+        edges.extend(inclusion_edges(file_id, document))
     return edges
 
 
