@@ -3,29 +3,32 @@
 Subcommand surface is fixed by docs/ARCHITECTURE.md. Every command up to and
 including `plan` must run without a TeX engine installed; only `run` executes one.
 
-`tokens`, `ast`, `symbols`, `check`, `graph`, and `classify` are
-implemented. Other subcommands are not yet implemented; see
-docs/IMPLEMENTATION-PLAN.md.
+`tokens`, `ast`, `symbols`, `check`, `graph`, `classify`, and `plan` are
+implemented. Only `run` is not yet implemented; see docs/IMPLEMENTATION-PLAN.md.
 """
 
 from __future__ import annotations
 
 import argparse
 import sys
+from dataclasses import replace
 from pathlib import Path
+from time import perf_counter
 
-from auxflow.analysis.classify import State, classify
+from auxflow.analysis.classify import Classification, State, classify
 from auxflow.analysis.classify_cycles import classify_components
 from auxflow.analysis.condensation import build_condensation
 from auxflow.analysis.report import render
 from auxflow.analysis.scc import tarjan
-from auxflow.analysis.stable_pass import compute_stable_pass
+from auxflow.analysis.stable_pass import StablePass, compute_stable_pass
 from auxflow.analysis.taint import insert_structural_edges, propagate_taint, seed_facts
 from auxflow.ast import Forest, build_forest, print_tree
 from auxflow.ast.forest import inclusion_edges
-from auxflow.ir import lower, to_dot
+from auxflow.ir import ARG, lower, to_dot
 from auxflow.lexer import tokenize
 from auxflow.parser import Diagnostic, Document, Span, parse
+from auxflow.planner.lower import build_plan
+from auxflow.planner.serialize import to_json
 from auxflow.semantic.diagnostics import check_packages, check_symbols
 from auxflow.semantic.inclusion import check_inclusions
 from auxflow.semantic.resolve import declare, resolve
@@ -37,7 +40,7 @@ COMMANDS = (
     "check",  # phase 6  semantic diagnostics, non-zero exit on error
     "graph",  # phase 7  ARG as Graphviz DOT
     "classify",  # phase 11 convergence classification with diagnosis
-    "plan",  # phase 12 BuildPlan as JSON
+    "plan",  # phase 12 BuildPlan JSON and explained schedule
     "run",  # phase 13 execute the plan with verification
 )
 
@@ -60,7 +63,7 @@ def build_parser() -> argparse.ArgumentParser:
             sub.add_argument("--force", action="store_true")
         if name == "plan":
             sub.add_argument("--explain", action="store_true")
-
+            sub.add_argument("--force", action="store_true")
     return parser
 
 
@@ -189,25 +192,60 @@ def _run_graph(path: str, output: str | None) -> int:
     return 0
 
 
-def _run_classify(path: str, *, verbose: bool, force: bool) -> int:
-    forest, parse_diagnostics = _load_forest(path)
-    _print_parse_diagnostics(parse_diagnostics)
-    sources = {file_id: Path(file_id).read_text(encoding="utf-8") for file_id in forest.documents}
-
+def _analyze(forest: Forest) -> tuple[ARG, list[tuple[int, ...]], Classification, StablePass]:
+    """Run the shared classifier pipeline once for classify and plan."""
     graph = lower(forest, resolve(forest, declare(forest)))
     seeds = seed_facts(graph)
     taint, _ = propagate_taint(graph, seeds)
     graph = insert_structural_edges(graph, taint)
     components = tarjan(graph)
-    condensation = build_condensation(graph, components)
     labels = classify_components(graph, components)
-    stable_pass = compute_stable_pass(graph, condensation, labels)
-    classification = classify(graph, components, labels, stable_pass)
+    stable_pass = compute_stable_pass(graph, build_condensation(graph, components), labels)
+    return graph, components, classify(graph, components, labels, stable_pass), stable_pass
 
+
+def _run_classify(path: str, *, verbose: bool, force: bool) -> int:
+    forest, parse_diagnostics = _load_forest(path)
+    _print_parse_diagnostics(parse_diagnostics)
+    sources = {file_id: Path(file_id).read_text(encoding="utf-8") for file_id in forest.documents}
+    graph, _components, classification, stable_pass = _analyze(forest)
     report = render(graph, sources, classification, stable_pass, verbose=verbose)
     if report is not None:
         print(report, end="")
     return int(classification.state is State.AMPLIFYING and not force)
+
+
+def _run_plan(path: str, *, explain: bool, force: bool) -> int:
+    started = perf_counter()
+    forest, parse_diagnostics = _load_forest(path)
+    graph, components, classification, stable_pass = _analyze(forest)
+    plan = build_plan(
+        forest,
+        str(Path(path).absolute()),
+        graph,
+        components,
+        classification,
+        stable_pass,
+        analysis_ms=(perf_counter() - started) * 1000,
+        force=force,
+    )
+    if parse_diagnostics:
+        plan = replace(plan, diagnostics=[*parse_diagnostics, *plan.diagnostics])
+    if classification.state is State.AMPLIFYING and not force:
+        sources = {
+            file_id: Path(file_id).read_text(encoding="utf-8") for file_id in forest.documents
+        }
+        report = render(graph, sources, classification, stable_pass)
+        assert report is not None
+        print(report, end="")
+        return 1
+    if explain:
+        print(f"auxflow: {plan.classification} plan")
+        for index, step in enumerate(plan.steps, 1):
+            print(f"  {index}. {step.tool} ({step.jobname}): {step.reason}")
+    else:
+        print(to_json(plan))
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -231,6 +269,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_graph(args.file, args.output)
     if args.command == "classify":
         return _run_classify(args.file, verbose=args.verbose, force=args.force)
+    if args.command == "plan":
+        return _run_plan(args.file, explain=args.explain, force=args.force)
 
     raise NotImplementedError(
         f"auxflow {args.command}: bootstrap phase, see docs/IMPLEMENTATION-PLAN.md"

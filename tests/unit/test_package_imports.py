@@ -60,6 +60,6 @@ def test_cli_with_no_command_prints_help_and_exits_nonzero(
 
 
 def test_cli_known_subcommand_not_yet_implemented() -> None:
-    # tokens, ast, symbols, check, graph and classify are implemented; plan (phase 12) is not yet.
+    # run (phase 13) is the only subcommand not yet implemented.
     with pytest.raises(NotImplementedError):
-        cli.main(["plan", "doc.tex"])
+        cli.main(["run", "doc.tex"])
