@@ -390,8 +390,10 @@ issues:
       -> LABEL_NUMBER/LABEL_PAGE value facts with CONTENT_VOLUME->LABEL_PAGE LAYOUT lag 0; \ref -> REF_USE
       with LABEL_NUMBER->REF_USE AUX_ROUNDTRIP lag 1; \pageref -> PAGEREF_USE AUX_ROUNDTRIP lag 1; sectioning
       -> TOC_ENTRY; \caption -> LOF/LOT; \cite -> CITE_USE->BBL TOOL lag 1; \bibliography -> BBL; \value
-      in control -> COUNTER_READ. Opaque nodes mark the file''s facts unknown. Acceptance: lowering the
-      bibliography-cascade example in docs/IR.md yields exactly the facts and edges in that table.'
+      in control -> COUNTER_READ. Opaque nodes mark the file''s facts unknown. Acceptance: a document
+      with a label, reference, section, caption, citation, bibliography and counter read lowers to
+      distinct instance facts and typed edges. The final exists/value split and worked-example
+      edge structure are checked in the next sub-issue.'
     labels:
     - task
     - ir
@@ -400,7 +402,8 @@ issues:
       fact per document with a mandatory span pointing at the first pagination- sensitive construct; CONTENT_VOLUME
       depends only on exists components (LIST_EXTENT via LAYOUT lag 1); LABEL_PAGE.value depends on CONTENT_VOLUME;
       PAGEREF_USE depends on LABEL_PAGE.value. Acceptance: the table-of-contents example in docs/IR.md
-      lowers to an acyclic graph where TOC_ENTRY.exists has no CONTENT_VOLUME back-edge.'
+      lowers to an acyclic graph where TOC_ENTRY.exists has no CONTENT_VOLUME back-edge; the
+      bibliography-cascade example has exactly the facts and edges in its table.'
     labels:
     - task
     - ir
