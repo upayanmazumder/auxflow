@@ -393,7 +393,11 @@ def score(plan: dict[str, Any]) -> dict[str, float]:
         defects += 2  # STRETCH items (23-28) not represented
 
     # --- open decisions that gate the build (docs/PROJECT.md) ---------------
-    decisions = as_list(plan.get("decisions"))
+    raw_decisions = plan.get("decisions")
+    if isinstance(raw_decisions, dict):
+        decisions = as_list(raw_decisions.get("items"))
+    else:
+        decisions = as_list(raw_decisions)
     dec_by_id = {
         text_of(d.get("id")).upper(): d for d in decisions if isinstance(d, dict)
     }

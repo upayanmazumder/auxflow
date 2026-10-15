@@ -959,3 +959,71 @@ deferred:
   - 5. Dead-file elimination.
   - 6. Per-fact stability report.
   - 7. Explained-plan detail, reducing --explain to a plain plan dump.
+decisions:
+  note: 'Open decisions from docs/PROJECT.md that gate the build. The docs are explicit: implementation
+    must not start until D13 and D14 are resolved. Resolve the two blockers before Phase 1; close each
+    phase-tied decision before its phase.'
+  items:
+  - id: D4
+    status: OPEN
+    question: Exact fact-kind set for the ARG.
+    resolve_by_phase: 7
+    blocks_implementation: false
+    mitigation: Provisional set in IR.md; freeze before IR generation (phase 7), justified by corpus documents
+      that need each kind.
+  - id: D5
+    status: OPEN
+    question: Pass-lag semantics for external tools (bibtex edge as lag-1 vs separate scheduling node).
+    resolve_by_phase: 8
+    blocks_implementation: false
+    mitigation: Resolve with a targeted experiment in phase 8; affects predicted counts for bibliography
+      documents.
+  - id: D6
+    status: OPEN
+    question: State-equivalence definition for ground truth (leaning normalised auxiliary state).
+    resolve_by_phase: 14
+    blocks_implementation: false
+    mitigation: PDF byte identity rejected; newlabel vs @writefile records need different normalisation.
+      Must be fixed before any ground truth is generated (phase 14).
+  - id: D7
+    status: OPEN
+    question: 'Benign-cycle bound: finite bound vs always-unbounded deferred to runtime verification.'
+    resolve_by_phase: 11
+    blocks_implementation: false
+    mitigation: Conservative option is the fallback; do not tune a constant against the corpus.
+  - id: D10
+    status: OPEN
+    question: Containerised TeX Live image, pinned by digest, containing latexmk/latexrun/Tectonic.
+    resolve_by_phase: 14
+    blocks_implementation: false
+    mitigation: Select and pin before the harness (phase 14); required baselines depend on it.
+  - id: D11
+    status: OPEN
+    question: Whether opaque constructs invalidate the whole document or only the containing file.
+    resolve_by_phase: 7
+    blocks_implementation: false
+    mitigation: Currently whole-document (conservative); per-file needs an argument that opacity cannot
+      leak across an inclusion boundary.
+  - id: D12
+    status: OPEN
+    question: Whether to split AMPLIFYING into a finite-height failure and a monotonicity failure.
+    resolve_by_phase: 11
+    blocks_implementation: false
+    mitigation: Small honest refinement (SHOULD item 22); the second class is largely undetectable, hence
+      a decision not a foregone conclusion.
+  - id: D13
+    status: OPEN
+    question: Whether the taint criterion is 'quantity of generated content' (narrow) or 'any layout-determining
+      measurement' (wide).
+    resolve_by_phase: 0
+    blocks_implementation: true
+    mitigation: Most consequential decision. Narrow misses mechanisms M3/M4/M6/M7; wide makes every document
+      with one ref one SCC and the analysis vacuous. Currently narrow; must be argued explicitly before
+      implementation starts.
+  - id: D14
+    status: BLOCKED
+    question: Whether the amplifying analysis may be claimed as a contribution at all.
+    resolve_by_phase: 0
+    blocks_implementation: true
+    mitigation: Blocked pending full reads of Krishnan & Van Wyk (SLE 2012) and Soderberg & Hedin (SLE
+      2013). No novelty claim about it may appear until then.
