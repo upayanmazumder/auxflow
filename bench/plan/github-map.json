@@ -332,6 +332,10 @@
     "Deferred scope and cut order": {
       "number": 76,
       "node_id": "I_kwDOUF-IGc8AAAABXaCRbg"
+    },
+    "Open decisions (blocks impl.: D13, D14)": {
+      "number": 77,
+      "node_id": "I_kwDOUF-IGc8AAAABXaIUaw"
     }
   },
   "sub_links": [
@@ -479,7 +483,8 @@
       "[P16] Regenerate all figures from JSONL via report.py": "PVTI_lAHOCIb45c4BnLikzhA98oo",
       "[P16] Rehearse the end-to-end demonstration on a corpus member": "PVTI_lAHOCIb45c4BnLikzhA98pA",
       "Risk register": "PVTI_lAHOCIb45c4BnLikzhA-FLQ",
-      "Deferred scope and cut order": "PVTI_lAHOCIb45c4BnLikzhA-Jao"
+      "Deferred scope and cut order": "PVTI_lAHOCIb45c4BnLikzhA-Jao",
+      "Open decisions (blocks impl.: D13, D14)": "PVTI_lAHOCIb45c4BnLikzhA-Pk0"
     }
   }
 }

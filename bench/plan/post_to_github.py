@@ -197,7 +197,19 @@ def phase_issue_body(issue: dict, plan: dict) -> str:
         f"**Milestone:** {issue['milestone']}\n\n"
         f"**Depends on:** {dep_txt}\n"
     )
-    return issue["body"].strip() + meta
+    gate = ""
+    if issue["phase"] == 1:
+        blockers = [
+            d["id"]
+            for d in (plan.get("decisions") or {}).get("items", [])
+            if d.get("blocks_implementation")
+        ]
+        if blockers:
+            gate = (
+                f"\n\n> **Gate:** docs/PROJECT.md forbids starting implementation until "
+                f"{' and '.join(blockers)} are resolved. See the Open decisions issue.\n"
+            )
+    return issue["body"].strip() + meta + gate
 
 
 def create_issue(
@@ -385,6 +397,28 @@ def post_deferred(plan: dict, store: Store, existing: dict[str, dict]) -> None:
     )
 
 
+def post_decisions(plan: dict, store: Store, existing: dict[str, dict]) -> None:
+    d = plan.get("decisions") or {}
+    items = d.get("items", [])
+    if not items:
+        return
+    run(["gh", "label", "create", "decision", "--repo", NWO, "--color", "0e8a16", "--force"])
+    run(["gh", "label", "create", "blocker", "--repo", NWO, "--color", "b60205", "--force"])
+    lines = [d.get("note", ""), "", "| ID | Status | Blocks impl. | Question | Resolve by |",
+             "|---|---|---|---|---|"]
+    for it in items:
+        blocks = "YES" if it.get("blocks_implementation") else "-"
+        phase = it.get("resolve_by_phase")
+        resolve = "before Phase 1" if phase == 0 else f"phase {phase}"
+        lines.append(
+            f"| {it['id']} | {it['status']} | {blocks} | {it['question']} | {resolve} |"
+        )
+    blockers = [it["id"] for it in items if it.get("blocks_implementation")]
+    labels = ["decision"] + (["blocker"] if blockers else [])
+    title = "Open decisions" + (f" (blocks impl.: {', '.join(blockers)})" if blockers else "")
+    create_issue(title, "\n".join(lines), labels, None, store, existing)
+
+
 def main(argv: list[str]) -> int:
     plan = yaml.safe_load(PLAN_PATH.read_text())
     store = Store(MAP_PATH)
@@ -423,6 +457,7 @@ def main(argv: list[str]) -> int:
 
     post_risk_register(plan, store, existing)
     post_deferred(plan, store, existing)
+    post_decisions(plan, store, existing)
 
     if "--no-project" not in argv:
         ensure_project(plan, store)
