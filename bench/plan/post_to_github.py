@@ -1,0 +1,379 @@
+#!/usr/bin/env python3
+"""Post the AuxFlow implementation plan to GitHub.
+
+Reads bench/plan/implementation-plan.yaml (validated by validate_plan.py) and
+creates, idempotently and resumably:
+
+  * one label per area,
+  * seven checkpoint milestones (CP1-CP6 + Evaluation),
+  * sixteen phase issues with accurate hours/risk/dependencies,
+  * fifty-eight sub-issues, each linked to its phase via the native
+    ``addSubIssue`` GraphQL mutation,
+  * a Project v2 board with Phase / Risk / Estimate fields and every issue
+    added as an item.
+
+State is persisted to bench/plan/github-map.json after every create, so a
+re-run skips work already done. Requires an authenticated ``gh`` with
+``repo`` and ``project`` scopes.
+
+Usage:
+    python3 bench/plan/post_to_github.py           # full run
+    python3 bench/plan/post_to_github.py --no-project   # skip the board
+"""
+
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+import yaml
+
+OWNER = "upayanmazumder"
+REPO = "auxflow"
+NWO = f"{OWNER}/{REPO}"
+
+HERE = Path(__file__).resolve().parent
+PLAN_PATH = HERE / "implementation-plan.yaml"
+MAP_PATH = HERE / "github-map.json"
+
+AREA_COLORS = {
+    "phase": "1f6feb",
+    "infra": "6e7781",
+    "safety": "d73a4a",
+    "lexer": "0e8a16",
+    "parser": "b60205",
+    "ast": "5319e7",
+    "symbol-table": "0052cc",
+    "semantic": "006b75",
+    "ir": "5319e7",
+    "analysis": "fbca04",
+    "planner": "c2e0c6",
+    "cli": "bfdadc",
+    "test": "d4c5f9",
+    "benchmarks": "f9d0c4",
+    "task": "ededed",
+}
+
+
+def run(cmd: list[str], *, stdin: str | None = None, check: bool = True) -> str:
+    proc = subprocess.run(
+        cmd,
+        input=stdin,
+        capture_output=True,
+        text=True,
+    )
+    if check and proc.returncode != 0:
+        raise RuntimeError(f"command failed: {' '.join(cmd)}\n{proc.stderr}")
+    return proc.stdout
+
+
+def gh_api(path: str, method: str = "GET", fields: dict | None = None) -> object:
+    cmd = ["gh", "api", "-X", method, path]
+    for key, value in (fields or {}).items():
+        cmd += ["-f", f"{key}={value}"] if isinstance(value, str) else ["-F", f"{key}={value}"]
+    out = run(cmd)
+    return json.loads(out) if out.strip() else None
+
+
+def graphql(query: str, **variables: str) -> dict:
+    cmd = ["gh", "api", "graphql", "-f", f"query={query}"]
+    for key, value in variables.items():
+        cmd += ["-f", f"{key}={value}"]
+    return json.loads(run(cmd))
+
+
+class Store:
+    def __init__(self, path: Path):
+        self.path = path
+        self.data: dict = {
+            "labels": [],
+            "milestones": {},  # key -> number
+            "issues": {},      # title -> {number, node_id}
+            "sub_links": [],   # list of "parent#child"
+            "project": {},     # number, id, url, fields, items(title->item_id)
+        }
+        if path.is_file():
+            self.data.update(json.loads(path.read_text()))
+
+    def save(self) -> None:
+        self.path.write_text(json.dumps(self.data, indent=2))
+
+
+def repo_node_id() -> str:
+    data = graphql(
+        'query($o:String!,$n:String!){repository(owner:$o,name:$n){id}}',
+        o=OWNER,
+        n=REPO,
+    )
+    return data["data"]["repository"]["id"]
+
+
+def load_existing_issues() -> dict[str, dict]:
+    """title -> {number, node_id} for every issue already in the repo."""
+    result: dict[str, dict] = {}
+    page = 1
+    while True:
+        batch = gh_api(
+            f"repos/{NWO}/issues?state=all&per_page=100&page={page}"
+        )
+        if not batch:
+            break
+        for item in batch:
+            if "pull_request" in item:
+                continue
+            result[item["title"]] = {
+                "number": item["number"],
+                "node_id": item["node_id"],
+            }
+        if len(batch) < 100:
+            break
+        page += 1
+    return result
+
+
+def ensure_labels(plan: dict, store: Store) -> None:
+    names: set[str] = set()
+    for issue in plan["issues"]:
+        names.update(str(x) for x in issue.get("labels", []))
+        for sub in issue.get("sub_issues", []):
+            names.update(str(x) for x in sub.get("labels", []))
+    for name in sorted(names):
+        if name in store.data["labels"]:
+            continue
+        color = AREA_COLORS.get(name, "ededed")
+        run(
+            [
+                "gh", "label", "create", name,
+                "--repo", NWO, "--color", color, "--force",
+            ]
+        )
+        store.data["labels"].append(name)
+        store.save()
+        print(f"label  {name}")
+
+
+def ensure_milestones(plan: dict, store: Store) -> dict[str, int]:
+    existing = {m["title"]: m["number"] for m in gh_api(f"repos/{NWO}/milestones?state=all")}
+    key_to_number: dict[str, int] = {}
+    for ms in plan["milestones"]:
+        title = ms["title"]
+        if title in existing:
+            number = existing[title]
+        else:
+            created = gh_api(
+                f"repos/{NWO}/milestones",
+                method="POST",
+                fields={"title": title, "description": ms.get("description", "")},
+            )
+            number = created["number"]
+            print(f"milestone  {title}")
+        key_to_number[ms["key"]] = number
+        store.data["milestones"][ms["key"]] = number
+    store.save()
+    return key_to_number
+
+
+def phase_issue_body(issue: dict, plan: dict) -> str:
+    deps = issue.get("depends_on", [])
+    names = {i["phase"]: i["title"] for i in plan["issues"]}
+    dep_txt = (
+        ", ".join(f"phase {d} ({names.get(d, '').split(' — ')[-1]})" for d in deps)
+        if deps
+        else "none"
+    )
+    meta = (
+        f"\n\n---\n"
+        f"**Phase:** {issue['phase']}  |  "
+        f"**Estimate:** {issue['hours']} h  |  "
+        f"**Risk:** {issue['risk']}  |  "
+        f"**Milestone:** {issue['milestone']}\n\n"
+        f"**Depends on:** {dep_txt}\n"
+    )
+    return issue["body"].strip() + meta
+
+
+def create_issue(
+    title: str,
+    body: str,
+    labels: list[str],
+    milestone: int | None,
+    store: Store,
+    existing: dict[str, dict],
+) -> dict:
+    if title in store.data["issues"]:
+        return store.data["issues"][title]
+    if title in existing:
+        store.data["issues"][title] = existing[title]
+        store.save()
+        return existing[title]
+    payload: dict = {"title": title, "body": body, "labels": labels}
+    if milestone is not None:
+        payload["milestone"] = milestone
+    cmd = ["gh", "api", "-X", "POST", f"repos/{NWO}/issues", "--input", "-"]
+    out = run(cmd, stdin=json.dumps(payload))
+    created = json.loads(out)
+    rec = {"number": created["number"], "node_id": created["node_id"]}
+    store.data["issues"][title] = rec
+    store.save()
+    print(f"issue  #{rec['number']}  {title}")
+    return rec
+
+
+def link_sub_issue(parent: dict, child: dict, store: Store) -> None:
+    key = f"{parent['number']}#{child['number']}"
+    if key in store.data["sub_links"]:
+        return
+    graphql(
+        "mutation($p:ID!,$c:ID!){addSubIssue(input:{issueId:$p,subIssueId:$c}){issue{number}}}",
+        p=parent["node_id"],
+        c=child["node_id"],
+    )
+    store.data["sub_links"].append(key)
+    store.save()
+    print(f"  sub-issue #{child['number']} -> #{parent['number']}")
+
+
+def ensure_project(plan: dict, store: Store) -> None:
+    proj = store.data["project"]
+    if not proj.get("number"):
+        out = run(
+            [
+                "gh", "project", "create",
+                "--owner", OWNER,
+                "--title", plan["project"]["name"],
+                "--format", "json",
+            ]
+        )
+        created = json.loads(out)
+        proj.update(
+            {
+                "number": created["number"],
+                "id": created["id"],
+                "url": created["url"],
+                "fields": {},
+                "items": {},
+            }
+        )
+        store.save()
+        print(f"project  #{proj['number']}  {proj['url']}")
+
+    # custom fields
+    want_fields = {"Phase": "TEXT", "Risk": "TEXT", "Estimate": "NUMBER"}
+    existing_fields = json.loads(
+        run(
+            [
+                "gh", "project", "field-list", str(proj["number"]),
+                "--owner", OWNER, "--format", "json",
+            ]
+        )
+    )["fields"]
+    by_name = {f["name"]: f for f in existing_fields}
+    for name, dtype in want_fields.items():
+        if name in by_name:
+            proj["fields"][name] = by_name[name]["id"]
+            continue
+        out = run(
+            [
+                "gh", "project", "field-create", str(proj["number"]),
+                "--owner", OWNER, "--name", name, "--data-type", dtype,
+                "--format", "json",
+            ]
+        )
+        proj["fields"][name] = json.loads(out)["id"]
+        store.save()
+        print(f"project field  {name}")
+
+    # add every issue as an item, set fields for phase issues
+    phase_titles = {i["title"]: i for i in plan["issues"]}
+    for title, rec in list(store.data["issues"].items()):
+        url = f"https://github.com/{NWO}/issues/{rec['number']}"
+        item_id = proj["items"].get(title)
+        if not item_id:
+            out = run(
+                [
+                    "gh", "project", "item-add", str(proj["number"]),
+                    "--owner", OWNER, "--url", url, "--format", "json",
+                ]
+            )
+            item_id = json.loads(out)["id"]
+            proj["items"][title] = item_id
+            store.save()
+        if title in phase_titles:
+            issue = phase_titles[title]
+            _set_text(proj, item_id, "Phase", str(issue["phase"]))
+            _set_text(proj, item_id, "Risk", issue["risk"])
+            _set_number(proj, item_id, "Estimate", issue["hours"])
+    print(f"project items: {len(proj['items'])}")
+    store.save()
+
+
+def _set_text(proj: dict, item_id: str, field: str, value: str) -> None:
+    run(
+        [
+            "gh", "project", "item-edit",
+            "--project-id", proj["id"], "--id", item_id,
+            "--field-id", proj["fields"][field], "--text", value,
+        ]
+    )
+
+
+def _set_number(proj: dict, item_id: str, field: str, value: int) -> None:
+    run(
+        [
+            "gh", "project", "item-edit",
+            "--project-id", proj["id"], "--id", item_id,
+            "--field-id", proj["fields"][field], "--number", str(value),
+        ]
+    )
+
+
+def main(argv: list[str]) -> int:
+    plan = yaml.safe_load(PLAN_PATH.read_text())
+    store = Store(MAP_PATH)
+    existing = load_existing_issues()
+
+    ensure_labels(plan, store)
+    key_to_ms = ensure_milestones(plan, store)
+
+    # phase issues
+    phase_recs: dict[int, dict] = {}
+    for issue in plan["issues"]:
+        rec = create_issue(
+            issue["title"],
+            phase_issue_body(issue, plan),
+            [str(x) for x in issue.get("labels", [])],
+            key_to_ms.get(issue["milestone"]),
+            store,
+            existing,
+        )
+        phase_recs[issue["phase"]] = rec
+
+    # sub-issues + native links
+    for issue in plan["issues"]:
+        parent = phase_recs[issue["phase"]]
+        for sub in issue.get("sub_issues", []):
+            title = f"[P{issue['phase']}] {sub['title']}"
+            child = create_issue(
+                title,
+                sub.get("body", "").strip() + f"\n\n---\nSub-issue of: {issue['title']}",
+                [str(x) for x in sub.get("labels", [])],
+                key_to_ms.get(issue["milestone"]),
+                store,
+                existing,
+            )
+            link_sub_issue(parent, child, store)
+
+    if "--no-project" not in argv:
+        ensure_project(plan, store)
+
+    print("\nDone.")
+    print(f"  milestones: {len(store.data['milestones'])}")
+    print(f"  issues:     {len(store.data['issues'])}")
+    print(f"  sub-links:  {len(store.data['sub_links'])}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))

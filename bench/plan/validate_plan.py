@@ -99,6 +99,33 @@ TOTAL_HOURS = sum(hours for _, hours, _, _ in PHASES.values())  # 182
 CHECKPOINTS: tuple[str, ...] = ("CP1", "CP2", "CP3", "CP4", "CP5", "CP6")
 GATES: tuple[str, ...] = ("Gate 1", "Gate 2")
 
+# Exact CLI subcommand each phase must deliver (docs/IMPLEMENTATION-PLAN.md
+# deliverables, docs/SCOPE.md MUST-BUILD). A faithful issue names its command.
+CLI_SUBCOMMANDS: dict[int, str] = {
+    2: "auxflow tokens",
+    4: "auxflow ast",
+    5: "auxflow symbols",
+    6: "auxflow check",
+    7: "auxflow graph",
+    11: "auxflow classify",
+    12: "auxflow plan",
+    13: "auxflow run",
+}
+
+# The eight rows of the docs/IMPLEMENTATION-PLAN.md risk register. A faithful
+# rollout carries each one so its mitigation is tracked, not lost. Each tuple is
+# a set of keywords; one hit in the plan's risk_register counts the row covered.
+RISK_REGISTER: tuple[tuple[str, ...], ...] = (
+    ("parser scope creep", "scope creep"),
+    ("tarjan", "stack overflow", "recursion"),
+    ("arg collapsing", "fixed lattice", "instance-level"),
+    ("benign-cycle", "benign cycle", "d7"),
+    ("ground-truth criterion", "ground truth", "pdf byte", "d6"),
+    ("evaluation squeezed", "evaluation", "two-week margin", "week 8"),
+    ("infrastructure", "displacing"),
+    ("assumption a2", "a2", "prediction miss"),
+)
+
 
 class HardError(Exception):
     """Unrecoverable problem: the artifact cannot be scored at all."""
@@ -186,6 +213,8 @@ def score(plan: dict[str, Any]) -> dict[str, float]:
     dep_checked = 0
     dep_correct = 0
     subissue_count = 0
+    cli_covered = 0
+    acceptance_covered = 0
 
     for pid, (name_frag, hours, deps, risk) in PHASES.items():
         issue = by_phase.get(pid)
@@ -233,6 +262,26 @@ def score(plan: dict[str, Any]) -> dict[str, float]:
                 defects += 1
             if not [lbl for lbl in as_list(sub.get("labels")) if text_of(lbl)]:
                 defects += 0.5
+
+        # Phase text blob: body plus every sub-issue title and body.
+        phase_blob = "\n".join(
+            [text_of(issue.get("body"))]
+            + [text_of(s.get("title")) + " " + text_of(s.get("body")) for s in good_subs]
+        ).lower()
+
+        # Executable issues state acceptance criteria explicitly.
+        if "accept" in text_of(issue.get("body")).lower():
+            acceptance_covered += 1
+        else:
+            defects += 1
+
+        # The phase must name the exact CLI subcommand it ships, where one exists.
+        wanted_cli = CLI_SUBCOMMANDS.get(pid)
+        if wanted_cli is not None:
+            if wanted_cli in phase_blob:
+                cli_covered += 1
+            else:
+                defects += 1
 
     # --- milestones ---------------------------------------------------------
     good_milestones = [
@@ -289,6 +338,27 @@ def score(plan: dict[str, Any]) -> dict[str, float]:
         if plan_hours != TOTAL_HOURS:
             defects += 3
 
+    # --- risk register: the eight documented risks must be carried -----------
+    register = as_list(plan.get("risk_register"))
+    register_blob = "\n".join(
+        " ".join(
+            text_of(entry.get(k))
+            for k in ("risk", "likelihood", "impact", "mitigation")
+        )
+        for entry in register
+        if isinstance(entry, dict)
+    ).lower()
+    risk_covered = 0
+    for keywords in RISK_REGISTER:
+        if any(kw in register_blob for kw in keywords):
+            risk_covered += 1
+        else:
+            defects += 1
+    # Every carried entry needs a mitigation, else it is a label not a plan.
+    for entry in register:
+        if isinstance(entry, dict) and not text_of(entry.get("mitigation")):
+            defects += 0.5
+
     # --- dependency graph integrity ----------------------------------------
     adj: dict[int, set[int]] = {}
     for pid, issue in by_phase.items():
@@ -330,6 +400,9 @@ def score(plan: dict[str, Any]) -> dict[str, float]:
 
     phase_coverage_pct = 100.0 * covered_phases / len(PHASES)
     dependency_accuracy_pct = 100.0 * dep_correct / dep_checked if dep_checked else 0.0
+    cli_coverage_pct = 100.0 * cli_covered / len(CLI_SUBCOMMANDS)
+    acceptance_coverage_pct = 100.0 * acceptance_covered / len(PHASES)
+    risk_coverage_pct = 100.0 * risk_covered / len(RISK_REGISTER)
     quality_score = max(0.0, 100.0 - defects)
 
     return {
@@ -338,6 +411,9 @@ def score(plan: dict[str, Any]) -> dict[str, float]:
         "dependency_accuracy_pct": round(dependency_accuracy_pct, 2),
         "subissue_count": float(subissue_count),
         "scope_coverage_pct": round(scope_coverage_pct, 2),
+        "cli_coverage_pct": round(cli_coverage_pct, 2),
+        "acceptance_coverage_pct": round(acceptance_coverage_pct, 2),
+        "risk_coverage_pct": round(risk_coverage_pct, 2),
         "quality_score": round(quality_score, 3),
     }
 
@@ -358,6 +434,9 @@ def main(argv: list[str]) -> int:
         "dependency_accuracy_pct",
         "subissue_count",
         "scope_coverage_pct",
+        "cli_coverage_pct",
+        "acceptance_coverage_pct",
+        "risk_coverage_pct",
         "quality_score",
     ):
         value = metrics[name]

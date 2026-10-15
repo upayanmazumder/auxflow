@@ -1,0 +1,475 @@
+{
+  "labels": [
+    "analysis",
+    "ast",
+    "benchmarks",
+    "cli",
+    "documentation",
+    "evaluation",
+    "executor",
+    "infra",
+    "ir",
+    "lexer",
+    "parser",
+    "phase",
+    "planner",
+    "safety",
+    "semantic",
+    "symbol-table",
+    "task",
+    "test"
+  ],
+  "milestones": {
+    "cp1": 1,
+    "cp2": 2,
+    "cp3": 3,
+    "cp4": 4,
+    "cp5": 5,
+    "cp6": 6,
+    "eval": 7
+  },
+  "issues": {
+    "Phase 1 \u2014 Project and tooling setup": {
+      "number": 1,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxSiQ"
+    },
+    "Phase 2 \u2014 Lexer": {
+      "number": 2,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxTtA"
+    },
+    "Phase 3 \u2014 Parser": {
+      "number": 3,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxVNw"
+    },
+    "Phase 4 \u2014 AST and inclusion resolution": {
+      "number": 4,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxWag"
+    },
+    "Phase 5 \u2014 Symbol tables": {
+      "number": 5,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxXxg"
+    },
+    "Phase 6 \u2014 Semantic analysis": {
+      "number": 6,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxZGA"
+    },
+    "Phase 7 \u2014 IR generation": {
+      "number": 7,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxaZQ"
+    },
+    "Phase 8 \u2014 SCC analysis": {
+      "number": 8,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxbwA"
+    },
+    "Phase 9 \u2014 Taint analysis": {
+      "number": 9,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxc-A"
+    },
+    "Phase 10 \u2014 Stable-pass fixpoint": {
+      "number": 10,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxeIQ"
+    },
+    "Phase 11 \u2014 Classification and diagnostics": {
+      "number": 11,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxfXA"
+    },
+    "Phase 12 \u2014 Build planner": {
+      "number": 12,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxgZA"
+    },
+    "Phase 13 \u2014 Runtime verification": {
+      "number": 13,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxhlQ"
+    },
+    "Phase 14 \u2014 Benchmark harness": {
+      "number": 14,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxjEQ"
+    },
+    "Phase 15 \u2014 Evaluation": {
+      "number": 15,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxkPA"
+    },
+    "Phase 16 \u2014 Documentation and report": {
+      "number": 16,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxlPg"
+    },
+    "[P1] Scaffold the auxflow package and CLI entry point": {
+      "number": 17,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxmfQ"
+    },
+    "[P1] Configure CI: lint, type-check, tests": {
+      "number": 18,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxojA"
+    },
+    "[P1] Write the planner safety assertion property test FIRST": {
+      "number": 19,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxrAg"
+    },
+    "[P2] Category-code table and single-pass table-driven scan": {
+      "number": 20,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxs7Q"
+    },
+    "[P2] Comment and verbatim handling": {
+      "number": 21,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxvDQ"
+    },
+    "[P2] auxflow tokens CLI and round-trip property test": {
+      "number": 22,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxxAA"
+    },
+    "[P3] Recursive-descent core with one-token lookahead": {
+      "number": 23,
+      "node_id": "I_kwDOUF-IGc8AAAABXZxzmg"
+    },
+    "[P3] Argument-signature table and optional-argument handling": {
+      "number": 24,
+      "node_id": "I_kwDOUF-IGc8AAAABXZx1oQ"
+    },
+    "[P3] Error recovery on malformed input": {
+      "number": 25,
+      "node_id": "I_kwDOUF-IGc8AAAABXZx3gQ"
+    },
+    "[P4] Define AST node classes with mandatory Span in ast/nodes.py": {
+      "number": 26,
+      "node_id": "I_kwDOUF-IGc8AAAABXZx6eQ"
+    },
+    "[P4] Implement visitor traversal and pretty printer in ast/visitor.py and ast/printer.py": {
+      "number": 27,
+      "node_id": "I_kwDOUF-IGc8AAAABXZx9SQ"
+    },
+    "[P4] Build multi-file forest and inclusion graph with cycle detection in ast/inclusion wiring": {
+      "number": 28,
+      "node_id": "I_kwDOUF-IGc8AAAABXZyACg"
+    },
+    "[P4] Wire the `auxflow ast` CLI subcommand": {
+      "number": 29,
+      "node_id": "I_kwDOUF-IGc8AAAABXZyCMg"
+    },
+    "[P5] Define the six symbol table data structures in semantic/tables.py": {
+      "number": 30,
+      "node_id": "I_kwDOUF-IGc8AAAABXZyExg"
+    },
+    "[P5] Implement the declare phase traversal in semantic/resolve.py": {
+      "number": 31,
+      "node_id": "I_kwDOUF-IGc8AAAABXZyG9g"
+    },
+    "[P5] Implement the resolve phase binding references across files": {
+      "number": 32,
+      "node_id": "I_kwDOUF-IGc8AAAABXZyJXQ"
+    },
+    "[P5] Wire the `auxflow symbols` CLI subcommand": {
+      "number": 33,
+      "node_id": "I_kwDOUF-IGc8AAAABXZyL7Q"
+    },
+    "[P6] Implement reference, citation, and duplicate-label checks in semantic/diagnostics.py": {
+      "number": 34,
+      "node_id": "I_kwDOUF-IGc8AAAABXZyOFw"
+    },
+    "[P6] Implement inclusion checks: unresolvable inclusion, missing graphics, inclusion cycle": {
+      "number": 35,
+      "node_id": "I_kwDOUF-IGc8AAAABXZyQIw"
+    },
+    "[P6] Implement unmodelled-package warning via PackageTable": {
+      "number": 36,
+      "node_id": "I_kwDOUF-IGc8AAAABXZyScg"
+    },
+    "[P6] Wire `auxflow check` with zero engine executions and non-zero exit on error": {
+      "number": 37,
+      "node_id": "I_kwDOUF-IGc8AAAABXZyUlQ"
+    },
+    "[P7] Define Fact, FactKind, DepType, DepEdge data model": {
+      "number": 38,
+      "node_id": "I_kwDOUF-IGc8AAAABXZyXOg"
+    },
+    "[P7] Syntax-directed lowering rules for the auxiliary reference graph": {
+      "number": 39,
+      "node_id": "I_kwDOUF-IGc8AAAABXZyZxw"
+    },
+    "[P7] Implement exists/value split and single CONTENT_VOLUME synthetic fact": {
+      "number": 40,
+      "node_id": "I_kwDOUF-IGc8AAAABXZycIA"
+    },
+    "[P7] ARG serialisation to JSON and Graphviz DOT with `auxflow graph`": {
+      "number": 41,
+      "node_id": "I_kwDOUF-IGc8AAAABXZye_g"
+    },
+    "[P8] Iterative (non-recursive) Tarjan SCC over the ARG": {
+      "number": 42,
+      "node_id": "I_kwDOUF-IGc8AAAABXZyhlw"
+    },
+    "[P8] Build the condensation graph in topological order": {
+      "number": 43,
+      "node_id": "I_kwDOUF-IGc8AAAABXZykVw"
+    },
+    "[P8] Cycle classification into AMPLIFYING / UNKNOWN_CYCLE / BENIGN": {
+      "number": 44,
+      "node_id": "I_kwDOUF-IGc8AAAABXZymuA"
+    },
+    "[P9] Seed set computation from control constructs": {
+      "number": 45,
+      "node_id": "I_kwDOUF-IGc8AAAABXZypJg"
+    },
+    "[P9] Forward worklist propagation over value-carrying edges": {
+      "number": 46,
+      "node_id": "I_kwDOUF-IGc8AAAABXZyrDw"
+    },
+    "[P9] STRUCTURAL edge insertion to CONTENT_VOLUME with reason strings": {
+      "number": 47,
+      "node_id": "I_kwDOUF-IGc8AAAABXZysxg"
+    },
+    "[P10] Singleton-component stable-pass recurrence": {
+      "number": 48,
+      "node_id": "I_kwDOUF-IGc8AAAABXZyusw"
+    },
+    "[P10] Condensation traversal with BENIGN-cycle heuristic and unbounded propagation": {
+      "number": 49,
+      "node_id": "I_kwDOUF-IGc8AAAABXZywrg"
+    },
+    "[P10] Derive P and predicted run count": {
+      "number": 50,
+      "node_id": "I_kwDOUF-IGc8AAAABXZyy2g"
+    },
+    "[P11] Implement the four-state classifier decision logic": {
+      "number": 51,
+      "node_id": "I_kwDOUF-IGc8AAAABXZy1QQ"
+    },
+    "[P11] Render the four NON-CONVERGENCE.md diagnostic formats": {
+      "number": 52,
+      "node_id": "I_kwDOUF-IGc8AAAABXZy3dA"
+    },
+    "[P11] Wire the `auxflow classify` CLI subcommand": {
+      "number": 53,
+      "node_id": "I_kwDOUF-IGc8AAAABXZy5ow"
+    },
+    "[P11] Add the b08/b05 classifier guard tests": {
+      "number": 54,
+      "node_id": "I_kwDOUF-IGc8AAAABXZy7wA"
+    },
+    "[P12] Write the safety invariant assertion and its property test FIRST": {
+      "number": 55,
+      "node_id": "I_kwDOUF-IGc8AAAABXZy96Q"
+    },
+    "[P12] Implement BuildPlan/Step dataclasses and JSON serialisation": {
+      "number": 56,
+      "node_id": "I_kwDOUF-IGc8AAAABXZzATw"
+    },
+    "[P12] Implement the four ordered lowering/optimisation passes": {
+      "number": 57,
+      "node_id": "I_kwDOUF-IGc8AAAABXZzCrg"
+    },
+    "[P12] Wire `auxflow plan --explain` CLI output": {
+      "number": 58,
+      "node_id": "I_kwDOUF-IGc8AAAABXZzFEg"
+    },
+    "[P13] Implement auxiliary-state normalisation into canonical record sets": {
+      "number": 59,
+      "node_id": "I_kwDOUF-IGc8AAAABXZzHyA"
+    },
+    "[P13] Implement the executor run loop with stop conditions": {
+      "number": 60,
+      "node_id": "I_kwDOUF-IGc8AAAABXZzJmw"
+    },
+    "[P13] Implement the bounded extension policy and prediction-miss logging": {
+      "number": 61,
+      "node_id": "I_kwDOUF-IGc8AAAABXZzMFQ"
+    },
+    "[P13] Wire the `auxflow run` CLI subcommand": {
+      "number": 62,
+      "node_id": "I_kwDOUF-IGc8AAAABXZzO7g"
+    },
+    "[P14] Author the fifteen-member corpus with hand-written expected.json oracle files": {
+      "number": 63,
+      "node_id": "I_kwDOUF-IGc8AAAABXZzROA"
+    },
+    "[P14] Implement baselines A, B, C, C', C'' as readable shell scripts": {
+      "number": 64,
+      "node_id": "I_kwDOUF-IGc8AAAABXZzS_Q"
+    },
+    "[P14] Implement harness run.py and normalise.py emitting JSONL per repetition": {
+      "number": 65,
+      "node_id": "I_kwDOUF-IGc8AAAABXZzVmQ"
+    },
+    "[P14] Implement ground-truth computation groundtruth.py (normalised-state equivalence)": {
+      "number": 66,
+      "node_id": "I_kwDOUF-IGc8AAAABXZzYCw"
+    },
+    "[P14] Record reference-implementation verdicts for the oracle cross-check": {
+      "number": 67,
+      "node_id": "I_kwDOUF-IGc8AAAABXZzang"
+    },
+    "[P15] Execute the full measurement run under the pinned, isolated protocol": {
+      "number": 68,
+      "node_id": "I_kwDOUF-IGc8AAAABXZzcOA"
+    },
+    "[P15] Implement report.py to regenerate the mechanism-coverage table from JSONL": {
+      "number": 69,
+      "node_id": "I_kwDOUF-IGc8AAAABXZzePQ"
+    },
+    "[P15] Generate the oracle-comparison table from JSONL": {
+      "number": 70,
+      "node_id": "I_kwDOUF-IGc8AAAABXZzf-Q"
+    },
+    "[P15] Verify the two headline gates and the declared-false-negative gate hold": {
+      "number": 71,
+      "node_id": "I_kwDOUF-IGc8AAAABXZziPA"
+    },
+    "[P16] Write the evaluation report grounded in the published results": {
+      "number": 72,
+      "node_id": "I_kwDOUF-IGc8AAAABXZzj9g"
+    },
+    "[P16] Regenerate all figures from JSONL via report.py": {
+      "number": 73,
+      "node_id": "I_kwDOUF-IGc8AAAABXZzmRQ"
+    },
+    "[P16] Rehearse the end-to-end demonstration on a corpus member": {
+      "number": 74,
+      "node_id": "I_kwDOUF-IGc8AAAABXZzoVA"
+    }
+  },
+  "sub_links": [
+    "1#17",
+    "1#18",
+    "1#19",
+    "2#20",
+    "2#21",
+    "2#22",
+    "3#23",
+    "3#24",
+    "3#25",
+    "4#26",
+    "4#27",
+    "4#28",
+    "4#29",
+    "5#30",
+    "5#31",
+    "5#32",
+    "5#33",
+    "6#34",
+    "6#35",
+    "6#36",
+    "6#37",
+    "7#38",
+    "7#39",
+    "7#40",
+    "7#41",
+    "8#42",
+    "8#43",
+    "8#44",
+    "9#45",
+    "9#46",
+    "9#47",
+    "10#48",
+    "10#49",
+    "10#50",
+    "11#51",
+    "11#52",
+    "11#53",
+    "11#54",
+    "12#55",
+    "12#56",
+    "12#57",
+    "12#58",
+    "13#59",
+    "13#60",
+    "13#61",
+    "13#62",
+    "14#63",
+    "14#64",
+    "14#65",
+    "14#66",
+    "14#67",
+    "15#68",
+    "15#69",
+    "15#70",
+    "15#71",
+    "16#72",
+    "16#73",
+    "16#74"
+  ],
+  "project": {
+    "number": 8,
+    "id": "PVT_kwHOCIb45c4BnLik",
+    "url": "https://github.com/users/upayanmazumder/projects/8",
+    "fields": {
+      "Phase": "PVTF_lAHOCIb45c4BnLikzhlxVKs",
+      "Risk": "PVTF_lAHOCIb45c4BnLikzhlxVL8",
+      "Estimate": "PVTF_lAHOCIb45c4BnLikzhlxVNo"
+    },
+    "items": {
+      "Phase 1 \u2014 Project and tooling setup": "PVTI_lAHOCIb45c4BnLikzhA97CI",
+      "Phase 2 \u2014 Lexer": "PVTI_lAHOCIb45c4BnLikzhA97Hw",
+      "Phase 3 \u2014 Parser": "PVTI_lAHOCIb45c4BnLikzhA97Mc",
+      "Phase 4 \u2014 AST and inclusion resolution": "PVTI_lAHOCIb45c4BnLikzhA97TE",
+      "Phase 5 \u2014 Symbol tables": "PVTI_lAHOCIb45c4BnLikzhA97Y8",
+      "Phase 6 \u2014 Semantic analysis": "PVTI_lAHOCIb45c4BnLikzhA97eU",
+      "Phase 7 \u2014 IR generation": "PVTI_lAHOCIb45c4BnLikzhA97jo",
+      "Phase 8 \u2014 SCC analysis": "PVTI_lAHOCIb45c4BnLikzhA97p8",
+      "Phase 9 \u2014 Taint analysis": "PVTI_lAHOCIb45c4BnLikzhA97wg",
+      "Phase 10 \u2014 Stable-pass fixpoint": "PVTI_lAHOCIb45c4BnLikzhA972o",
+      "Phase 11 \u2014 Classification and diagnostics": "PVTI_lAHOCIb45c4BnLikzhA979Y",
+      "Phase 12 \u2014 Build planner": "PVTI_lAHOCIb45c4BnLikzhA98E0",
+      "Phase 13 \u2014 Runtime verification": "PVTI_lAHOCIb45c4BnLikzhA98Mg",
+      "Phase 14 \u2014 Benchmark harness": "PVTI_lAHOCIb45c4BnLikzhA98Uo",
+      "Phase 15 \u2014 Evaluation": "PVTI_lAHOCIb45c4BnLikzhA98eI",
+      "Phase 16 \u2014 Documentation and report": "PVTI_lAHOCIb45c4BnLikzhA98lc",
+      "[P1] Scaffold the auxflow package and CLI entry point": "PVTI_lAHOCIb45c4BnLikzhA97E0",
+      "[P1] Configure CI: lint, type-check, tests": "PVTI_lAHOCIb45c4BnLikzhA97FI",
+      "[P1] Write the planner safety assertion property test FIRST": "PVTI_lAHOCIb45c4BnLikzhA97Fs",
+      "[P2] Category-code table and single-pass table-driven scan": "PVTI_lAHOCIb45c4BnLikzhA97Jg",
+      "[P2] Comment and verbatim handling": "PVTI_lAHOCIb45c4BnLikzhA97KM",
+      "[P2] auxflow tokens CLI and round-trip property test": "PVTI_lAHOCIb45c4BnLikzhA97KY",
+      "[P3] Recursive-descent core with one-token lookahead": "PVTI_lAHOCIb45c4BnLikzhA97NY",
+      "[P3] Argument-signature table and optional-argument handling": "PVTI_lAHOCIb45c4BnLikzhA97OI",
+      "[P3] Error recovery on malformed input": "PVTI_lAHOCIb45c4BnLikzhA97Oo",
+      "[P4] Define AST node classes with mandatory Span in ast/nodes.py": "PVTI_lAHOCIb45c4BnLikzhA97UU",
+      "[P4] Implement visitor traversal and pretty printer in ast/visitor.py and ast/printer.py": "PVTI_lAHOCIb45c4BnLikzhA97Uw",
+      "[P4] Build multi-file forest and inclusion graph with cycle detection in ast/inclusion wiring": "PVTI_lAHOCIb45c4BnLikzhA97VI",
+      "[P4] Wire the `auxflow ast` CLI subcommand": "PVTI_lAHOCIb45c4BnLikzhA97V0",
+      "[P5] Define the six symbol table data structures in semantic/tables.py": "PVTI_lAHOCIb45c4BnLikzhA97ak",
+      "[P5] Implement the declare phase traversal in semantic/resolve.py": "PVTI_lAHOCIb45c4BnLikzhA97bQ",
+      "[P5] Implement the resolve phase binding references across files": "PVTI_lAHOCIb45c4BnLikzhA97bs",
+      "[P5] Wire the `auxflow symbols` CLI subcommand": "PVTI_lAHOCIb45c4BnLikzhA97b0",
+      "[P6] Implement reference, citation, and duplicate-label checks in semantic/diagnostics.py": "PVTI_lAHOCIb45c4BnLikzhA97gU",
+      "[P6] Implement inclusion checks: unresolvable inclusion, missing graphics, inclusion cycle": "PVTI_lAHOCIb45c4BnLikzhA97gw",
+      "[P6] Implement unmodelled-package warning via PackageTable": "PVTI_lAHOCIb45c4BnLikzhA97hI",
+      "[P6] Wire `auxflow check` with zero engine executions and non-zero exit on error": "PVTI_lAHOCIb45c4BnLikzhA97hc",
+      "[P7] Define Fact, FactKind, DepType, DepEdge data model": "PVTI_lAHOCIb45c4BnLikzhA97l0",
+      "[P7] Syntax-directed lowering rules for the auxiliary reference graph": "PVTI_lAHOCIb45c4BnLikzhA97mA",
+      "[P7] Implement exists/value split and single CONTENT_VOLUME synthetic fact": "PVTI_lAHOCIb45c4BnLikzhA97mU",
+      "[P7] ARG serialisation to JSON and Graphviz DOT with `auxflow graph`": "PVTI_lAHOCIb45c4BnLikzhA97mo",
+      "[P8] Iterative (non-recursive) Tarjan SCC over the ARG": "PVTI_lAHOCIb45c4BnLikzhA97rg",
+      "[P8] Build the condensation graph in topological order": "PVTI_lAHOCIb45c4BnLikzhA97r8",
+      "[P8] Cycle classification into AMPLIFYING / UNKNOWN_CYCLE / BENIGN": "PVTI_lAHOCIb45c4BnLikzhA97sg",
+      "[P9] Seed set computation from control constructs": "PVTI_lAHOCIb45c4BnLikzhA97yU",
+      "[P9] Forward worklist propagation over value-carrying edges": "PVTI_lAHOCIb45c4BnLikzhA97yg",
+      "[P9] STRUCTURAL edge insertion to CONTENT_VOLUME with reason strings": "PVTI_lAHOCIb45c4BnLikzhA97y4",
+      "[P10] Singleton-component stable-pass recurrence": "PVTI_lAHOCIb45c4BnLikzhA975o",
+      "[P10] Condensation traversal with BENIGN-cycle heuristic and unbounded propagation": "PVTI_lAHOCIb45c4BnLikzhA9758",
+      "[P10] Derive P and predicted run count": "PVTI_lAHOCIb45c4BnLikzhA976U",
+      "[P11] Implement the four-state classifier decision logic": "PVTI_lAHOCIb45c4BnLikzhA97-8",
+      "[P11] Render the four NON-CONVERGENCE.md diagnostic formats": "PVTI_lAHOCIb45c4BnLikzhA97_M",
+      "[P11] Wire the `auxflow classify` CLI subcommand": "PVTI_lAHOCIb45c4BnLikzhA97_0",
+      "[P11] Add the b08/b05 classifier guard tests": "PVTI_lAHOCIb45c4BnLikzhA98AE",
+      "[P12] Write the safety invariant assertion and its property test FIRST": "PVTI_lAHOCIb45c4BnLikzhA98HQ",
+      "[P12] Implement BuildPlan/Step dataclasses and JSON serialisation": "PVTI_lAHOCIb45c4BnLikzhA98Hs",
+      "[P12] Implement the four ordered lowering/optimisation passes": "PVTI_lAHOCIb45c4BnLikzhA98IU",
+      "[P12] Wire `auxflow plan --explain` CLI output": "PVTI_lAHOCIb45c4BnLikzhA98Is",
+      "[P13] Implement auxiliary-state normalisation into canonical record sets": "PVTI_lAHOCIb45c4BnLikzhA98Ns",
+      "[P13] Implement the executor run loop with stop conditions": "PVTI_lAHOCIb45c4BnLikzhA98OM",
+      "[P13] Implement the bounded extension policy and prediction-miss logging": "PVTI_lAHOCIb45c4BnLikzhA98Os",
+      "[P13] Wire the `auxflow run` CLI subcommand": "PVTI_lAHOCIb45c4BnLikzhA98PE",
+      "[P14] Author the fifteen-member corpus with hand-written expected.json oracle files": "PVTI_lAHOCIb45c4BnLikzhA98XI",
+      "[P14] Implement baselines A, B, C, C', C'' as readable shell scripts": "PVTI_lAHOCIb45c4BnLikzhA98Xg",
+      "[P14] Implement harness run.py and normalise.py emitting JSONL per repetition": "PVTI_lAHOCIb45c4BnLikzhA98YM",
+      "[P14] Implement ground-truth computation groundtruth.py (normalised-state equivalence)": "PVTI_lAHOCIb45c4BnLikzhA98Yw",
+      "[P14] Record reference-implementation verdicts for the oracle cross-check": "PVTI_lAHOCIb45c4BnLikzhA98ZQ",
+      "[P15] Execute the full measurement run under the pinned, isolated protocol": "PVTI_lAHOCIb45c4BnLikzhA98f4",
+      "[P15] Implement report.py to regenerate the mechanism-coverage table from JSONL": "PVTI_lAHOCIb45c4BnLikzhA98gg",
+      "[P15] Generate the oracle-comparison table from JSONL": "PVTI_lAHOCIb45c4BnLikzhA98hA",
+      "[P15] Verify the two headline gates and the declared-false-negative gate hold": "PVTI_lAHOCIb45c4BnLikzhA98hg",
+      "[P16] Write the evaluation report grounded in the published results": "PVTI_lAHOCIb45c4BnLikzhA98ok",
+      "[P16] Regenerate all figures from JSONL via report.py": "PVTI_lAHOCIb45c4BnLikzhA98oo",
+      "[P16] Rehearse the end-to-end demonstration on a corpus member": "PVTI_lAHOCIb45c4BnLikzhA98pA"
+    }
+  }
+}
