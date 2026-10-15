@@ -125,7 +125,7 @@ demonstrable and independently testable.
 | `auxflow graph FILE -o G.dot` | 1 | ARG in Graphviz DOT |
 | `auxflow classify FILE [-v] [--force]` | 1 | classification with diagnosis |
 | `auxflow plan FILE [--explain] [--force]` | 1 | BuildPlan JSON or explained steps |
-| `auxflow run FILE` | 2 | execute the plan with verification |
+| `auxflow run [--force] [--strict] FILE` | 2 | execute the plan and print ExecReport JSON |
 
 `auxflow ast FILE` reads reachable `\input` and `\include` files. It resolves
 relative names from each source file and adds `.tex` when a name has no suffix.
@@ -148,6 +148,13 @@ required to print a `BENIGN_CYCLIC` report; it is silent otherwise.
 reasons. `--explain` prints the step order and each reason instead of JSON.
 For `AMPLIFYING`, it prints the diagnosis and exits 1 without a plan.
 `--force` emits a capped, conservative plan instead.
+
+`auxflow run` classifies, plans, and executes in the source directory.
+It preserves external tool output and prints a JSON execution report last.
+The report includes `status`, `stop_condition`, `runs`, and `prediction_miss`.
+It exits non-zero on tool failures, missing inputs, an exceeded cap,
+`AMPLIFYING` without `--force`, or `UNKNOWN` with `--strict`.
+For an amplifying refusal, it also prints the cycle diagnosis.
 
 Every command up to and including `plan` runs without a TeX engine installed. This is a hard
 requirement, and it is what makes the compiler independently gradeable.
