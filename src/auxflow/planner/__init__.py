@@ -12,6 +12,7 @@ Classification = Literal["CERTIFIED", "BENIGN_CYCLIC", "AMPLIFYING", "UNKNOWN"]
 # The conservative plan includes three engine runs. Optional tool steps
 # cannot make a shorter engine schedule safe.
 CONSERVATIVE_DEFAULT_ENGINE_RUNS = 3
+MAX_RUNS_UNDER_FORCE = 6
 
 
 def assert_safety_invariant(classification: Classification, tools: list[str]) -> None:
