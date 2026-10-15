@@ -3,8 +3,8 @@
 Subcommand surface is fixed by docs/ARCHITECTURE.md. Every command up to and
 including `plan` must run without a TeX engine installed; only `run` executes one.
 
-`tokens`, `ast`, `symbols`, and `check` are implemented. Other subcommands
-are not yet implemented; see docs/IMPLEMENTATION-PLAN.md.
+`tokens`, `ast`, `symbols`, `check`, and `graph` are implemented. Other
+subcommands are not yet implemented; see docs/IMPLEMENTATION-PLAN.md.
 """
 
 from __future__ import annotations
@@ -15,6 +15,7 @@ from pathlib import Path
 
 from auxflow.ast import Forest, build_forest, print_tree
 from auxflow.ast.forest import inclusion_edges
+from auxflow.ir import lower, to_dot
 from auxflow.lexer import tokenize
 from auxflow.parser import Diagnostic, Document, Span, parse
 from auxflow.semantic.diagnostics import check_packages, check_symbols
@@ -166,6 +167,17 @@ def _run_check(path: str) -> int:
     return int(any(diagnostic.severity == "error" for diagnostic in diagnostics))
 
 
+def _run_graph(path: str, output: str | None) -> int:
+    forest, parse_diagnostics = _load_forest(path)
+    _print_parse_diagnostics(parse_diagnostics)
+    dot = to_dot(lower(forest, resolve(forest, declare(forest))))
+    if output:
+        Path(output).write_text(dot, encoding="utf-8")
+    else:
+        print(dot, end="")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -183,6 +195,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_symbols(args.file)
     if args.command == "check":
         return _run_check(args.file)
+    if args.command == "graph":
+        return _run_graph(args.file, args.output)
 
     raise NotImplementedError(
         f"auxflow {args.command}: bootstrap phase, see docs/IMPLEMENTATION-PLAN.md"
