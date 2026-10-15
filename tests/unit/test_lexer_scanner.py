@@ -90,7 +90,7 @@ def test_catcode_invalid() -> None:
 
 
 def test_catcode_non_latin1_defaults_to_other() -> None:
-    assert catcode_of("é") == CatCode.OTHER
+    assert catcode_of("Ā") == CatCode.OTHER  # U+0100, outside the 256-entry table
 
 
 # --- both control-sequence shapes --------------------------------------------
