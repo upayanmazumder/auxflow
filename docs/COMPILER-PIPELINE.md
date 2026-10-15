@@ -78,6 +78,10 @@ The declaration pass scans every file before it binds any use. It records
 labels, packages, files and counter operations. An unknown package stays
 unmodelled. The pass treats `graphicx` as modelled with no auxiliary facts.
 
+The resolution pass binds `\ref` and `\pageref` uses to declared labels, even
+across files. It records each `\cite` key with its source span. Uses with no
+definition remain unbound for phase 6 diagnostics.
+
 - **Algorithm** — two-phase traversal: declare, then resolve. A single phase would misreport
   forward references as undefined.
 - **Compiler-design relevance** — symbol tables and scope resolution. The multi-file aspect is

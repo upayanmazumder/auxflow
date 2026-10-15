@@ -1,7 +1,7 @@
 r"""Two-pass symbol resolution over the parsed document forest.
 
-The declaration pass records definitions without inspecting references. The
-resolution pass follows in phase 5's next sub-issue.
+The declaration pass records definitions across all files. The second pass
+binds references and citations after every declaration is available.
 """
 
 from __future__ import annotations
@@ -123,4 +123,25 @@ def declare(forest: Forest) -> SymbolTables:
             ),
         )
         _declare_node(document, tables, "unknown")
+    return tables
+
+
+def resolve(forest: Forest, tables: SymbolTables) -> SymbolTables:
+    """Bind reference uses after declarations, across all files in the forest."""
+    for document in forest.documents.values():
+        for node in walk(document):
+            if not isinstance(node, MacroCall):
+                continue
+            key = _argument_text(node)
+            if not key:
+                continue
+            if node.name in {"\\ref", "\\pageref"}:
+                kind: Literal["ref", "pageref"] = "pageref" if node.name == "\\pageref" else "ref"
+                use = tables.refs.insert(key, kind, node.span)
+                use.definition = tables.labels.lookup(key)
+            elif node.name == "\\cite":
+                for cite_key in key.split(","):
+                    cite_key = cite_key.strip()
+                    if cite_key:
+                        tables.cites.insert(cite_key, node.span)
     return tables
