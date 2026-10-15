@@ -315,8 +315,13 @@ def ensure_project(plan: dict, store: Store) -> None:
         store.save()
         print(f"project field  {name}")
 
-    # add every issue as an item, set fields for phase issues
+    # add every issue as an item; set fields for phase issues, Phase for sub-issues
     phase_titles = {i["title"]: i for i in plan["issues"]}
+    sub_phase = {
+        f"[P{i['phase']}] {s['title']}": i["phase"]
+        for i in plan["issues"]
+        for s in i.get("sub_issues", [])
+    }
     for title, rec in list(store.data["issues"].items()):
         url = f"https://github.com/{NWO}/issues/{rec['number']}"
         item_id = proj["items"].get(title)
@@ -335,6 +340,8 @@ def ensure_project(plan: dict, store: Store) -> None:
             _set_text(proj, item_id, "Phase", str(issue["phase"]))
             _set_text(proj, item_id, "Risk", issue["risk"])
             _set_number(proj, item_id, "Estimate", issue["hours"])
+        elif title in sub_phase:
+            _set_text(proj, item_id, "Phase", str(sub_phase[title]))
     print(f"project items: {len(proj['items'])}")
     store.save()
 

@@ -116,6 +116,11 @@ def main() -> int:
             if title not in titles:
                 drift.append(f"project item missing: {title}")
         phase_titles = {i["title"]: i for i in plan["issues"]}
+        sub_phase = {
+            f"[P{i['phase']}] {s['title']}": i["phase"]
+            for i in plan["issues"]
+            for s in i.get("sub_issues", [])
+        }
         for it in items:
             title = it.get("content", {}).get("title")
             if title in phase_titles:
@@ -126,6 +131,8 @@ def main() -> int:
                     drift.append(f"project Risk wrong for {title}: {it.get('risk')}")
                 if it.get("estimate") != issue["hours"]:
                     drift.append(f"project Estimate wrong for {title}: {it.get('estimate')}")
+            elif title in sub_phase and str(it.get("phase")) != str(sub_phase[title]):
+                drift.append(f"project Phase unset/wrong for sub-issue {title}: {it.get('phase')}")
     else:
         drift.append("project not created")
 
