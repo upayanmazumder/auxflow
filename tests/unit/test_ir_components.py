@@ -45,7 +45,7 @@ def test_toc_exists_affects_extent_but_not_its_own_value() -> None:
 
     assert len(exists) == len(values) == 2
     assert len(volume) == len(extent) == 1
-    assert volume[0].source_location.start == source.index("\\section")
+    assert volume[0].source_location.start == source.index("\\tableofcontents")
     for entry in exists:
         assert entry.fact_id in extent[0].dependencies
         assert volume[0].fact_id not in entry.dependencies
