@@ -10,6 +10,7 @@ required"). Later phases may extend this; they must not narrow it.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 from auxflow.parser.spans import Span
 
@@ -18,3 +19,4 @@ from auxflow.parser.spans import Span
 class Diagnostic:
     span: Span
     message: str
+    severity: Literal["error", "warning"] = "error"
