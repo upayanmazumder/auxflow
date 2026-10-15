@@ -3,8 +3,8 @@
 Subcommand surface is fixed by docs/ARCHITECTURE.md. Every command up to and
 including `plan` must run without a TeX engine installed; only `run` executes one.
 
-`tokens` (phase 2), `ast` (phase 4), and `symbols` (phase 5) are implemented.
-Other subcommands are not yet implemented; see docs/IMPLEMENTATION-PLAN.md.
+`tokens`, `ast`, `symbols`, and `check` are implemented. Other subcommands
+are not yet implemented; see docs/IMPLEMENTATION-PLAN.md.
 """
 
 from __future__ import annotations
@@ -17,6 +17,8 @@ from auxflow.ast import Forest, build_forest, print_tree
 from auxflow.ast.forest import inclusion_edges
 from auxflow.lexer import tokenize
 from auxflow.parser import Diagnostic, Document, Span, parse
+from auxflow.semantic.diagnostics import check_packages, check_symbols
+from auxflow.semantic.inclusion import check_inclusions
 from auxflow.semantic.resolve import declare, resolve
 
 COMMANDS = (
@@ -142,6 +144,28 @@ def _run_symbols(path: str) -> int:
     return 0
 
 
+def _run_check(path: str) -> int:
+    forest, parse_diagnostics = _load_forest(path)
+    tables = resolve(forest, declare(forest))
+    diagnostics = [
+        *parse_diagnostics,
+        *check_symbols(tables),
+        *check_inclusions(forest),
+        *check_packages(forest, tables),
+    ]
+    diagnostics.sort(
+        key=lambda diagnostic: (
+            diagnostic.span.file_id,
+            diagnostic.span.start,
+            diagnostic.span.end,
+            diagnostic.message,
+        )
+    )
+    for diagnostic in diagnostics:
+        print(f"{_span(diagnostic.span)}: {diagnostic.severity}: {diagnostic.message}")
+    return int(any(diagnostic.severity == "error" for diagnostic in diagnostics))
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -157,6 +181,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_ast(args.file)
     if args.command == "symbols":
         return _run_symbols(args.file)
+    if args.command == "check":
+        return _run_check(args.file)
 
     raise NotImplementedError(
         f"auxflow {args.command}: bootstrap phase, see docs/IMPLEMENTATION-PLAN.md"

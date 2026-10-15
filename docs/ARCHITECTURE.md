@@ -135,6 +135,9 @@ Phase 6 reports missing inclusions as semantic diagnostics.
 `auxflow symbols FILE` uses the same forest. It prints all six tables in a
 fixed order, with keys sorted within each table.
 
+`auxflow check FILE` reads the same forest and prints diagnostics with source
+spans and severity. Errors produce exit status 1. Warnings alone produce 0.
+
 Every command up to and including `plan` runs without a TeX engine installed. This is a hard
 requirement, and it is what makes the compiler independently gradeable.
 
