@@ -36,6 +36,12 @@ Phases 1–12 require no TeX engine. Phase 13 is the only one that executes anyt
   table of known macro signatures (`\label{}` takes one mandatory argument;
   `\includegraphics[]{} ` takes one optional and one mandatory). Unknown control sequences
   consume no arguments and produce a bare `MacroCall`.
+
+The phase 7 parser elaboration preserves `\forloop` and `\whiledo` conditions
+and bodies as `ControlConstruct` nodes. It stores `\newcommand` bodies as
+unexpanded tokens in `MacroDef` nodes. ARG lowering turns unsupported bare
+calls into opaque facts rather than assuming they are safe.
+
 - **Compiler-design relevance** — syntax analysis; a hand-written predictive parser.
 - **Note** — this is the highest-risk phase. Optional arguments, nested braces inside optional
   arguments, and verbatim interaction are where the time goes.

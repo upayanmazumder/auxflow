@@ -11,11 +11,13 @@ from __future__ import annotations
 
 from auxflow.lexer import tokenize
 from auxflow.parser import (
+    ControlConstruct,
     Diagnostic,
     Document,
     Environment,
     Group,
     MacroCall,
+    MacroDef,
     Text,
     parse,
 )
@@ -146,3 +148,43 @@ def test_multiple_independent_errors_are_all_reported() -> None:
     # every diagnostic span lies within the source
     for d in result.diagnostics:
         assert 0 <= d.span.start < d.span.end <= len(source)
+
+
+def test_missing_loop_body_reports_diagnostic_and_keeps_condition() -> None:
+    source = r"\forloop{n}{0}{\pageref{x}}text"
+    result = _parse(source)
+    loop, trailing = result.document.children
+    assert isinstance(loop, ControlConstruct)
+    assert loop.condition[0].name == r"\pageref"  # type: ignore[union-attr]
+    assert loop.body == ()
+    assert loop.span.end == source.index("text")
+    assert isinstance(trailing, Text) and trailing.text == "text"
+    assert len(result.diagnostics) == 1
+    assert "body" in result.diagnostics[0].message
+
+
+def test_unterminated_macro_body_reports_nested_unmatched_braces_and_keeps_tokens() -> None:
+    source = r"\newcommand{\foo}[2]{a{b"
+    result = _parse(source)
+    (definition,) = result.document.children
+    assert isinstance(definition, MacroDef)
+    assert definition.name == r"\foo"
+    assert definition.arity == 2
+    assert "".join(token.text for token in definition.body_tokens) == "a{b"
+    assert definition.span.end == len(source)
+    assert len(result.diagnostics) == 2
+    assert {d.span.start for d in result.diagnostics} == {
+        source.index("{a"),
+        source.index("{b"),
+    }
+
+
+def test_missing_macro_body_reports_diagnostic_without_consuming_following_text() -> None:
+    source = r"\renewcommand{\foo}[1]plain"
+    result = _parse(source)
+    definition, trailing = result.document.children
+    assert isinstance(definition, MacroDef)
+    assert definition.body_tokens == ()
+    assert definition.span.end == source.index("plain")
+    assert isinstance(trailing, Text) and trailing.text == "plain"
+    assert any("body" in d.message for d in result.diagnostics)
