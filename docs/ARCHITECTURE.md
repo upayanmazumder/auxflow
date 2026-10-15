@@ -143,7 +143,7 @@ requirement, and it is what makes the compiler independently gradeable.
 | Contract | Producer | Consumer | Form |
 |---|---|---|---|
 | `BuildPlan` | planner | executor | JSON, versioned by `model_version` |
-| `Diagnostic` | semantic, analysis | report | structured record with `Span` |
+| `Diagnostic` | semantic, analysis | report | structured record with `Span` and error or warning severity |
 | `AuxState` | executor | verifier | canonical set of records |
 | `ExecReport` | executor | harness | JSON, one per run |
 

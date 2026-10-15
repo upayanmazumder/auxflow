@@ -107,6 +107,9 @@ File checks stat inclusion targets and graphics paths relative to their source
 file. A graphics name without a suffix can match `.pdf`, `.png`, `.jpg`, `.jpeg`
 or `.eps`. A cycle diagnostic uses the span of its closing inclusion.
 
+An unmodelled package produces a warning at its `\usepackage` span. All name
+and file defects above produce errors.
+
 - **Algorithm** — table lookups after resolution; DFS with colouring for inclusion cycles.
 - **Compiler-design relevance** — semantic analysis proper. Every check runs with zero engine
   executions, which is the point: these are defects an engine would report only after a full
