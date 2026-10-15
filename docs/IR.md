@@ -67,6 +67,10 @@ class Fact:
 diagnostics in [NON-CONVERGENCE.md](NON-CONVERGENCE.md) are the project's main user-visible
 output and they are worthless without spans.
 
+`Fact` rejects a missing or null `source_location`. Fact records and
+dependency edges are frozen. Analysis stages keep mutable graph state
+separate from these records.
+
 The fact kind set is **open decision D4**. It will be revised once the corpus is authored, on
 the principle that a fact kind must be justified by a document that needs it.
 

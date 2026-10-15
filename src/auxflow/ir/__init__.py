@@ -1,5 +1,5 @@
-"""Phase 6: the Auxiliary Reference Graph.
+"""Phase 7: instance-level facts and lagged ARG dependencies."""
 
-Instance-level facts with the exists/value split, lag-weighted dependency edges,
-syntax-directed lowering, DOT emission. See docs/IR.md.
-"""
+from auxflow.ir.model import Component, DepEdge, DepType, Fact, FactKind
+
+__all__ = ["Component", "DepEdge", "DepType", "Fact", "FactKind"]
