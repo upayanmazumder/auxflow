@@ -660,9 +660,10 @@ issues:
       elimination); (2) bibtex iff citation facts exist AND a bibliography command is present, placed
       after the first engine run (dead-tool elimination); (3) index tool iff index facts exist; (4) engine
       runs = predicted_runs when certified else the conservative default; then set verify_after on the
-      final engine step; amplifying emits no steps and exits non-zero unless --force. Acceptance: tests
-      show bibtex omitted when no citations, spellcheck skipped for unreachable files, and an amplifying
-      input yields empty steps with populated diagnostics and non-zero exit.'
+      final engine step; amplifying emits no steps with populated diagnostics unless --force.
+      Acceptance: tests show bibtex omitted when no citations, spellcheck skipped for unreachable
+      files, and an amplifying input yields empty steps with populated diagnostics. The CLI exit
+      status is verified in sub-issue #58.'
     labels:
     - task
     - planner
@@ -670,8 +671,8 @@ issues:
     body: 'Add `auxflow plan [--explain] [--force] <entry.tex>` that classifies, builds the BuildPlan,
       and with --explain prints each step with its reason traceable to a fact or the classification. Non-certified
       plans match the conservative default sequence; amplifying without --force refuses and emits the
-      diagnosis. Acceptance: --explain on a certified fixture lists per-step reasons including "P=3 so
-      runs=P+1".'
+      diagnosis with a non-zero exit status. Acceptance: --explain on a certified fixture lists
+      per-step reasons including "P=3 so runs=P+1"; amplifying without --force exits non-zero.'
     labels:
     - task
     - cli
