@@ -1,0 +1,8 @@
+auxflow: CERTIFIED -- 2 runs
+
+  longest dependency chain (stable_pass 1):
+    LABEL_NUMBER(c:one)  non_convergence_certified.tex:2:1  -> 1
+    LABEL_PAGE(c:one)  non_convergence_certified.tex:2:1  -> 1
+    REF_USE(c:one)  non_convergence_certified.tex:4:18  consumed on run 2
+
+  The facts above require all 2 runs to stabilise.

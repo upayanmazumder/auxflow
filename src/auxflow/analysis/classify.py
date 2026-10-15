@@ -18,6 +18,7 @@ from enum import Enum, auto
 from auxflow.analysis.classify_cycles import Label
 from auxflow.analysis.stable_pass import StablePass, predicted_runs
 from auxflow.ir.graph import ARG
+from auxflow.ir.model import FactKind
 
 
 class State(Enum):
@@ -62,9 +63,15 @@ def classify(
     if amplifying:
         return Classification(State.AMPLIFYING, None, amplifying, ())
 
-    opaque_fact_ids = tuple(fact_id for fact_id, fact in arg.facts.items() if fact.opaque)
-    if opaque_fact_ids:
-        return Classification(State.UNKNOWN, None, (), opaque_fact_ids)
+    if any(fact.opaque for fact in arg.facts.values()):
+        # Report only the causal markers (the construct that was itself
+        # unsupported), not every downstream fact merely contaminated by
+        # whole-document opacity -- matching docs/NON-CONVERGENCE.md's
+        # UNKNOWN example, which names the specific unsupported constructs.
+        causal = tuple(
+            fact_id for fact_id, fact in arg.facts.items() if fact.kind is FactKind.OPAQUE
+        )
+        return Classification(State.UNKNOWN, None, (), causal)
 
     has_cycle = any(len(component) > 1 for component in components) or any(
         labels.get(component[0]) is not None for component in components if len(component) == 1
