@@ -3,12 +3,16 @@
 Subcommand surface is fixed by docs/ARCHITECTURE.md. Every command up to and
 including `plan` must run without a TeX engine installed; only `run` executes one.
 
-Not yet implemented -- see docs/IMPLEMENTATION-PLAN.md.
+`tokens` is implemented (phase 2). Every other subcommand is not yet
+implemented -- see docs/IMPLEMENTATION-PLAN.md.
 """
 
 from __future__ import annotations
 
 import argparse
+import sys
+
+from auxflow.lexer import tokenize
 
 COMMANDS = (
     "tokens",  # phase 2  token stream
@@ -47,6 +51,14 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _run_tokens(path: str) -> int:
+    with open(path, encoding="utf-8") as f:
+        source = f.read()
+    for token in tokenize(source, file_id=path):
+        print(f"{token.line}:{token.col} {token.catcode.name} {token.text!r}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -55,6 +67,13 @@ def main(argv: list[str] | None = None) -> int:
         parser.print_help()
         return 1
 
+    if args.command == "tokens":
+        return _run_tokens(args.file)
+
     raise NotImplementedError(
         f"auxflow {args.command}: bootstrap phase, see docs/IMPLEMENTATION-PLAN.md"
     )
+
+
+if __name__ == "__main__":
+    sys.exit(main())
