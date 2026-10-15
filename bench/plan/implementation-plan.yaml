@@ -607,8 +607,11 @@ issues:
   - title: Add the b08/b05 classifier guard tests
     body: 'Two highest-value tests from NON-CONVERGENCE.md: b08 MUST classify AMPLIFYING with all three
       cycle facts named at correct spans (PAGEREF_USE, CONTENT_VOLUME, LABEL_PAGE); b05 (table of contents)
-      MUST NOT classify amplifying and lands BENIGN_CYCLIC. Acceptance: both tests present, named, and
-      passing; b05 is the negative guard against flagging every document with a TOC.'
+      MUST NOT classify amplifying. docs/IR.md''s exists/value split makes an ordinary generated-list
+      document acyclic by construction, so b05 lands CERTIFIED, not BENIGN_CYCLIC -- NON-CONVERGENCE.md''s
+      own Testing section only requires "must not be classified amplifying", which this satisfies.
+      Acceptance: both tests present, named, and passing; b05 is the negative guard against flagging
+      every document with a TOC.'
     labels:
     - task
     - test
