@@ -19,10 +19,7 @@ from auxflow.analysis.scc import tarjan
 from auxflow.analysis.stable_pass import StablePass
 from auxflow.ir.graph import ARG
 from auxflow.ir.model import DepEdge, DepType, Fact, FactKind
-
-MAX_RUNS_UNDER_FORCE = 6
-"""Matches the documented max_runs example in docs/BUILD-PLANNER.md; the
-build planner (phase 12) owns this constant going forward."""
+from auxflow.planner import MAX_RUNS_UNDER_FORCE
 
 
 def offset_to_line_col(text: str, offset: int) -> tuple[int, int]:

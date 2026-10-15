@@ -59,6 +59,10 @@ Applied in order.
    classification, including certified.
 6. **Amplifying refusal** — emit no steps; emit the diagnosis; exit non-zero unless `--force`.
 
+Spell-check is optional and disabled by default. When enabled, it scans only
+files reachable from the entry file. A certified plan uses at least its
+predicted count as `max_runs`; the default cap is six.
+
 ### Safety invariant
 
 > The emitted plan is never shorter than the conservative default unless the classification is
