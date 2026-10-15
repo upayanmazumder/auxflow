@@ -933,3 +933,29 @@ risk_register:
   impact: MED
   mitigation: Prediction misses are a reported metric at Gate 2, so the failure is measurable rather than
     invisible.
+deferred:
+  note: Not built in the 5-day core. SHOULD items add research value; STRETCH items are attempted only
+    after MUST item 16. If time runs short, cut in the stated order; every prefix removal leaves a coherent
+    project. The core compiler is never cut.
+  should:
+  - 17. Per-fact stability report naming which references force the final run.
+  - 18. Dead-file and dead-tool elimination, with a corpus document containing unreachable files.
+  - 19. --strict mode refusing to execute unknown-classified documents.
+  - 20. DOT output colouring nodes by component and edges by dependency type.
+  - 21. Golden-file test infrastructure for AST and ARG snapshots.
+  - 22. Splitting AMPLIFYING into a finite-height failure and a monotonicity failure (open decision D12).
+  stretch:
+  - 23. \includeonly-driven incremental invalidation.
+  - 24. Index tool support, confirming the tool-lag model generalises.
+  - 25. Long-table width feedback, a convergence mechanism unrelated to pagination.
+  - 26. Distributed execution of independent documents.
+  - 27. Compiler-derived scheduling metadata attached to work items.
+  - 28. Event-driven worker scaling.
+  cut_order:
+  - 1. Event-driven worker scaling.
+  - 2. Distributed execution and scheduling metadata.
+  - 3. Index and long-table support.
+  - 4. Incremental invalidation.
+  - 5. Dead-file elimination.
+  - 6. Per-fact stability report.
+  - 7. Explained-plan detail, reducing --explain to a plain plan dump.
