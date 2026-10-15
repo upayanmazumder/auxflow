@@ -2,6 +2,8 @@ r"""Resolve uses only after all file declarations are present."""
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from auxflow.ast import build_forest
 from auxflow.lexer import tokenize
 from auxflow.parser import parse
@@ -48,3 +50,27 @@ def test_unresolved_reference_and_citation_keys_remain_visible() -> None:
     assert one is not None and two is not None
     assert not one.present and not two.present
     assert one.spans[0].file_id == two.spans[0].file_id == "main.tex"
+
+
+def test_bibliography_presence_is_marked_from_declared_database(tmp_path: Path) -> None:
+    main = tmp_path / "main.tex"
+    database = tmp_path / "refs.bib"
+    database.write_text(
+        "@article{found,\n  title={One}\n}\n@comment{not-a-citation,\n  text={Ignored}\n}\n"
+    )
+    forest = build_forest(
+        {
+            str(main): _document(
+                "\\cite{found,missing,not-a-citation}\\bibliography{refs}", str(main)
+            )
+        }
+    )
+
+    tables = resolve(forest, declare(forest))
+
+    found = tables.cites.lookup("found")
+    missing = tables.cites.lookup("missing")
+    comment = tables.cites.lookup("not-a-citation")
+    assert found is not None and found.present
+    assert missing is not None and not missing.present
+    assert comment is not None and not comment.present
