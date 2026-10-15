@@ -36,7 +36,9 @@ def test_modelled_constructs_create_distinct_facts_and_typed_edges() -> None:
         FactKind.LIST_EXTENT,
         FactKind.CONTENT_VOLUME,
     } <= kinds
-    assert len([fact for fact in facts if fact.kind is FactKind.TOC_ENTRY]) == 2
+    entries = [fact for fact in facts if fact.kind is FactKind.TOC_ENTRY]
+    assert {fact.component for fact in entries} == {"exists", "value"}
+    assert len([fact for fact in entries if fact.component == "exists"]) == 3
     assert len([fact for fact in facts if fact.kind is FactKind.LABEL_NUMBER]) == 2
     assert len([fact for fact in facts if fact.kind is FactKind.REF_USE]) == 2
     assert len({fact.fact_id for fact in facts}) == len(facts)

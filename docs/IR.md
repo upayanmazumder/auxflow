@@ -147,6 +147,11 @@ Every list-producing fact is split into two nodes:
 `CONTENT_VOLUME` depends only on `exists` components. `LABEL_PAGE.value` depends on
 `CONTENT_VOLUME`. `PAGEREF_USE` depends on `LABEL_PAGE.value`.
 
+Lowering creates one `CONTENT_VOLUME` fact for the source document and links
+each list entry's `exists` node to its list extent. The extent links to
+`CONTENT_VOLUME`. `CONTENT_VOLUME` links to each entry's `value` node.
+A bibliography adds a `BBL.exists` fact and a contents entry.
+
 **Without this split the analysis is vacuous.** `TOC_ENTRY.value → CONTENT_VOLUME →
 TOC_ENTRY.value` is a cycle, so every document containing a table of contents would be
 classified cyclic and no bound could ever be computed. With the split, ordinary documents are
