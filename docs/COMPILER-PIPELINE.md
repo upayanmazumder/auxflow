@@ -98,6 +98,11 @@ declaration names that key. Missing databases leave cited keys absent.
 - **Output** — diagnostics; annotated tables.
 - **Checks** — undefined reference, undefined citation, duplicate label, unresolvable inclusion,
   missing graphics file, inclusion cycle, use of an unmodelled package.
+
+Name diagnostics use the unresolved reference span, the cited key's use span,
+or the duplicate label's later definition span. A citation is undefined when
+the CiteTable marks its key absent from the declared bibliography databases.
+
 - **Algorithm** — table lookups after resolution; DFS with colouring for inclusion cycles.
 - **Compiler-design relevance** — semantic analysis proper. Every check runs with zero engine
   executions, which is the point: these are defects an engine would report only after a full
