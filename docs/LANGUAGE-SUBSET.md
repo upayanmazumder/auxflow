@@ -127,7 +127,7 @@ produce it. This table is the justification for the subset's contents.
 | Conditional on a reference value | `\ifthenelse` selecting differently sized content on `\pageref` | b14 |
 | Extent feedback — **not modelled** | resolved reference width changing a line break | b11 |
 | Float placement feedback — **not modelled** | `[!t]` float with roman page numbering | b12 |
-| Dynamic textual reference — **not modelled** | `varioref`-style reference whose length moves its float | b13 |
+| Dynamic textual reference — **not modelled** | `varioref` text shifts a reference across a page break relative to a float | b13 |
 | Footnote extent feedback — **not modelled** | page reference in a footnote changes its own page placement | b07 |
 | Nondeterministic generated state — **out of model** | fresh auxiliary value each engine run | b10 |
 | Same-page citation feedback — **refused, not modelled** | `biblatex` `ibid` across a page break | b15 |

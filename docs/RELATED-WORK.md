@@ -313,7 +313,7 @@ Part 3. Summarised:
 | M3 typeset *width* of a resolved reference changes a line break, hence a page break | period-2 oscillation, no loop, no conditional | **no** |
 | M4 `[!t]` float plus roman page numbering | period-2 oscillation | **no** |
 | M5 citation style selecting a shorter form when the previous citation is on the same page (`biblatex` `ibid`) | period-2 oscillation | only by refusal, via the opaque-package rule |
-| M6 dynamic textual references (`varioref`) whose length moves the floats they refer to | oscillation | **no** |
+| M6 dynamic textual references (`varioref`) whose length shifts a reference or its float across a page break | oscillation | **no** |
 | M7 references in margin or foot notes | oscillation | **no** |
 | M8 a non-deterministic generated auxiliary file (e.g. an `.eps` carrying a timestamp) | unbounded rerun with no cross-reference cause | **no**, and out of model |
 | M9 active characters in captions defeating the kernel's own change test | *not* real non-convergence — a false positive of `\@testdef` | n/a |

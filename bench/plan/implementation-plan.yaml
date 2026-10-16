@@ -765,8 +765,10 @@ issues:
       RELATED-WORK.md 7.3: b11-b13 carry declared_false_negative:true (expected CERTIFIED, which
       is wrong); b15_ibid is the fourth undetectable member and is UNKNOWN; b07_footnote covers M7
       through UNKNOWN fallback; b10_random generates changing auxiliary state. Recognise narrow
-      varioref reference syntax without modelling typeset extent for b13. b04_chain uses a contents
-      list and page reference to achieve a three-edge chain without an external tool; a chain of
+      varioref reference syntax without modelling typeset extent for b13. Its period-two example
+      moves the reference across a page break relative to a fixed float; do not claim the float
+      itself moves. b04_chain uses a contents list and page reference to achieve a three-edge
+      chain without an external tool; a chain of
       plain references without a generated list is not expressible by the current ARG. b05 and
       others carry must_not:["AMPLIFYING"]. b09_thesis has unreachable
       auxiliary files and an active-character caption for the M9 warning false positive. Derive
