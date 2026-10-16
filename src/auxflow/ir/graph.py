@@ -101,9 +101,7 @@ class _Builder:
         self.incoming.append([])
         return fact_id
 
-    def edge(
-        self, source: int, destination: int, lag: int, kind: DepType, reason: str
-    ) -> None:
+    def edge(self, source: int, destination: int, lag: int, kind: DepType, reason: str) -> None:
         self.edges.append(DepEdge(source, destination, lag, kind, reason))
         self.incoming[destination].append(source)
 
@@ -144,9 +142,7 @@ def _nodes(document: Document) -> Iterator[tuple[Node, str | None, str | None]]:
         elif isinstance(node, ControlConstruct):
             stack.extend((child, environment, "body") for child in reversed(node.else_body))
             stack.extend((child, environment, "body") for child in reversed(node.body))
-            stack.extend(
-                (child, environment, "condition") for child in reversed(node.condition)
-            )
+            stack.extend((child, environment, "condition") for child in reversed(node.condition))
             continue
         elif isinstance(node, MacroCall):
             children = tuple(child for arg in node.args for child in arg.content)
@@ -194,10 +190,7 @@ def lower(forest: Forest, tables: SymbolTables) -> ARG:
             if (
                 isinstance(node, MacroCall)
                 and node.name in _VOLUME_TRIGGERS
-                and (
-                    earliest_trigger_span is None
-                    or node.span.start < earliest_trigger_span.start
-                )
+                and (earliest_trigger_span is None or node.span.start < earliest_trigger_span.start)
             ):
                 earliest_trigger_span = node.span
 
@@ -250,9 +243,7 @@ def lower(forest: Forest, tables: SymbolTables) -> ARG:
             f"pagination sets {list_kind} entry page",
         )
         if source is not None:
-            builder.edge(
-                source, exists, 1, DepType.LAYOUT, "bibliography body adds a toc entry"
-            )
+            builder.edge(source, exists, 1, DepType.LAYOUT, "bibliography body adds a toc entry")
 
     for document in forest.documents.values():
         for node, environment, control_role in _nodes(document):
@@ -267,9 +258,7 @@ def lower(forest: Forest, tables: SymbolTables) -> ARG:
                         "value",
                         node.span,
                         metadata={
-                            "reason": (
-                                node.reason if isinstance(node, Opaque) else node.name
-                            )
+                            "reason": (node.reason if isinstance(node, Opaque) else node.name)
                         },
                     )
             elif isinstance(node, UsePackage):
@@ -302,9 +291,7 @@ def lower(forest: Forest, tables: SymbolTables) -> ARG:
                         "value",
                         node.span,
                         metadata={
-                            "counter_kind": (
-                                label.counter_kind if label is not None else "unknown"
-                            )
+                            "counter_kind": (label.counter_kind if label is not None else "unknown")
                         },
                     )
                     page = builder.fact(FactKind.LABEL_PAGE, key, "value", node.span)
@@ -317,36 +304,22 @@ def lower(forest: Forest, tables: SymbolTables) -> ARG:
                         key,
                         "value",
                         node.span,
-                        metadata=(
-                            {"control_role": control_role} if control_role else None
-                        ),
+                        metadata=({"control_role": control_role} if control_role else None),
                     )
                     pending_refs.append((key, use, is_page))
                 elif node.name == "\\caption" and environment in {"figure", "table"}:
-                    kind = (
-                        FactKind.LOF_ENTRY
-                        if environment == "figure"
-                        else FactKind.LOT_ENTRY
-                    )
-                    list_entry(
-                        kind, "lof" if environment == "figure" else "lot", node.span
-                    )
+                    kind = FactKind.LOF_ENTRY if environment == "figure" else FactKind.LOT_ENTRY
+                    list_entry(kind, "lof" if environment == "figure" else "lot", node.span)
                 elif node.name == "\\cite" and key:
                     for cite_key in key.split(","):
                         cite_key = cite_key.strip()
                         if cite_key:
                             cite_uses.append(
-                                builder.fact(
-                                    FactKind.CITE_USE, cite_key, "value", node.span
-                                )
+                                builder.fact(FactKind.CITE_USE, cite_key, "value", node.span)
                             )
                 elif node.name == "\\bibliography" and key:
-                    exists = builder.fact(
-                        FactKind.BBL, key, "exists", node.span, producer="bibtex"
-                    )
-                    builder.fact(
-                        FactKind.BBL, key, "value", node.span, producer="bibtex"
-                    )
+                    exists = builder.fact(FactKind.BBL, key, "exists", node.span, producer="bibtex")
+                    builder.fact(FactKind.BBL, key, "value", node.span, producer="bibtex")
                     bibliography.append(exists)
                     list_entry(FactKind.TOC_ENTRY, "toc", node.span, source=exists)
                 elif node.name == "\\value" and key and control_role:

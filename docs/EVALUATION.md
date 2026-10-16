@@ -164,8 +164,8 @@ Listed so they are not run by accident.
 
 ## Threats to validity
 
-- **Corpus size.** Ten documents, mostly synthetic. Findings are illustrative of mechanisms, not
-  statistically representative of real-world documents.
+- **Corpus size.** Fifteen documents, mostly synthetic. Findings are illustrative of mechanisms,
+  not statistically representative of real-world documents.
 - **Single machine.** Timing is not portable.
 - **Synthetic non-convergence.** The amplifying case is a known constructed example, not one
   observed in the wild.
