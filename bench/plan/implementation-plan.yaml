@@ -748,10 +748,10 @@ issues:
   - benchmarks
   body: 'Author the fifteen-document benchmark corpus with hand-written expectations, the seven baselines
     (A, B, C, C'', C'''', D, E), the measurement harness, and ground-truth computation. Each corpus member
-    covers the M1-M8 non-convergence mechanisms from RELATED-WORK.md section 7.3. The four
-    extent-feedback cases b07_footnote and b11-b13 are declared false negatives (expected CERTIFIED,
-    which is wrong); b10_random exercises out-of-model nondeterministic auxiliary state, b09_thesis
-    exercises the M9 engine-warning false positive, and b15_ibid is expected UNKNOWN.
+    covers the M1-M8 non-convergence mechanisms from RELATED-WORK.md section 7.3. b11-b13 are
+    declared false negatives (expected CERTIFIED, which is wrong). b15_ibid is the fourth
+    undetectable member and is expected UNKNOWN. b07_footnote and b10_random exercise opaque
+    fallback and out-of-model generated state; b09_thesis probes the M9 warning false positive.
     expected.json is written from the source before the analyser runs on a corpus
     member, so results are not circular. Ground truth N* is computed by normalised
     auxiliary-state equivalence plus rendered-text equality against a reference run count MAX=8. Acceptance:
@@ -762,11 +762,13 @@ issues:
   - title: Author the fifteen-member corpus with hand-written expected.json oracle files
     body: 'Create bench/corpus/b01_plain .. b15_ibid, each with main.tex, expected.json and a one-paragraph
       README.md. One mechanism per document per BENCHMARKS.md design rule 1. Cover M1-M8 from
-      RELATED-WORK.md 7.3: b07_footnote and b11-b13 carry declared_false_negative:true (expected
-      CERTIFIED, which is wrong); b10_random generates changing auxiliary state; b15_ibid is UNKNOWN
-      with mechanism and why_undetected. Recognise the narrow footnote and varioref reference syntax
-      without modelling typeset extent, so the M7 and M6 false negatives are measured rather than
-      refused as opaque. b05 and others carry must_not:["AMPLIFYING"]. b09_thesis has unreachable
+      RELATED-WORK.md 7.3: b11-b13 carry declared_false_negative:true (expected CERTIFIED, which
+      is wrong); b15_ibid is the fourth undetectable member and is UNKNOWN; b07_footnote covers M7
+      through UNKNOWN fallback; b10_random generates changing auxiliary state. Recognise narrow
+      varioref reference syntax without modelling typeset extent for b13. b04_chain uses a contents
+      list and page reference to achieve a three-edge chain without an external tool; a chain of
+      plain references without a generated list is not expressible by the current ARG. b05 and
+      others carry must_not:["AMPLIFYING"]. b09_thesis has unreachable
       auxiliary files and an active-character caption for the M9 warning false positive. Derive
       expected.json from each source before running the analyser on that corpus member;
       never back-fill it from program output. bench/corpus/shared/ holds refs.bib
@@ -834,8 +836,8 @@ issues:
     the expected classification, the observed classification, and whether a mismatch was declared in advance.
     The oracle-comparison table gives per corpus member each oracle''s verdict, its soundness direction,
     and the executions it consumed. Acceptance: b08 observed AMPLIFYING, b05 not AMPLIFYING,
-    b07 and b11-b13 misclassified as predicted; every number traces to a committed results file
-    under bench/results/.'
+    b11-b13 misclassified as predicted, b07 and b15 UNKNOWN; every number traces to a committed
+    results file under bench/results/.'
   sub_issues:
   - title: Execute the full measurement run under the pinned, isolated protocol
     body: 'Run run.py over all 15 documents x 7 baselines with at least ten repetitions each, one container
@@ -849,11 +851,10 @@ issues:
   - title: Implement report.py to regenerate the mechanism-coverage table from JSONL
     body: 'bench/harness/report.py reads JSONL and emits the mechanism-coverage table: per mechanism the
       expected classification, observed classification, and whether a mismatch was declared in advance
-      (SCOPE.md item 15). Predicted misclassifications (b07 and b11-b13) are reported separately
-      from genuine misses so a predicted and an unpredicted false negative are never averaged
-      together. Acceptance: regenerating from JSONL yields b08 AMPLIFYING, b05 not AMPLIFYING,
-      and b07 and b11-b13 shown as declared false negatives; re-running the generator reproduces
-      the table byte-for-byte.'
+      (SCOPE.md item 15). Predicted misclassifications (b11-b13) are reported separately from
+      genuine misses. The b07 and b15 UNKNOWN fallbacks remain visible. Acceptance: regenerating
+      from JSONL yields b08 AMPLIFYING, b05 not AMPLIFYING, and b11-b13 shown as declared false
+      negatives; re-running the generator reproduces the table byte-for-byte.'
     labels:
     - task
     - evaluation
@@ -869,11 +870,11 @@ issues:
     - evaluation
   - title: Verify the two headline gates and the declared-false-negative gate hold
     body: 'Add a results-checking step asserting the three gates from BENCHMARKS.md: b08 classified AMPLIFYING
-      with all three facts named and correct spans; b05 not AMPLIFYING; b07 and b11-b13 classified
-      CERTIFIED exactly as their expected.json predicted, flagged as declared false negatives rather
-      than surprises. Any b07 or b11-b13 result other than CERTIFIED must be surfaced as a failure
-      to investigate. Acceptance: the gate check passes on the published results and fails loudly
-      if any gate regresses.'
+      with all three facts named and correct spans; b05 not AMPLIFYING; b11-b13 classified CERTIFIED
+      exactly as their expected.json predicted, flagged as declared false negatives rather than
+      surprises. b07 and b15 must be UNKNOWN. Any b11-b13 result other than CERTIFIED must be
+      surfaced as a failure to investigate. Acceptance: the gate check passes on the published
+      results and fails loudly if any gate regresses.'
     labels:
     - task
     - evaluation
@@ -1053,8 +1054,9 @@ decisions:
     resolve_by_phase: 0
     blocks_implementation: false
     mitigation: 'Resolved: narrow. Wide makes every document with one ref a single SCC and the
-      analysis vacuous; narrow is unsound for a named, corpus-covered class (M3/M4/M6/M7), each
-      reported as a measured false negative. See docs/PROJECT.md D13 and RELATED-WORK.md section 7.4.'
+      analysis vacuous. M3/M4/M6 are declared false negatives in b11-b13; M7 is covered by
+      opaque fallback in b07, not claimed as a measured false negative. See docs/PROJECT.md D13
+      and RELATED-WORK.md section 7.4.'
   - id: D14
     status: RESOLVED (split)
     question: Whether the amplifying analysis may be claimed as a contribution at all.

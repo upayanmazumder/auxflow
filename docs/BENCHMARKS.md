@@ -31,10 +31,10 @@ input. Documents are committed as sources only — build artifacts are never com
 | `b01_plain` | No labels, references, lists or citations | The simplest case, and the one where a state-comparison detector provably costs an extra run | no facts | CERTIFIED |
 | `b02_backref` | A label, then a later reference to it | The minimal auxiliary round trip | one edge, acyclic | CERTIFIED |
 | `b03_fwdref` | A reference, then a later label | Confirms direction does not affect the lag | one edge, acyclic | CERTIFIED |
-| `b04_chain` | Chained dependencies without generated lists | Forces stable-pass to exceed two by chaining rather than by list feedback | a path of length 3 | CERTIFIED |
+| `b04_chain` | Contents entries, a label, and a page reference, without an external tool | The generated-list-to-pagination-to-reference chain exceeds two passes | a path of length 3 | CERTIFIED |
 | `b05_toc` | Table of contents with many sections, no references | The generated-list path. **Also the document on which engine-warning detection is unsound.** | list extent feeding pagination | CERTIFIED, and explicitly **not** amplifying |
 | `b06_bib` | Table of contents, bibliography, page references | The external-tool edge and the deepest ordinary cascade | tool edge then list edge then layout | CERTIFIED |
-| `b07_footnote` | A page reference in a footnote changes its own page placement | **Declared false negative.** Extent feedback in a footnote (M7) | acyclic in the ARG; no STRUCTURAL edge | **CERTIFIED — which is WRONG.** Expected misclassification |
+| `b07_footnote` | A page reference in a footnote changes its own page placement | M7 extent feedback lies outside the supported footnote syntax | opaque facts | **UNKNOWN** |
 | `b08_cycle` | A loop bounded by a page reference to a label inside the generated material | **The headline case.** Structure known from the literature not to converge | a cycle containing a STRUCTURAL edge | **AMPLIFYING** |
 | `b09_thesis` | Multi-chapter document with contents, lists, bibliography, cross-references, **unreachable auxiliary files**, and an active-character caption | Realism and the engine-warning false positive (M9); also no expected saving | several hundred facts, acyclic after abstraction | CERTIFIED |
 | `b10_random` | A generated auxiliary record contains a fresh pdfTeX random value each run | Out-of-model nondeterministic generated state (M8); the fallback must degrade rather than crash | opaque facts | **UNKNOWN** |
@@ -46,25 +46,26 @@ input. Documents are committed as sources only — build artifacts are never com
 
 ### Declared false negatives
 
-`b07`, `b11`, `b12`, and `b13` are non-convergent documents that AuxFlow is expected to classify
-as convergent. They are in the corpus **because** of that. Their `expected.json` files record
+`b11`, `b12`, and `b13` are non-convergent documents that AuxFlow is expected to classify as
+convergent. They are in the corpus **because** of that. Their `expected.json` files record
 the wrong answer as the expected answer, with `"declared_false_negative": true` and a note
-naming the mechanism.
+naming the mechanism. `b15_ibid` is the fourth undetectable member, but its package is opaque
+and its expected classification is `UNKNOWN`. `b07_footnote` also uses the opaque fallback.
 
-The reason is structural and is not fixable by tuning: all four feed back through the *typeset
-extent* of a resolved value, and [IR.md](IR.md)'s `exists`/`value` split severs that edge by
+The reason is structural and is not fixable by tuning: the three declared cases feed back
+through the *typeset extent* of a resolved value. The [IR.md](IR.md) `exists`/`value` split severs that edge by
 construction. Removing the split would make every document containing one `\ref` a single strongly
 connected component and the analysis vacuous. See open decision D13 in [PROJECT.md](PROJECT.md) and
 [RELATED-WORK.md](RELATED-WORK.md) section 7.4.
 
-**If any of `b07` or `b11`–`b13` is classified `AMPLIFYING` or `UNKNOWN`, investigate it.**
+**If any of `b11`–`b13` is classified `AMPLIFYING` or `UNKNOWN`, investigate it.**
 An analysis that accidentally catches these has unexplained behaviour.
 
 ### The two highest-value tests remain unchanged
 
 `b08` must be classified `AMPLIFYING` with all three facts named and correct spans. `b05` must
-**not** be classified `AMPLIFYING`. `b07` and `b11`–`b13` form the third gate: their
-misclassification must be predicted, not discovered.
+**not** be classified `AMPLIFYING`. `b11`–`b13` form the third gate: their
+misclassification must be predicted, not discovered. `b07` and `b15` must remain `UNKNOWN`.
 
 Ground-truth run counts are deliberately absent from this table. They are produced by the
 harness under the protocol in [EVALUATION.md](EVALUATION.md) and recorded in
@@ -94,7 +95,7 @@ One per document. Hand-written from analysis of the source, before the analyser 
 `b05` carries `"must_not": ["AMPLIFYING"]`, and that single assertion guards against the most
 likely way for the classifier to appear to work while being useless.
 
-`b07`, `b11`, `b12`, and `b13` additionally carry `"declared_false_negative": true` with
+`b11`, `b12`, and `b13` additionally carry `"declared_false_negative": true` with
 `"mechanism"` naming the non-convergence mechanism and `"why_undetected"` giving one sentence. The
 harness must report these separately from genuine misses, because a predicted misclassification and
 an unpredicted one are different results and averaging them would hide the interesting one.

@@ -117,13 +117,13 @@ produce it. This table is the justification for the subset's contents.
 |---|---|---|
 | Backward dependency | `\label` then later `\ref` | b02 |
 | Forward dependency | `\ref` then later `\label` | b03 |
-| Dependency chain | citation to bibliography state to list entry to pagination to page reference | b04, b06 |
+| Dependency chain | contents extent to pagination to page reference; citation to bibliography adds tool lag | b04, b06 |
 | Generated-state dependency | `\tableofcontents` with sectioning | b05 |
 | External tool dependency | `\cite` with `\bibliography` | b06 |
 | Multiple interacting lists | `\tableofcontents`, `\listoffigures`, `\listoftables` | b09 |
 | Benign cycle | any generated list plus `\pageref` | b05, b09 |
 | Amplifying cycle | `\forloop` bounded by `\pageref`, generating `\newpage` | b08 |
-| Opaque fallback | changing generated auxiliary state, `biblatex` | b10, b15 |
+| Opaque fallback | unsupported footnote, changing generated state, `biblatex` | b07, b10, b15 |
 | Conditional on a reference value | `\ifthenelse` selecting differently sized content on `\pageref` | b14 |
 | Extent feedback — **not modelled** | resolved reference width changing a line break | b11 |
 | Float placement feedback — **not modelled** | `[!t]` float with roman page numbering | b12 |
@@ -132,10 +132,10 @@ produce it. This table is the justification for the subset's contents.
 | Nondeterministic generated state — **out of model** | fresh auxiliary value each engine run | b10 |
 | Same-page citation feedback — **refused, not modelled** | `biblatex` `ibid` across a page break | b15 |
 
-The `b07` and `b11`–`b13` cases recognise reference syntax but do not model typeset extent.
+The `b11`–`b13` cases recognise reference syntax but do not model typeset extent.
 Modelling that extent requires line breaking, which is out of scope. Treating every rendered value
-as pagination-affecting makes the analysis vacuous. The `b15` package remains opaque, so it is
-refused instead. These cases state the subset boundary in terms of convergence mechanisms.
+as pagination-affecting makes the analysis vacuous. `b07` and `b15` instead remain opaque and
+are refused under strict mode. These cases state the subset boundary by convergence mechanism.
 
 ## Non-goals for the subset
 
