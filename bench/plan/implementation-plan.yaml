@@ -765,10 +765,8 @@ issues:
       RELATED-WORK.md 7.3: b11-b13 carry declared_false_negative:true (expected CERTIFIED, which
       is wrong); b15_ibid is the fourth undetectable member and is UNKNOWN; b07_footnote covers M7
       through UNKNOWN fallback; b10_random generates changing auxiliary state. Recognise narrow
-      varioref reference syntax without modelling typeset extent for b13. Its period-two example
-      moves the reference across a page break relative to a fixed float; do not claim the float
-      itself moves. b04_chain uses a contents list and page reference to achieve a three-edge
-      chain without an external tool; a chain of
+      varioref reference syntax without modelling typeset extent for b13. b04_chain uses a contents
+      list and page reference to achieve a three-edge chain without an external tool; a chain of
       plain references without a generated list is not expressible by the current ARG. b05 and
       others carry must_not:["AMPLIFYING"]. b09_thesis has unreachable
       auxiliary files and an active-character caption for the M9 warning false positive. Derive
@@ -1017,12 +1015,14 @@ decisions:
       the stable_pass recurrence specifically, matching the documented "external tool runs after run
       1" timing. Affects predicted counts for bibliography documents; verified against the worked example.
   - id: D6
-    status: OPEN
+    status: 'RESOLVED: normalised auxiliary-state equality plus rendered-text equality, exclusion {\relax}.'
     question: State-equivalence definition for ground truth (leaning normalised auxiliary state).
     resolve_by_phase: 14
     blocks_implementation: false
-    mitigation: PDF byte identity rejected; newlabel vs @writefile records need different normalisation.
-      Must be fixed before any ground truth is generated (phase 14).
+    mitigation: Implemented in auxflow.runtime.normalize (phase 13) and reused unchanged by
+      bench/harness/groundtruth_incontainer.py and bench/harness/normstate.py, so every oracle
+      in docs/EVALUATION.md shares one normalisation. Text equality checked via pdftotext to
+      guard against auxiliary state settling before rendered output does.
   - id: D7
     status: OPEN
     question: 'Benign-cycle bound: finite bound vs always-unbounded deferred to runtime verification.'
@@ -1030,11 +1030,15 @@ decisions:
     blocks_implementation: false
     mitigation: Conservative option is the fallback; do not tune a constant against the corpus.
   - id: D10
-    status: OPEN
+    status: "RESOLVED: bench/Dockerfile, python:3.12-slim-bookworm base pinned by digest."
     question: Containerised TeX Live image, pinned by digest, containing latexmk/latexrun/Tectonic.
     resolve_by_phase: 14
     blocks_implementation: false
-    mitigation: Select and pin before the harness (phase 14); required baselines depend on it.
+    mitigation: TeX Live (including latexmk) from the Debian bookworm apt archive; latexrun
+      pinned to one commit, Tectonic 0.15.0 and Typst 0.11.0 as pinned release binaries, biber
+      for the b15_ibid cross-check, labelschanged built from its CTAN .dtx/.ins pair. auxflow
+      itself is pip-installed into the image so baseline scripts and the ground-truth sweep
+      share identical normalisation with the host (see D6).
   - id: D11
     status: OPEN
     question: Whether opaque constructs invalidate the whole document or only the containing file.
