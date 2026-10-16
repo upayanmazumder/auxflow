@@ -1,0 +1,15 @@
+{
+  "id": "b07_footnote",
+  "purpose": "M7: a footnote's own page reference can change its typeset extent and page placement",
+  "expected_class": "UNKNOWN",
+  "expected_structure": {
+    "has_cycle": false,
+    "has_structural_edge": false,
+    "min_facts": 3,
+    "longest_chain": ["OPAQUE"]
+  },
+  "must_not": ["AMPLIFYING", "CERTIFIED"],
+  "mechanism": "M7 footnote placement feedback through the typeset width of a resolved page reference",
+  "why_undetected": "Footnote layout is outside the declared subset, so the footnote command makes the document opaque before its extent feedback can be classified.",
+  "notes": "The note labels its own page near a page boundary. UNKNOWN is an explicit fallback, not a claimed false negative; dynamic measurement must establish whether this threshold oscillates."
+}

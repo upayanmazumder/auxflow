@@ -1,0 +1,1 @@
+An opening section names a later procedure by reference before the procedure's section and label occur in source order. This reverses the ordering of the producer and consumer in b02 while keeping the auxiliary-file dependency the same, testing that source order does not change the cross-run lag. No generated list is typeset.

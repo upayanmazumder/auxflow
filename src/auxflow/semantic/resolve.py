@@ -69,9 +69,11 @@ def _record_package(tables: SymbolTables, names: str) -> None:
     for name in names.split(","):
         name = name.strip()
         if name:
-            # Only graphicx is known here to add no auxiliary facts. Unknown
-            # packages stay unmodelled until a package model exists.
-            tables.packages.insert(name, frozenset(), None, modelled=name == "graphicx")
+            # These package calls have narrowly modelled reference syntax.
+            # Their effects on typeset extent remain outside the ARG.
+            tables.packages.insert(
+                name, frozenset(), None, modelled=name in {"graphicx", "varioref", "ifthen"}
+            )
 
 
 def _declare_node(node: Node, tables: SymbolTables, counter_kind: str) -> str:
@@ -88,6 +90,7 @@ def _declare_node(node: Node, tables: SymbolTables, counter_kind: str) -> str:
     if isinstance(node, ControlConstruct):
         _declare_children(node.condition, tables, counter_kind)
         _declare_children(node.body, tables, counter_kind)
+        _declare_children(node.else_body, tables, counter_kind)
     if isinstance(node, UsePackage):
         _record_package(tables, node.name)
     if isinstance(node, CounterOp):
@@ -140,8 +143,10 @@ def resolve(forest: Forest, tables: SymbolTables) -> SymbolTables:
             key = _argument_text(node)
             if not key:
                 continue
-            if node.name in {"\\ref", "\\pageref"}:
-                kind: Literal["ref", "pageref"] = "pageref" if node.name == "\\pageref" else "ref"
+            if node.name in {"\\ref", "\\pageref", "\\vref", "\\vpageref"}:
+                kind: Literal["ref", "pageref"] = (
+                    "pageref" if node.name in {"\\pageref", "\\vref", "\\vpageref"} else "ref"
+                )
                 use = tables.refs.insert(key, kind, node.span)
                 use.definition = tables.labels.lookup(key)
             elif node.name == "\\cite":

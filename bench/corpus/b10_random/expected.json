@@ -1,0 +1,13 @@
+{
+  "id": "b10_random",
+  "purpose": "M8: a pdfTeX random draw changes a generated auxiliary record without a reference dependency",
+  "expected_class": "UNKNOWN",
+  "expected_structure": {
+    "has_cycle": false,
+    "has_structural_edge": false,
+    "min_facts": 1,
+    "longest_chain": ["OPAQUE"]
+  },
+  "must_not": ["CERTIFIED", "AMPLIFYING"],
+  "notes": "An end-of-document immediate write records a fresh pdfTeX draw in main.aux. The read-side command consumes the record without affecting printed content; the unmodelled random source requires the opaque fallback. Rare equal successive draws are possible."
+}

@@ -1,0 +1,16 @@
+{
+  "id": "b12_float",
+  "purpose": "M4: a large top float and Roman page numbers can feed back through placement",
+  "expected_class": "CERTIFIED",
+  "expected_structure": {
+    "has_cycle": false,
+    "has_structural_edge": false,
+    "min_facts": 3,
+    "longest_chain": ["LABEL_PAGE", "PAGEREF_USE"]
+  },
+  "must_not": ["UNKNOWN", "AMPLIFYING"],
+  "declared_false_negative": true,
+  "mechanism": "M4 top float placement and Roman page number width can oscillate",
+  "why_undetected": "Float placement and the rendered extent of a page reference do not create structural edges in the ARG.",
+  "notes": "The large [!t] float precedes the page reference and labelled section. This is a declared model boundary, not a measured period or run count."
+}

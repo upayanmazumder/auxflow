@@ -1,0 +1,13 @@
+{
+  "id": "b04_chain",
+  "purpose": "Contents extent shifts pagination before a page reference reads the closing label",
+  "expected_class": "CERTIFIED",
+  "expected_structure": {
+    "has_cycle": false,
+    "has_structural_edge": false,
+    "min_facts": 5,
+    "longest_chain": ["TOC_ENTRY", "LIST_EXTENT", "CONTENT_VOLUME", "LABEL_PAGE", "PAGEREF_USE"]
+  },
+  "must_not": ["AMPLIFYING", "UNKNOWN"],
+  "notes": "The list entry, list extent, page volume, label page, and page-reference use form a directed chain. No external tool adds another lag. The exact ground-truth run count is measured later."
+}

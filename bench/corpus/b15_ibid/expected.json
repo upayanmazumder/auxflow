@@ -1,0 +1,14 @@
+{
+  "id": "b15_ibid",
+  "purpose": "M5: biblatex's same-page citation feedback is safe only through the opaque-package rule",
+  "expected_class": "UNKNOWN",
+  "expected_structure": {
+    "has_cycle": false,
+    "has_structural_edge": false,
+    "min_facts": 1,
+    "longest_chain": ["OPAQUE"]
+  },
+  "must_not": ["CERTIFIED", "AMPLIFYING"],
+  "mechanism": "M5 a citation style selects a shorter form when the prior citation is on the same page",
+  "notes": "biblatex is never added to the modelled package set, so loading it marks the document OPAQUE under assumption A3. Five real engine runs settle by run 3 with this exact source and height (page 2, \"Smith 2020, p. 2\"); the historical same-page oscillation (tex.SE 81695) is why the package stays opaque regardless of this instance's measured convergence."
+}

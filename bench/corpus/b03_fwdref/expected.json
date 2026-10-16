@@ -1,0 +1,13 @@
+{
+  "id": "b03_fwdref",
+  "purpose": "A reference precedes the label that supplies its section number",
+  "expected_class": "CERTIFIED",
+  "expected_structure": {
+    "has_cycle": false,
+    "has_structural_edge": false,
+    "min_facts": 2,
+    "longest_chain": ["LABEL_NUMBER", "REF_USE"]
+  },
+  "must_not": ["AMPLIFYING", "UNKNOWN"],
+  "notes": "The unresolved forward reference is filled from the preceding run's auxiliary record just like a backward reference; source order does not remove the round trip."
+}

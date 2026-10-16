@@ -1,0 +1,10 @@
+\documentclass{article}
+\usepackage{ifthen}
+\begin{document}
+The condition compares the page number of the final label.
+
+\vspace{18cm}
+\ifthenelse{\equal{\pageref{test}}{1}}{\Huge A}{\small A}
+\label{test}
+\newpage
+\end{document}

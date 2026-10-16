@@ -1,0 +1,13 @@
+{
+  "id": "b05_toc",
+  "purpose": "Generated contents entries alter the list extent without any reference use",
+  "expected_class": "CERTIFIED",
+  "expected_structure": {
+    "has_cycle": false,
+    "has_structural_edge": false,
+    "min_facts": 30,
+    "longest_chain": ["TOC_ENTRY", "LIST_EXTENT", "CONTENT_VOLUME"]
+  },
+  "must_not": ["AMPLIFYING", "UNKNOWN"],
+  "notes": "Sixteen section entries feed the contents list. No page-reference value controls content quantity. Base LaTeX may omit a rerun warning while the contents file changes; compare canonical auxiliary state instead."
+}

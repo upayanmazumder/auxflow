@@ -1,0 +1,11 @@
+\documentclass{article}
+\usepackage{ifthen}
+\newcounter{generatedpage}
+\begin{document}
+\whiledo{\value{generatedpage}<\pageref{end:generated}}{%
+  \stepcounter{generatedpage}%
+  Record sheet occupies its own generated page.
+  \newpage
+}
+End of the generated record.\label{end:generated}
+\end{document}

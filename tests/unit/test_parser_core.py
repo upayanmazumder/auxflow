@@ -249,6 +249,24 @@ def test_whiledo_preserves_nested_group_structure() -> None:
     assert isinstance(loop.body[2], MacroCall) and loop.body[2].name == "\\newpage"
 
 
+def test_ifthenelse_retains_page_condition_and_both_size_branches() -> None:
+    source = r"\ifthenelse{\equal{\pageref{test}}{1}}{\Huge A}{\small A}"
+    result = _parse(source)
+    assert result.diagnostics == ()
+    (conditional,) = result.document.children
+    assert isinstance(conditional, ControlConstruct)
+    assert conditional.kind == "ifthenelse"
+    assert conditional.span.end == len(source)
+    (comparison,) = conditional.condition
+    assert isinstance(comparison, MacroCall) and comparison.name == r"\equal"
+    (page,) = comparison.args[0].content
+    assert isinstance(page, MacroCall) and page.name == r"\pageref"
+    assert isinstance(conditional.body[0], MacroCall)
+    assert conditional.body[0].name == r"\Huge"
+    assert isinstance(conditional.else_body[0], MacroCall)
+    assert conditional.else_body[0].name == r"\small"
+
+
 def test_macro_def_body_is_unexpanded_tokens_including_nested_braces() -> None:
     source = r"\newcommand{\pages}[1]{pre{#1}\pageref{x}\newpage}"
     result = _parse(source)

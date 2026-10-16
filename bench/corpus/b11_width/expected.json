@@ -1,0 +1,16 @@
+{
+  "id": "b11_width",
+  "purpose": "M3: a page reference near a line and page boundary can change its own resolved page",
+  "expected_class": "CERTIFIED",
+  "expected_structure": {
+    "has_cycle": false,
+    "has_structural_edge": false,
+    "min_facts": 3,
+    "longest_chain": ["CONTENT_VOLUME", "LABEL_PAGE", "PAGEREF_USE"]
+  },
+  "must_not": ["UNKNOWN", "AMPLIFYING"],
+  "declared_false_negative": true,
+  "mechanism": "M3 resolved page-number width changes a line break and page placement",
+  "why_undetected": "The graph omits the edge from the rendered width of PAGEREF_USE to page layout and LABEL_PAGE.",
+  "notes": "This is a declared prediction failure for extent feedback, not an asserted run count. Ground truth must establish whether the chosen page threshold oscillates."
+}
