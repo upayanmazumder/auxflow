@@ -1,0 +1,13 @@
+{
+  "id": "b02_backref",
+  "purpose": "A label precedes the reference that reads its section number",
+  "expected_class": "CERTIFIED",
+  "expected_structure": {
+    "has_cycle": false,
+    "has_structural_edge": false,
+    "min_facts": 2,
+    "longest_chain": ["LABEL_NUMBER", "REF_USE"]
+  },
+  "must_not": ["AMPLIFYING", "UNKNOWN"],
+  "notes": "The label in the first section supplies a number to the later reference through the auxiliary round trip; the unread section TOC records do not create list feedback."
+}

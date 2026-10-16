@@ -108,9 +108,10 @@ class CounterOp(Node):
 
 @dataclass(frozen=True)
 class ControlConstruct(Node):
-    kind: Literal["forloop", "whiledo"]
+    kind: Literal["forloop", "whiledo", "ifthenelse"]
     condition: tuple[Node, ...]
     body: tuple[Node, ...]
+    else_body: tuple[Node, ...] = ()
 
 
 @dataclass(frozen=True)

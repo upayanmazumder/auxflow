@@ -1,0 +1,16 @@
+{
+  "id": "b13_varioref",
+  "purpose": "M6: dynamic varioref text moves its reference across a page break relative to a fixed float",
+  "expected_class": "CERTIFIED",
+  "expected_structure": {
+    "has_cycle": false,
+    "has_structural_edge": false,
+    "min_facts": 3,
+    "longest_chain": ["LABEL_PAGE", "PAGEREF_USE"]
+  },
+  "must_not": ["UNKNOWN", "AMPLIFYING"],
+  "declared_false_negative": true,
+  "mechanism": "M6 varioref changes reference text according to relative float placement",
+  "why_undetected": "The narrow varioref syntax model records the page read but omits feedback from rendered reference length to the reference's own placement.",
+  "notes": "Eight successive TeX runs alternate the page containing the reference between 1 and 2. This oracle states the source mechanism rather than copying the analyser output."
+}

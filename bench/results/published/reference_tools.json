@@ -1,0 +1,513 @@
+{
+  "image_digest": "sha256:5ce7c46493cbe5574c643e9fcd1c990d50ec19b41245162f55b5a057b977efc6",
+  "notes": {
+    "latexmk_latexrun_vs_auxflow": "latexmk and latexrun -- both real, widely-used tools -- independently fail to converge (non-zero exit / rerun-cap reached) on b11_width, b12_float and b13_varioref, the exact three documents AuxFlow's static analysis wrongly CERTIFIES (declared false negatives). This is concrete, measured, cross-tool confirmation that the mechanism is real non-convergence, not a corpus-authoring artifact.",
+    "tectonic_offline_coverage": "Only b01_plain and b08_cycle converge offline against the build-time-primed bundle; the remaining documents need network access to Tectonic's own file index for packages/fonts outside the primer set (--network=none is enforced for every container, per docs/EVALUATION.md reproducibility). b09_thesis additionally fails because Tectonic's sandboxed bundle does not see the repo-local auditthesis.cls. Disclosed limitation, not fabricated success."
+  },
+  "results": [
+    {
+      "document": "b01_plain",
+      "status": "ok",
+      "tools": [
+        {
+          "converged": true,
+          "pdflatex_passes": 1,
+          "returncode": 0,
+          "stderr_tail": "",
+          "tool": "latexmk"
+        },
+        {
+          "converged": true,
+          "label_changed_reports": 2,
+          "returncode": 0,
+          "tool": "latexmk+labelschanged"
+        },
+        {
+          "converged": true,
+          "pdflatex_passes": 0,
+          "returncode": 0,
+          "stderr_tail": "/usr/local/bin/latexrun:1214: SyntaxWarning: invalid escape sequence '\\w'\n  if lookingatre('(Package |Class |LaTeX |pdfTeX )?(\\w+ )?warning: ', re.I):\n/usr/local/bin/latexrun:1353: SyntaxWarning: invalid escape sequence '\\.'\n  m2 = self.__lookingatre('l\\.[0-9]+ ')\n/usr/local/bin/latexrun:1835: SyntaxWarning: invalid escape sequence '\\d'\n  m2 = re.match(\"BibTeX subsystem: (.*?), line (\\d+), (.*)$\", m.group(1))\n",
+          "tool": "latexrun"
+        },
+        {
+          "converged": true,
+          "returncode": 0,
+          "stderr_tail": "",
+          "tool": "tectonic"
+        }
+      ]
+    },
+    {
+      "document": "b02_backref",
+      "status": "ok",
+      "tools": [
+        {
+          "converged": true,
+          "pdflatex_passes": 2,
+          "returncode": 0,
+          "stderr_tail": "",
+          "tool": "latexmk"
+        },
+        {
+          "converged": true,
+          "label_changed_reports": 2,
+          "returncode": 0,
+          "tool": "latexmk+labelschanged"
+        },
+        {
+          "converged": true,
+          "pdflatex_passes": 0,
+          "returncode": 0,
+          "stderr_tail": "/usr/local/bin/latexrun:1214: SyntaxWarning: invalid escape sequence '\\w'\n  if lookingatre('(Package |Class |LaTeX |pdfTeX )?(\\w+ )?warning: ', re.I):\n/usr/local/bin/latexrun:1353: SyntaxWarning: invalid escape sequence '\\.'\n  m2 = self.__lookingatre('l\\.[0-9]+ ')\n/usr/local/bin/latexrun:1835: SyntaxWarning: invalid escape sequence '\\d'\n  m2 = re.match(\"BibTeX subsystem: (.*?), line (\\d+), (.*)$\", m.group(1))\n",
+          "tool": "latexrun"
+        },
+        {
+          "converged": false,
+          "returncode": 1,
+          "stderr_tail": "ror trying to connect: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: failed to lookup address information: Temporary failure in name resolution\nerror: main.tex:3: Font TU/lmr/m/n/14.4=[lmroman12-regular]:mapping=tex-text; at 14.4pt not loadable: Metric (TFM) file or installed font not found\nerror: halted on potentially-recoverable error as specified\n",
+          "tool": "tectonic"
+        }
+      ]
+    },
+    {
+      "document": "b03_fwdref",
+      "status": "ok",
+      "tools": [
+        {
+          "converged": true,
+          "pdflatex_passes": 2,
+          "returncode": 0,
+          "stderr_tail": "",
+          "tool": "latexmk"
+        },
+        {
+          "converged": true,
+          "label_changed_reports": 2,
+          "returncode": 0,
+          "tool": "latexmk+labelschanged"
+        },
+        {
+          "converged": true,
+          "pdflatex_passes": 0,
+          "returncode": 0,
+          "stderr_tail": "/usr/local/bin/latexrun:1214: SyntaxWarning: invalid escape sequence '\\w'\n  if lookingatre('(Package |Class |LaTeX |pdfTeX )?(\\w+ )?warning: ', re.I):\n/usr/local/bin/latexrun:1353: SyntaxWarning: invalid escape sequence '\\.'\n  m2 = self.__lookingatre('l\\.[0-9]+ ')\n/usr/local/bin/latexrun:1835: SyntaxWarning: invalid escape sequence '\\d'\n  m2 = re.match(\"BibTeX subsystem: (.*?), line (\\d+), (.*)$\", m.group(1))\n",
+          "tool": "latexrun"
+        },
+        {
+          "converged": false,
+          "returncode": 1,
+          "stderr_tail": "ror trying to connect: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: failed to lookup address information: Temporary failure in name resolution\nerror: main.tex:3: Font TU/lmr/m/n/14.4=[lmroman12-regular]:mapping=tex-text; at 14.4pt not loadable: Metric (TFM) file or installed font not found\nerror: halted on potentially-recoverable error as specified\n",
+          "tool": "tectonic"
+        }
+      ]
+    },
+    {
+      "document": "b04_chain",
+      "status": "ok",
+      "tools": [
+        {
+          "converged": true,
+          "pdflatex_passes": 2,
+          "returncode": 0,
+          "stderr_tail": "Latexmk: Missing input file 'main.toc' (or dependence on it) from following:\n  No file main.toc.\n",
+          "tool": "latexmk"
+        },
+        {
+          "converged": true,
+          "label_changed_reports": 2,
+          "returncode": 0,
+          "tool": "latexmk+labelschanged"
+        },
+        {
+          "converged": true,
+          "pdflatex_passes": 0,
+          "returncode": 0,
+          "stderr_tail": "/usr/local/bin/latexrun:1214: SyntaxWarning: invalid escape sequence '\\w'\n  if lookingatre('(Package |Class |LaTeX |pdfTeX )?(\\w+ )?warning: ', re.I):\n/usr/local/bin/latexrun:1353: SyntaxWarning: invalid escape sequence '\\.'\n  m2 = self.__lookingatre('l\\.[0-9]+ ')\n/usr/local/bin/latexrun:1835: SyntaxWarning: invalid escape sequence '\\d'\n  m2 = re.match(\"BibTeX subsystem: (.*?), line (\\d+), (.*)$\", m.group(1))\n",
+          "tool": "latexrun"
+        },
+        {
+          "converged": false,
+          "returncode": 1,
+          "stderr_tail": "ror trying to connect: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: failed to lookup address information: Temporary failure in name resolution\nerror: main.tex:3: Font TU/lmr/m/n/14.4=[lmroman12-regular]:mapping=tex-text; at 14.4pt not loadable: Metric (TFM) file or installed font not found\nerror: halted on potentially-recoverable error as specified\n",
+          "tool": "tectonic"
+        }
+      ]
+    },
+    {
+      "document": "b05_toc",
+      "status": "ok",
+      "tools": [
+        {
+          "converged": true,
+          "pdflatex_passes": 3,
+          "returncode": 0,
+          "stderr_tail": "Latexmk: Missing input file 'main.toc' (or dependence on it) from following:\n  No file main.toc.\n",
+          "tool": "latexmk"
+        },
+        {
+          "converged": true,
+          "label_changed_reports": 2,
+          "returncode": 0,
+          "tool": "latexmk+labelschanged"
+        },
+        {
+          "converged": true,
+          "pdflatex_passes": 0,
+          "returncode": 0,
+          "stderr_tail": "/usr/local/bin/latexrun:1214: SyntaxWarning: invalid escape sequence '\\w'\n  if lookingatre('(Package |Class |LaTeX |pdfTeX )?(\\w+ )?warning: ', re.I):\n/usr/local/bin/latexrun:1353: SyntaxWarning: invalid escape sequence '\\.'\n  m2 = self.__lookingatre('l\\.[0-9]+ ')\n/usr/local/bin/latexrun:1835: SyntaxWarning: invalid escape sequence '\\d'\n  m2 = re.match(\"BibTeX subsystem: (.*?), line (\\d+), (.*)$\", m.group(1))\n",
+          "tool": "latexrun"
+        },
+        {
+          "converged": false,
+          "returncode": 1,
+          "stderr_tail": "ror trying to connect: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: failed to lookup address information: Temporary failure in name resolution\nerror: main.tex:3: Font TU/lmr/m/n/14.4=[lmroman12-regular]:mapping=tex-text; at 14.4pt not loadable: Metric (TFM) file or installed font not found\nerror: halted on potentially-recoverable error as specified\n",
+          "tool": "tectonic"
+        }
+      ]
+    },
+    {
+      "document": "b06_bib",
+      "status": "ok",
+      "tools": [
+        {
+          "converged": true,
+          "pdflatex_passes": 3,
+          "returncode": 0,
+          "stderr_tail": "Latexmk: Missing input file 'main.toc' (or dependence on it) from following:\n  No file main.toc.\nLatexmk: Missing bbl file 'main.bbl' in following:\n No file main.bbl.\n",
+          "tool": "latexmk"
+        },
+        {
+          "converged": true,
+          "label_changed_reports": 2,
+          "returncode": 0,
+          "tool": "latexmk+labelschanged"
+        },
+        {
+          "converged": true,
+          "pdflatex_passes": 0,
+          "returncode": 0,
+          "stderr_tail": "/usr/local/bin/latexrun:1214: SyntaxWarning: invalid escape sequence '\\w'\n  if lookingatre('(Package |Class |LaTeX |pdfTeX )?(\\w+ )?warning: ', re.I):\n/usr/local/bin/latexrun:1353: SyntaxWarning: invalid escape sequence '\\.'\n  m2 = self.__lookingatre('l\\.[0-9]+ ')\n/usr/local/bin/latexrun:1835: SyntaxWarning: invalid escape sequence '\\d'\n  m2 = re.match(\"BibTeX subsystem: (.*?), line (\\d+), (.*)$\", m.group(1))\n",
+          "tool": "latexrun"
+        },
+        {
+          "converged": false,
+          "returncode": 1,
+          "stderr_tail": "ror trying to connect: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: failed to lookup address information: Temporary failure in name resolution\nerror: main.tex:3: Font TU/lmr/m/n/14.4=[lmroman12-regular]:mapping=tex-text; at 14.4pt not loadable: Metric (TFM) file or installed font not found\nerror: halted on potentially-recoverable error as specified\n",
+          "tool": "tectonic"
+        }
+      ]
+    },
+    {
+      "document": "b07_footnote",
+      "status": "ok",
+      "tools": [
+        {
+          "converged": true,
+          "pdflatex_passes": 2,
+          "returncode": 0,
+          "stderr_tail": "",
+          "tool": "latexmk"
+        },
+        {
+          "converged": true,
+          "label_changed_reports": 2,
+          "returncode": 0,
+          "tool": "latexmk+labelschanged"
+        },
+        {
+          "converged": true,
+          "pdflatex_passes": 0,
+          "returncode": 0,
+          "stderr_tail": "/usr/local/bin/latexrun:1214: SyntaxWarning: invalid escape sequence '\\w'\n  if lookingatre('(Package |Class |LaTeX |pdfTeX )?(\\w+ )?warning: ', re.I):\n/usr/local/bin/latexrun:1353: SyntaxWarning: invalid escape sequence '\\.'\n  m2 = self.__lookingatre('l\\.[0-9]+ ')\n/usr/local/bin/latexrun:1835: SyntaxWarning: invalid escape sequence '\\d'\n  m2 = re.match(\"BibTeX subsystem: (.*?), line (\\d+), (.*)$\", m.group(1))\n",
+          "tool": "latexrun"
+        },
+        {
+          "converged": false,
+          "returncode": 1,
+          "stderr_tail": "ror trying to connect: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: failed to lookup address information: Temporary failure in name resolution\nerror: main.tex:4: Font TU/lmr/m/n/14.4=[lmroman12-regular]:mapping=tex-text; at 14.4pt not loadable: Metric (TFM) file or installed font not found\nerror: halted on potentially-recoverable error as specified\n",
+          "tool": "tectonic"
+        }
+      ]
+    },
+    {
+      "document": "b08_cycle",
+      "status": "ok",
+      "tools": [
+        {
+          "converged": false,
+          "pdflatex_passes": 5,
+          "returncode": 12,
+          "stderr_tail": "Latexmk: Maximum runs of pdflatex reached without getting stable files\n----------------------\nThis message may duplicate earlier message.\nLatexmk: Failure in processing file 'main.tex':\n   'pdflatex' needed too many passes\n----------------------\nLatexmk: If appropriate, the -f option can be used to get latexmk\n  to try to force complete processing.\n",
+          "tool": "latexmk"
+        },
+        {
+          "converged": false,
+          "label_changed_reports": 4,
+          "returncode": 12,
+          "tool": "latexmk+labelschanged"
+        },
+        {
+          "converged": false,
+          "pdflatex_passes": 0,
+          "returncode": 1,
+          "stderr_tail": "/usr/local/bin/latexrun:1214: SyntaxWarning: invalid escape sequence '\\w'\n  if lookingatre('(Package |Class |LaTeX |pdfTeX )?(\\w+ )?warning: ', re.I):\n/usr/local/bin/latexrun:1353: SyntaxWarning: invalid escape sequence '\\.'\n  m2 = self.__lookingatre('l\\.[0-9]+ ')\n/usr/local/bin/latexrun:1835: SyntaxWarning: invalid escape sequence '\\d'\n  m2 = re.match(\"BibTeX subsystem: (.*?), line (\\d+), (.*)$\", m.group(1))\nerror: files are still changing after 10 iterations; giving up\n",
+          "tool": "latexrun"
+        },
+        {
+          "converged": true,
+          "returncode": 0,
+          "stderr_tail": "warning: TeX rerun seems needed, but stopping at 6 passes\n",
+          "tool": "tectonic"
+        }
+      ]
+    },
+    {
+      "document": "b09_thesis",
+      "status": "ok",
+      "tools": [
+        {
+          "converged": true,
+          "pdflatex_passes": 3,
+          "returncode": 0,
+          "stderr_tail": "Latexmk: Missing input file 'main.toc' (or dependence on it) from following:\n  No file main.toc.\nLatexmk: Missing input file 'main.lof' (or dependence on it) from following:\n  No file main.lof.\nLatexmk: Missing input file 'main.lot' (or dependence on it) from following:\n  No file main.lot.\nLatexmk: Missing bbl file 'main.bbl' in following:\n No file main.bbl.\n",
+          "tool": "latexmk"
+        },
+        {
+          "converged": true,
+          "label_changed_reports": 2,
+          "returncode": 0,
+          "tool": "latexmk+labelschanged"
+        },
+        {
+          "converged": true,
+          "pdflatex_passes": 0,
+          "returncode": 0,
+          "stderr_tail": "/usr/local/bin/latexrun:1214: SyntaxWarning: invalid escape sequence '\\w'\n  if lookingatre('(Package |Class |LaTeX |pdfTeX )?(\\w+ )?warning: ', re.I):\n/usr/local/bin/latexrun:1353: SyntaxWarning: invalid escape sequence '\\.'\n  m2 = self.__lookingatre('l\\.[0-9]+ ')\n/usr/local/bin/latexrun:1835: SyntaxWarning: invalid escape sequence '\\d'\n  m2 = re.match(\"BibTeX subsystem: (.*?), line (\\d+), (.*)$\", m.group(1))\n",
+          "tool": "latexrun"
+        },
+        {
+          "converged": false,
+          "returncode": 1,
+          "stderr_tail": "error: main.tex:2: ! LaTeX Error: File `auditthesis.cls' not found.\nerror: halted on potentially-recoverable error as specified\n",
+          "tool": "tectonic"
+        }
+      ]
+    },
+    {
+      "document": "b10_random",
+      "status": "ok",
+      "tools": [
+        {
+          "converged": false,
+          "pdflatex_passes": 5,
+          "returncode": 12,
+          "stderr_tail": "Latexmk: Maximum runs of pdflatex reached without getting stable files\n----------------------\nThis message may duplicate earlier message.\nLatexmk: Failure in processing file 'main.tex':\n   'pdflatex' needed too many passes\n----------------------\nLatexmk: If appropriate, the -f option can be used to get latexmk\n  to try to force complete processing.\n",
+          "tool": "latexmk"
+        },
+        {
+          "converged": false,
+          "label_changed_reports": 2,
+          "returncode": 12,
+          "tool": "latexmk+labelschanged"
+        },
+        {
+          "converged": false,
+          "pdflatex_passes": 0,
+          "returncode": 1,
+          "stderr_tail": "/usr/local/bin/latexrun:1214: SyntaxWarning: invalid escape sequence '\\w'\n  if lookingatre('(Package |Class |LaTeX |pdfTeX )?(\\w+ )?warning: ', re.I):\n/usr/local/bin/latexrun:1353: SyntaxWarning: invalid escape sequence '\\.'\n  m2 = self.__lookingatre('l\\.[0-9]+ ')\n/usr/local/bin/latexrun:1835: SyntaxWarning: invalid escape sequence '\\d'\n  m2 = re.match(\"BibTeX subsystem: (.*?), line (\\d+), (.*)$\", m.group(1))\nerror: files are still changing after 10 iterations; giving up\n",
+          "tool": "latexrun"
+        },
+        {
+          "converged": false,
+          "returncode": 1,
+          "stderr_tail": "or trying to connect: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: failed to lookup address information: Temporary failure in name resolution\nerror: main.tex:10: Font TU/lmr/m/n/14.4=[lmroman12-regular]:mapping=tex-text; at 14.4pt not loadable: Metric (TFM) file or installed font not found\nerror: halted on potentially-recoverable error as specified\n",
+          "tool": "tectonic"
+        }
+      ]
+    },
+    {
+      "document": "b11_width",
+      "status": "ok",
+      "tools": [
+        {
+          "converged": false,
+          "pdflatex_passes": 5,
+          "returncode": 12,
+          "stderr_tail": "Latexmk: Maximum runs of pdflatex reached without getting stable files\n----------------------\nThis message may duplicate earlier message.\nLatexmk: Failure in processing file 'main.tex':\n   'pdflatex' needed too many passes\n----------------------\nLatexmk: If appropriate, the -f option can be used to get latexmk\n  to try to force complete processing.\n",
+          "tool": "latexmk"
+        },
+        {
+          "converged": false,
+          "label_changed_reports": 4,
+          "returncode": 12,
+          "tool": "latexmk+labelschanged"
+        },
+        {
+          "converged": false,
+          "pdflatex_passes": 0,
+          "returncode": 1,
+          "stderr_tail": "/usr/local/bin/latexrun:1214: SyntaxWarning: invalid escape sequence '\\w'\n  if lookingatre('(Package |Class |LaTeX |pdfTeX )?(\\w+ )?warning: ', re.I):\n/usr/local/bin/latexrun:1353: SyntaxWarning: invalid escape sequence '\\.'\n  m2 = self.__lookingatre('l\\.[0-9]+ ')\n/usr/local/bin/latexrun:1835: SyntaxWarning: invalid escape sequence '\\d'\n  m2 = re.match(\"BibTeX subsystem: (.*?), line (\\d+), (.*)$\", m.group(1))\nerror: files are still changing after 10 iterations; giving up\n",
+          "tool": "latexrun"
+        },
+        {
+          "converged": false,
+          "returncode": 1,
+          "stderr_tail": "or trying to connect: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: failed to lookup address information: Temporary failure in name resolution\nerror: main.tex:13: Font TU/lmr/m/n/14.4=[lmroman12-regular]:mapping=tex-text; at 14.4pt not loadable: Metric (TFM) file or installed font not found\nerror: halted on potentially-recoverable error as specified\n",
+          "tool": "tectonic"
+        }
+      ]
+    },
+    {
+      "document": "b12_float",
+      "status": "ok",
+      "tools": [
+        {
+          "converged": false,
+          "pdflatex_passes": 5,
+          "returncode": 12,
+          "stderr_tail": "Latexmk: Maximum runs of pdflatex reached without getting stable files\n----------------------\nThis message may duplicate earlier message.\nLatexmk: Failure in processing file 'main.tex':\n   'pdflatex' needed too many passes\n----------------------\nLatexmk: If appropriate, the -f option can be used to get latexmk\n  to try to force complete processing.\n",
+          "tool": "latexmk"
+        },
+        {
+          "converged": false,
+          "label_changed_reports": 4,
+          "returncode": 12,
+          "tool": "latexmk+labelschanged"
+        },
+        {
+          "converged": false,
+          "pdflatex_passes": 0,
+          "returncode": 1,
+          "stderr_tail": "/usr/local/bin/latexrun:1214: SyntaxWarning: invalid escape sequence '\\w'\n  if lookingatre('(Package |Class |LaTeX |pdfTeX )?(\\w+ )?warning: ', re.I):\n/usr/local/bin/latexrun:1353: SyntaxWarning: invalid escape sequence '\\.'\n  m2 = self.__lookingatre('l\\.[0-9]+ ')\n/usr/local/bin/latexrun:1835: SyntaxWarning: invalid escape sequence '\\d'\n  m2 = re.match(\"BibTeX subsystem: (.*?), line (\\d+), (.*)$\", m.group(1))\nerror: files are still changing after 10 iterations; giving up\n",
+          "tool": "latexrun"
+        },
+        {
+          "converged": false,
+          "returncode": 1,
+          "stderr_tail": "or trying to connect: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: failed to lookup address information: Temporary failure in name resolution\nerror: main.tex:11: Font TU/lmr/m/n/14.4=[lmroman12-regular]:mapping=tex-text; at 14.4pt not loadable: Metric (TFM) file or installed font not found\nerror: halted on potentially-recoverable error as specified\n",
+          "tool": "tectonic"
+        }
+      ]
+    },
+    {
+      "document": "b13_varioref",
+      "status": "ok",
+      "tools": [
+        {
+          "converged": false,
+          "pdflatex_passes": 5,
+          "returncode": 12,
+          "stderr_tail": "Latexmk: Maximum runs of pdflatex reached without getting stable files\n----------------------\nThis message may duplicate earlier message.\nLatexmk: Failure in processing file 'main.tex':\n   'pdflatex' needed too many passes\n----------------------\nLatexmk: If appropriate, the -f option can be used to get latexmk\n  to try to force complete processing.\n",
+          "tool": "latexmk"
+        },
+        {
+          "converged": false,
+          "label_changed_reports": 5,
+          "returncode": 12,
+          "tool": "latexmk+labelschanged"
+        },
+        {
+          "converged": false,
+          "pdflatex_passes": 0,
+          "returncode": 1,
+          "stderr_tail": "/usr/local/bin/latexrun:1214: SyntaxWarning: invalid escape sequence '\\w'\n  if lookingatre('(Package |Class |LaTeX |pdfTeX )?(\\w+ )?warning: ', re.I):\n/usr/local/bin/latexrun:1353: SyntaxWarning: invalid escape sequence '\\.'\n  m2 = self.__lookingatre('l\\.[0-9]+ ')\n/usr/local/bin/latexrun:1835: SyntaxWarning: invalid escape sequence '\\d'\n  m2 = re.match(\"BibTeX subsystem: (.*?), line (\\d+), (.*)$\", m.group(1))\nerror: files are still changing after 10 iterations; giving up\n",
+          "tool": "latexrun"
+        },
+        {
+          "converged": false,
+          "returncode": 1,
+          "stderr_tail": "tion\ncaused by: error trying to connect: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: failed to lookup address information: Temporary failure in name resolution\nerror: main.tex:42: Font TU/lmtt/m/n/10=[lmmono10-regular]: at 10.0pt not loadable: Metric (TFM) file or installed font not found\nerror: halted on potentially-recoverable error as specified\n",
+          "tool": "tectonic"
+        }
+      ]
+    },
+    {
+      "document": "b14_ifthen",
+      "status": "ok",
+      "tools": [
+        {
+          "converged": false,
+          "pdflatex_passes": 5,
+          "returncode": 12,
+          "stderr_tail": "Latexmk: Maximum runs of pdflatex reached without getting stable files\n----------------------\nThis message may duplicate earlier message.\nLatexmk: Failure in processing file 'main.tex':\n   'pdflatex' needed too many passes\n----------------------\nLatexmk: If appropriate, the -f option can be used to get latexmk\n  to try to force complete processing.\n",
+          "tool": "latexmk"
+        },
+        {
+          "converged": false,
+          "label_changed_reports": 4,
+          "returncode": 12,
+          "tool": "latexmk+labelschanged"
+        },
+        {
+          "converged": false,
+          "pdflatex_passes": 0,
+          "returncode": 1,
+          "stderr_tail": "/usr/local/bin/latexrun:1214: SyntaxWarning: invalid escape sequence '\\w'\n  if lookingatre('(Package |Class |LaTeX |pdfTeX )?(\\w+ )?warning: ', re.I):\n/usr/local/bin/latexrun:1353: SyntaxWarning: invalid escape sequence '\\.'\n  m2 = self.__lookingatre('l\\.[0-9]+ ')\n/usr/local/bin/latexrun:1835: SyntaxWarning: invalid escape sequence '\\d'\n  m2 = re.match(\"BibTeX subsystem: (.*?), line (\\d+), (.*)$\", m.group(1))\nerror: files are still changing after 10 iterations; giving up\n",
+          "tool": "latexrun"
+        },
+        {
+          "converged": false,
+          "returncode": 1,
+          "stderr_tail": "r trying to connect: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: failed to lookup address information: Temporary failure in name resolution\nerror: main.tex:7: Font TU/lmr/m/n/24.88=[lmroman17-regular]:mapping=tex-text; at 24.88pt not loadable: Metric (TFM) file or installed font not found\nerror: halted on potentially-recoverable error as specified\n",
+          "tool": "tectonic"
+        }
+      ]
+    },
+    {
+      "document": "b15_ibid",
+      "status": "ok",
+      "tools": [
+        {
+          "converged": true,
+          "pdflatex_passes": 4,
+          "returncode": 0,
+          "stderr_tail": "Latexmk: Missing bbl file 'main.bbl' in following:\n No file main.bbl.\n",
+          "tool": "latexmk"
+        },
+        {
+          "converged": true,
+          "label_changed_reports": 2,
+          "returncode": 0,
+          "tool": "latexmk+labelschanged"
+        },
+        {
+          "converged": false,
+          "pdflatex_passes": 0,
+          "returncode": 1,
+          "stderr_tail": "/usr/local/bin/latexrun:1214: SyntaxWarning: invalid escape sequence '\\w'\n  if lookingatre('(Package |Class |LaTeX |pdfTeX )?(\\w+ )?warning: ', re.I):\n/usr/local/bin/latexrun:1353: SyntaxWarning: invalid escape sequence '\\.'\n  m2 = self.__lookingatre('l\\.[0-9]+ ')\n/usr/local/bin/latexrun:1835: SyntaxWarning: invalid escape sequence '\\d'\n  m2 = re.match(\"BibTeX subsystem: (.*?), line (\\d+), (.*)$\", m.group(1))\n",
+          "tool": "latexrun"
+        },
+        {
+          "converged": false,
+          "returncode": 1,
+          "stderr_tail": "d to lookup address information: Temporary failure in name resolution\ncaused by: error trying to connect: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: dns error: failed to lookup address information: Temporary failure in name resolution\ncaused by: failed to lookup address information: Temporary failure in name resolution\nerror: main.tex:3: ! LaTeX Error: File `biblatex.sty' not found.\nerror: halted on potentially-recoverable error as specified\n",
+          "tool": "tectonic"
+        }
+      ]
+    }
+  ],
+  "typst_ports": {
+    "b08_cycle": {
+      "converged": false,
+      "note": "Typst's own relayout-until-fixpoint bound independently refuses; same AMPLIFYING verdict as AuxFlow's static analysis, different implementation.",
+      "result": "error: loop seems to be infinite"
+    },
+    "b11_width": {
+      "note": "No Typst analogue for LaTeX's stale-first-pass line-break width feedback; see bench/harness/typst-ports/README.md.",
+      "result": "not ported"
+    },
+    "b12_float": {
+      "note": "LaTeX-specific [!t] float placement heuristic has no Typst counterpart.",
+      "result": "not ported"
+    },
+    "b13_varioref": {
+      "note": "varioref's above/below text selection is a LaTeX-package-specific mechanism.",
+      "result": "not ported"
+    },
+    "b14_ifthen": {
+      "converged": true,
+      "note": "Typst's internal relayout finds a genuine fixpoint LaTeX's single-pass .aux write/reread model cannot see; evidence for AuxFlow's documented over-approximation on this member.",
+      "result": "compiled cleanly, 2 pages"
+    }
+  }
+}

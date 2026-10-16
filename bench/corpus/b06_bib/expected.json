@@ -1,0 +1,13 @@
+{
+  "id": "b06_bib",
+  "purpose": "Citation and bibliography add a tool edge before a generated-list pagination chain",
+  "expected_class": "CERTIFIED",
+  "expected_structure": {
+    "has_cycle": false,
+    "has_structural_edge": false,
+    "min_facts": 12,
+    "longest_chain": ["CITE_USE", "BBL", "TOC_ENTRY", "LIST_EXTENT", "CONTENT_VOLUME", "LABEL_PAGE", "PAGEREF_USE"]
+  },
+  "must_not": ["AMPLIFYING", "UNKNOWN"],
+  "notes": "Two citations reach a bibliography database. BibTeX adds a tool step between engine passes; contents extent and a page-reference use extend the ordinary acyclic dependency chain. No run count is asserted here."
+}

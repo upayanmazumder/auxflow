@@ -1,0 +1,13 @@
+{
+  "id": "b08_cycle",
+  "purpose": "M1: a page reference bounds a loop that emits pages before its own target label",
+  "expected_class": "AMPLIFYING",
+  "expected_structure": {
+    "has_cycle": true,
+    "has_structural_edge": true,
+    "min_facts": 3,
+    "longest_chain": ["LABEL_PAGE", "PAGEREF_USE", "CONTENT_VOLUME", "LABEL_PAGE"]
+  },
+  "must_not": ["CERTIFIED", "UNKNOWN"],
+  "notes": "With an unresolved reference the first run skips the loop and writes the target page. Later runs emit as many pages as that prior target page, then label the following page. The cycle contains the page reference, generated page quantity, and label page."
+}

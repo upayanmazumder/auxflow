@@ -1,0 +1,14 @@
+{
+  "id": "b14_ifthen",
+  "purpose": "M2: a page-conditioned font size changes the label's page",
+  "expected_class": "AMPLIFYING",
+  "expected_structure": {
+    "has_cycle": true,
+    "has_structural_edge": true,
+    "min_facts": 4,
+    "longest_chain": ["LABEL_PAGE", "PAGEREF_USE", "CONTENT_VOLUME"]
+  },
+  "must_not": ["UNKNOWN", "CERTIFIED"],
+  "mechanism": "M2 ifthenelse selects a large or small A according to the label's previous page",
+  "notes": "Eight TeX runs alternate the label between pages 1 and 2. The graph's structural edge treats the conditional as content growth, although the branch only changes size."
+}

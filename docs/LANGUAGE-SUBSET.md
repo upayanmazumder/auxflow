@@ -25,6 +25,7 @@ degrades conservatively. It is never guessed at.
 | `\label{k}` | Produces the primary fact |
 | `\ref{k}` | Consumes the number component; both directions |
 | `\pageref{k}` | Consumes the page component; the origin of page feedback |
+| `\vref{k}` with `varioref` | Reads a label page; its dynamic text extent is not modelled |
 | `\cite{k}` and variants | Produces a citation fact; drives the external tool edge |
 | `\bibliography{f}`, `\bibliographystyle{s}` | Produces bibliography state through an external tool |
 | `\tableofcontents` | Generated state whose page footprint shifts pagination |

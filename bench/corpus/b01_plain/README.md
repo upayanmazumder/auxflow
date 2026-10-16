@@ -1,0 +1,1 @@
+This control is a single paragraph in an article without sections, labels, citations, or generated lists. It tests the case in which there are no document-level auxiliary facts to propagate, so a detector that insists on comparing successive states does work the source itself does not require; the oracle deliberately records structure rather than a measured number of runs.

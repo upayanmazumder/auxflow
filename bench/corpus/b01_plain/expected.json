@@ -1,0 +1,13 @@
+{
+  "id": "b01_plain",
+  "purpose": "Plain prose with no auxiliary-state producers or consumers",
+  "expected_class": "CERTIFIED",
+  "expected_structure": {
+    "has_cycle": false,
+    "has_structural_edge": false,
+    "min_facts": 0,
+    "longest_chain": []
+  },
+  "must_not": ["AMPLIFYING", "UNKNOWN"],
+  "notes": "No labels, references, lists, sections, or citations appear in the source; no ground-truth run count is asserted."
+}

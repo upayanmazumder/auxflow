@@ -1,0 +1,13 @@
+\documentclass{article}
+% The command consumes the record when the preceding run's aux file is read.
+\providecommand\randomsample[1]{}
+\makeatletter
+\AtEndDocument{%
+  \immediate\write\@auxout{\string\randomsample{\number\pdfuniformdeviate 2147483647}}%
+}
+\makeatother
+\begin{document}
+\section*{A changing auxiliary record}
+The printed sentence is invariant. The generated auxiliary record contains a
+pdfTeX random draw made when this run ends, even when no cross-reference changes.
+\end{document}

@@ -4,13 +4,14 @@ Corpus design is specified in [../docs/BENCHMARKS.md](../docs/BENCHMARKS.md); th
 protocol and ground-truth definition in [../docs/EVALUATION.md](../docs/EVALUATION.md). This
 file covers organisation and operation.
 
-**No results are recorded in this directory yet, and none should be invented.** Any number that
-appears here must be regenerable by `harness/run.py`.
+**Results are not committed under `results/` itself** (regenerated, not source); the published
+set lives under `results/published/` once a measurement run has been promoted there.
 
 ## Organisation
 
 ```
 bench/
+  Dockerfile    pinned evaluation environment (TeX Live + reference tools + auxflow)
   corpus/       fifteen documents, sources only, one directory each
     shared/     shared bibliography database and document class
   baselines/    the convergence-detection mechanisms under comparison
@@ -27,37 +28,47 @@ an auxiliary or output file, something has run in the wrong place.
 
 ## Environment requirements
 
-- A TeX engine with the standard tooling, supplied by a **container image pinned by digest**.
-  The image must include `latexmk` so that an external cross-check of the state-comparison
-  baseline is possible. Selecting and pinning the image is open decision D10 in
-  [../docs/PROJECT.md](../docs/PROJECT.md) and must be closed before the first measurement.
+- A TeX engine with the standard tooling, supplied by `bench/Dockerfile`, a container image
+  pinned by digest (`python:3.12-slim-bookworm` base; resolved open decision D10 in
+  [../docs/PROJECT.md](../docs/PROJECT.md)). Build it with
+  `docker build -t auxflow-bench:v1 -f bench/Dockerfile .` from the repo root. It includes
+  `latexmk`, `latexrun`, `tectonic`, `typst`, `biber`, `labelschanged`, and `auxflow` itself
+  (pip-installed, so baseline scripts and the ground-truth sweep share identical normalisation
+  with the host).
 - No engine is needed for anything other than the harness. Every compiler command up to and
-  including `auxflow plan` runs without one.
-- The harness sets deterministic timestamp variables itself rather than relying on the
-  environment.
+  including `auxflow plan` runs without one. Baseline D never touches the container at all.
+- The harness sets `SOURCE_DATE_EPOCH` itself rather than relying on the environment.
 
 ## Baselines
 
 | Script | Mechanism | Notes |
 |---|---|---|
-| `baselines/fixed.sh` | Fixed schedule | The conventional sequence; no source analysis |
-| `baselines/warning.sh` | Engine-warning detection | Included **because it is unsound**; the gap against ground truth is a result |
-| `baselines/checksum.sh` | Normalised state comparison | Standard practice; costs one execution beyond the last productive run |
+| `baselines/fixed.sh` | Fixed schedule (A) | The conventional sequence; no source analysis |
+| `baselines/warning.sh` | Engine-warning detection (B) | Included **because it is unsound**; the gap against ground truth is a result |
+| `baselines/checksum.sh` | Consecutive-output comparison (C) | `latexmk`'s and ConTeXt's oracle; costs *N*+1 executions |
+| `baselines/inputs.sh` | Consecutive-input comparison (C′) | `latexrun`'s oracle; costs *N* executions |
+| `baselines/readwrite.sh` | Same-run read-then-written comparison (C″) | Tectonic's oracle; costs *N* executions, available one run earlier than C′ in wall-clock terms |
 
 Baselines are shell scripts so that a reviewer can read in a few lines exactly what was
-executed. They share the harness's normalisation so that they differ only in the mechanism under
-study.
+executed; `baselines/lib.sh` holds only the shared pdflatex/bibtex invocation mechanics, never
+the stopping-condition logic itself. Each script calls `harness/normstate.py` (pip-installed
+into the container alongside `auxflow`) for its state fingerprint, so every baseline compares
+exactly the canonical records `auxflow.runtime.normalize` defines.
 
-The two AuxFlow configurations — static analysis alone, and static analysis with runtime
-verification — are driven through the harness rather than through shell scripts.
+The two AuxFlow configurations — static analysis alone (D), and static analysis with runtime
+verification (E) — are driven through `harness/analyze.py` and `harness/plan_incontainer.py`
+rather than through shell scripts, reusing the same code path `auxflow classify`/`plan`/`run`
+use.
 
 ## Running
 
-Not yet implemented. The intended interface:
-
 ```
-python harness/run.py --corpus corpus --baseline all --reps 10 --out results/$(date -I)
-python harness/report.py results/<dir> > results/<dir>/summary.md
+docker build -t auxflow-bench:v1 -f bench/Dockerfile .
+python3 bench/harness/groundtruth.py --out bench/results/published/groundtruth.json
+python3 bench/harness/run.py --corpus bench/corpus --baseline all --reps 10 \
+    --out bench/results/$(date -I)
+python3 bench/harness/report.py bench/results/$(date -I) \
+    --groundtruth bench/results/published/groundtruth.json > bench/results/$(date -I)/summary.md
 ```
 
 `run.py` emits one JSONL record per repetition, each carrying the image digest, document
@@ -81,8 +92,7 @@ regenerated whenever a corpus document changes.
 - At least ten repetitions per (document, baseline).
 - Median, p95 and interquartile range. Point estimates are not reported for timings.
 - One container per repetition; CPU pinned; no concurrent measurement.
-- Cold conditions are primary: fresh working directory, no auxiliary files, one discarded run
-  first to warm the engine's format cache.
+- Cold conditions are primary: fresh working directory, no auxiliary files.
 - Per-document results only. **No corpus-wide mean** — it measures corpus composition rather
   than the system.
 

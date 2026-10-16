@@ -1,0 +1,24 @@
+\documentclass{article}
+\begin{document}
+\pagenumbering{Roman}
+
+First page\clearpage
+Second page\clearpage
+Third page\clearpage
+Fourth page\clearpage
+Fifth page\clearpage
+Sixth page\clearpage
+Seventh page\clearpage
+
+\section{Reference width and pagination}
+The earlier pages establish the Roman page numbers near IX and X.
+This paragraph places a page reference immediately before a page boundary.
+Its resolved width can change the line break at the end of the paragraph.
+The label below then changes the very page number used in that reference.
+The field record lists origin, date, site, sample, layer, depth, mass. The closing section is on page~\pageref{sec:boundary}.
+
+\vspace{14.2cm}
+
+\section{Boundary}\label{sec:boundary}
+This section records the page reached after the reference is typeset.
+\end{document}

@@ -1,0 +1,13 @@
+{
+  "id": "b09_thesis",
+  "purpose": "Realistic multi-chapter document: three interacting generated lists, bibliography, cross-chapter references, an unreachable chapter file, and an active-character caption",
+  "expected_class": "CERTIFIED",
+  "expected_structure": {
+    "has_cycle": false,
+    "has_structural_edge": false,
+    "min_facts": 100,
+    "longest_chain": ["TOC_ENTRY", "LIST_EXTENT", "CONTENT_VOLUME", "LABEL_PAGE", "PAGEREF_USE"]
+  },
+  "must_not": ["AMPLIFYING", "UNKNOWN"],
+  "notes": "Three chapters (\\include), three generated lists (toc/lof/lot), two bibliography entries cited six times, and cross-chapter \\ref/\\pageref pairs together form a benign cycle through a generated list, matching b05's structure but across files. chapters/appendix_draft.tex exists on disk and is never \\include'd, giving dead-file elimination a real unreachable file to skip. A literal '~' inside one caption stands for the active-character class the labelschanged documentation (SOURCED) names as an M9 false-positive cause for the engine's own \\@testdef warning; measured on this exact source, the real engine warns on runs 1-2 (new bibtex-fed labels, a genuine need to rerun) and is silent by run 3, so no persistent false positive is claimed here, only that AuxFlow's classification never depends on catcode behaviour the engine warning does."
+}

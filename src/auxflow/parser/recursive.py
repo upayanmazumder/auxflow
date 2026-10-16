@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Literal
 
 from auxflow.lexer.catcode import CatCode
 from auxflow.lexer.tokens import Token
@@ -60,6 +61,7 @@ _MODELLED_CONTROL_SEQUENCES = (
         "\\listoftables",
         "\\forloop",
         "\\whiledo",
+        "\\ifthenelse",
         "\\newcommand",
         "\\renewcommand",
         "\\newpage",
@@ -159,7 +161,7 @@ def _parse_nodes(cursor: _Cursor, stop: Callable[[_Cursor], bool]) -> list[Node]
                 flush_text()
                 nodes.append(_parse_sectioning(cursor))
                 continue
-            if tok.text in ("\\forloop", "\\whiledo"):
+            if tok.text in ("\\forloop", "\\whiledo", "\\ifthenelse"):
                 flush_text()
                 nodes.append(_parse_control_construct(cursor))
                 continue
@@ -261,6 +263,8 @@ def _parse_control_construct(cursor: _Cursor) -> ControlConstruct:
     labels = (
         ("counter", "start", "condition", "body")
         if command.text == "\\forloop"
+        else ("condition", "body", "else body")
+        if command.text == "\\ifthenelse"
         else ("condition", "body")
     )
     for label in labels:
@@ -273,12 +277,17 @@ def _parse_control_construct(cursor: _Cursor) -> ControlConstruct:
     condition_index = 2 if command.text == "\\forloop" else 0
     condition = groups[condition_index].children if len(groups) > condition_index else ()
     body = groups[condition_index + 1].children if len(groups) > condition_index + 1 else ()
+    else_body = groups[2].children if command.text == "\\ifthenelse" and len(groups) > 2 else ()
     end = cursor.end_offset() if groups else command.offset + len(command.text)
+    kind: Literal["forloop", "whiledo", "ifthenelse"] = (
+        "forloop"
+        if command.text == "\\forloop"
+        else "ifthenelse"
+        if command.text == "\\ifthenelse"
+        else "whiledo"
+    )
     return ControlConstruct(
-        Span(cursor.file_id, command.offset, end),
-        "forloop" if command.text == "\\forloop" else "whiledo",
-        condition,
-        body,
+        Span(cursor.file_id, command.offset, end), kind, condition, body, else_body
     )
 
 
