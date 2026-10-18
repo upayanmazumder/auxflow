@@ -6,10 +6,11 @@ AuxFlow is a compiler and static analyser for a declared subset of LaTeX. It par
 into an instance-level dependency graph of auxiliary facts, computes when each fact stabilises,
 and classifies the document's convergence behaviour before the typesetting engine runs once.
 
-**Status: bootstrap / design phase. No compiler code has been written yet.** A prior-art audit was
-completed on 2026-08-27; it falsified two hypotheses and removed five claimed contributions, and its
-findings govern the specification. See [Current status](#current-status),
-[docs/RELATED-WORK.md](docs/RELATED-WORK.md) and [research/sources/](research/sources/).
+**Status: implementation complete.** All sixteen implementation phases are built, tested, and
+merged, and the empirical evaluation has run. A prior-art audit was completed on 2026-08-27; it
+falsified two hypotheses and removed five claimed contributions, and its findings govern the
+specification. See [Current status](#current-status), [docs/RELATED-WORK.md](docs/RELATED-WORK.md)
+and [research/sources/](research/sources/).
 
 ---
 
@@ -161,20 +162,39 @@ removed without the project ceasing to be a complete compiler.
 
 ## Current status
 
-Bootstrap and design phase. The repository contains specifications, research notes and scaffolding.
-`src/` holds package structure and docstrings only: no lexer, no parser, no analysis.
-
 A prior-art audit was completed on 2026-08-27. Its evidence is in
 [research/sources/](research/sources/) (eight files, roughly 460 KB of search logs, verbatim quotes
 and per-source anticipation verdicts), indexed by
 [research/prior-art-log.md](research/prior-art-log.md). The audit changed the design's positioning
-substantially and left three open decisions that must close before implementation: how the taint
-criterion is scoped (D13), whether the amplifying class splits (D12), and whether the amplifying
-analysis may be claimed at all (D14, blocked on two paper reads).
+substantially and closed two decisions that gated implementation: the taint criterion is scoped
+narrowly (D13), and the amplifying analysis is claimed against Krishnan and Van Wyk but not
+against Söderberg and Hedin (D14). Both are recorded in
+[docs/PROJECT.md](docs/PROJECT.md#open-technical-decisions).
 
-**Implementation has not started and should not start until D13 and D14 are resolved.**
-[docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md) describes the phased plan; it predates the
-audit and its ordering must be revisited.
+All sixteen phases in [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md) are implemented,
+merged to `main`, and tracked to closure: 16 phase issues and 58 sub-issues on
+[the project board](https://github.com/users/upayanmazumder/projects/8), all closed. The compiler
+(`src/auxflow/`) has a lexer, parser, AST, symbol tables, semantic diagnostics, the Auxiliary
+Reference Graph, taint analysis, SCC detection, a stable-pass fixpoint, a four-state classifier, a
+build planner, and a runtime verifier, each reachable from the `auxflow` command-line tool. The
+test suite passes (245 tests, 1 skipped), `mypy --strict` reports no issues across 41 source
+files, and `ruff check`/`ruff format --check` are clean.
+
+The benchmark corpus (`bench/corpus/`) has fifteen documents. The measurement harness
+(`bench/harness/`) ran the full evaluation: fifteen documents across seven baselines, ten
+repetitions each, 1,050 records in `bench/results/published/`. Gate 1 (the classifier separates
+the amplifying headline case from the certified control, and the three declared false negatives
+misclassify exactly as predicted) and Gate 2 (the predicted run count is at least the measured
+ground truth for every certified document) both pass. `latexmk` and `latexrun` independently fail
+to converge on the same three documents AuxFlow's static analysis wrongly certifies, an external
+check that the declared false negatives are a real limitation rather than a corpus artifact. Full
+results and method in [docs/EVALUATION-REPORT.md](docs/EVALUATION-REPORT.md) and
+[docs/GATE-REPORT.md](docs/GATE-REPORT.md).
+
+Four decisions remain open (D4, D7, D11, D12 in [docs/PROJECT.md](docs/PROJECT.md)); none of them
+blocked implementation, and each is a scoping refinement rather than a missing capability. They
+are tracked on [issue #77](https://github.com/upayanmazumder/auxflow/issues/77), alongside the
+risk register (#75) and deferred scope (#76).
 
 ## Scope
 
@@ -206,6 +226,8 @@ Full boundary in [docs/SCOPE.md](docs/SCOPE.md).
 | [docs/BUILD-PLANNER.md](docs/BUILD-PLANNER.md) | Analysis result to execution plan |
 | [docs/RUNTIME-VERIFICATION.md](docs/RUNTIME-VERIFICATION.md) | State-based verification |
 | [docs/EVALUATION.md](docs/EVALUATION.md) | Baselines, ground truth, metrics |
+| [docs/EVALUATION-REPORT.md](docs/EVALUATION-REPORT.md) | Measured results against the published method |
+| [docs/GATE-REPORT.md](docs/GATE-REPORT.md) | Gate 1 and Gate 2 pass/fail against the measured results |
 | [docs/BENCHMARKS.md](docs/BENCHMARKS.md) | Corpus design |
 | [docs/RELATED-WORK.md](docs/RELATED-WORK.md) | Prior art, conceded explicitly |
 | [docs/PATENT-NOTES.md](docs/PATENT-NOTES.md) | Prior-art risk; not a patent application |
