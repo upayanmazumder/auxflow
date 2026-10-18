@@ -134,7 +134,7 @@ def build_document() -> None:
         ("Register Number(s)", "24BDS0367"),
         ("Programme / Branch", "B.Tech CSE (Data Science)"),
         ("Project Guide", "Banupriya R"),
-        ("Review Date", "[Insert Review 2 scheduled date]"),
+        ("Review Date", "21 October 2026"),
     ]
     table = doc.add_table(rows=len(details), cols=2)
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -311,11 +311,30 @@ def build_document() -> None:
     add_para(doc, "Screenshots of the implemented modules or prototype:").runs[0].bold = True
     add_para(
         doc,
-        "[Insert terminal screenshots here: output of `auxflow tokens`, `auxflow ast`, "
-        "`auxflow symbols`, `auxflow check`, and `auxflow graph` run against a sample "
-        "document, per the companion viva guide docs/review2-viva.md.]",
-        italic=True,
+        "Captured from real `auxflow` runs against the project's own benchmark corpus "
+        "(bench/corpus/). Each image shows the exact command and its unedited output.",
     )
+    screenshots = [
+        ("01-tokens.png", "Phase 2, Lexical Analysis: auxflow tokens"),
+        ("02-ast.png", "Phase 3-4, Parsing and AST: auxflow ast"),
+        ("03-symbols.png", "Phase 5, Symbol Tables: auxflow symbols"),
+        ("04-check.png", "Phase 6, Semantic Analysis: auxflow check, clean and with errors"),
+        ("05-graph.png", "Phase 7, Intermediate Representation: auxflow graph (Graphviz DOT)"),
+        ("06-classify-certified.png", "Preview of Phase 11 classification: a CERTIFIED document"),
+        ("07-classify-amplifying.png", "Preview of Phase 11 classification: an AMPLIFYING document"),
+        ("08-verification.png", "Test suite, type check, and lint, all passing"),
+    ]
+    for filename, caption in screenshots:
+        doc.add_picture(f"docs/screenshots/{filename}", width=Cm(15.5))
+        last_pic = doc.paragraphs[-1]
+        last_pic.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cap = doc.add_paragraph()
+        cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cap.paragraph_format.space_after = Pt(10)
+        crun = cap.add_run(caption)
+        crun.italic = True
+        crun.font.size = Pt(10)
+        crun.font.color.rgb = RGBColor(0x5A, 0x5A, 0x5A)
 
     add_para(doc, "Results obtained so far:").runs[0].bold = True
     results = [
