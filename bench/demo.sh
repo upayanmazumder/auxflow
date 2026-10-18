@@ -21,11 +21,19 @@
 set -eu
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
+# Auto-activate local virtual environment if present and not already in PATH
+if [ -d ".venv/bin" ]; then
+    export PATH="$(pwd)/.venv/bin:$PATH"
+fi
+
+if ! command -v pdflatex >/dev/null 2>&1 && [ -d "/tmp/auxflow-texlive/.TinyTeX/bin/x86_64-linux" ]; then
+    export PATH="/tmp/auxflow-texlive/.TinyTeX/bin/x86_64-linux:$PATH"
+fi
+
 section() { printf '\n=== %s ===\n' "$1"; }
 
 section "1/8  auxflow tokens (lexer, b08_cycle)"
-auxflow tokens bench/corpus/b08_cycle/main.tex 2>/dev/null | head -5
-
+auxflow tokens bench/corpus/b08_cycle/main.tex | head -5
 section "2/8  auxflow ast (parser, b08_cycle)"
 auxflow ast bench/corpus/b08_cycle/main.tex | head -12
 
@@ -33,7 +41,7 @@ section "3/8  auxflow check (semantic diagnostics, b08_cycle)"
 auxflow check bench/corpus/b08_cycle/main.tex && echo "(no diagnostics -- clean)"
 
 section "4/8  auxflow graph (ARG as DOT, b08_cycle)"
-auxflow graph bench/corpus/b08_cycle/main.tex 2>/dev/null | head -8
+auxflow graph bench/corpus/b08_cycle/main.tex | head -8
 
 section "5/8  auxflow classify (AMPLIFYING cycle with named facts and spans)"
 auxflow classify bench/corpus/b08_cycle/main.tex || true

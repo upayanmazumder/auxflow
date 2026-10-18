@@ -274,25 +274,25 @@ def main(argv: list[str] | None = None) -> int:
     if args.command is None:
         parser.print_help()
         return 1
-
-    if args.command == "tokens":
-        return _run_tokens(args.file)
-
-    if args.command == "ast":
-        return _run_ast(args.file)
-    if args.command == "symbols":
-        return _run_symbols(args.file)
-    if args.command == "check":
-        return _run_check(args.file)
-    if args.command == "graph":
-        return _run_graph(args.file, args.output)
-    if args.command == "classify":
-        return _run_classify(args.file, verbose=args.verbose, force=args.force)
-    if args.command == "plan":
-        return _run_plan(args.file, explain=args.explain, force=args.force)
-    if args.command == "run":
-        return _run_run(args.file, force=args.force, strict=args.strict)
-
+    try:
+        if args.command == "tokens":
+            return _run_tokens(args.file)
+        if args.command == "ast":
+            return _run_ast(args.file)
+        if args.command == "symbols":
+            return _run_symbols(args.file)
+        if args.command == "check":
+            return _run_check(args.file)
+        if args.command == "graph":
+            return _run_graph(args.file, args.output)
+        if args.command == "classify":
+            return _run_classify(args.file, verbose=args.verbose, force=args.force)
+        if args.command == "plan":
+            return _run_plan(args.file, explain=args.explain, force=args.force)
+        if args.command == "run":
+            return _run_run(args.file, force=args.force, strict=args.strict)
+    except BrokenPipeError:
+        return 0
     raise AssertionError(f"unknown command: {args.command}")
 
 
