@@ -1,266 +1,172 @@
 # AuxFlow
 
-A static applicability test for fixpoint convergence in multi-pass document compilation.
+Static analysis and build planning for multi-pass document compilation.
 
-AuxFlow is a compiler and static analyser for a declared subset of LaTeX. It parses a document
-into an instance-level dependency graph of auxiliary facts, computes when each fact stabilises,
-and classifies the document's convergence behaviour before the typesetting engine runs once.
-
-**Status: implementation complete.** All sixteen implementation phases are built, tested, and
-merged, and the empirical evaluation has run. A prior-art audit was completed on 2026-08-27; it
-falsified two hypotheses and removed five claimed contributions, and its findings govern the
-specification. See [Current status](#current-status), [docs/RELATED-WORK.md](docs/RELATED-WORK.md)
-and [research/sources/](research/sources/).
+AuxFlow is a compiler and static analyzer for LaTeX documents. It builds an instance-level dependency graph of cross-references, detects feedback cycles, and predicts how many passes the document needs to stabilize. All static checks complete before the typesetting engine runs.
 
 ---
 
-## What is AuxFlow?
+## Overview
 
-Document compilers such as LaTeX are *multi-pass*: they resolve cross-references by writing
-facts to auxiliary files and reading them back on the next run. A `\ref` cannot be resolved
-until the corresponding `\label` has been recorded, which happens during a previous run. The
-process iterates to a fixpoint.
+Document compilers like LaTeX are multi-pass systems. They write cross-references, table of contents entries, and citations to auxiliary files. The engine reads these files on subsequent passes to resolve references.
 
-How many runs a given document needs is a property of its cross-reference structure. In current
-practice that property is discovered *dynamically*: run the engine, compare the auxiliary state
-with the previous run's, repeat until nothing changes. AuxFlow asks a different question:
+Most build tools discover the required pass count dynamically. They run the engine repeatedly until auxiliary files stop changing, or they apply a fixed schedule.
 
-> How much of this can be determined statically, from the source alone?
+AuxFlow takes a compiler approach:
 
-AuxFlow is a conventional compiler front end (category-code lexer, recursive-descent parser,
-multi-file AST, symbol tables) feeding a purpose-built intermediate representation and two
-dataflow analyses. Its output is a classification, a build plan, and, for documents whose
-cross-reference structure may never converge, a diagnosis naming the facts responsible.
+1. It parses the LaTeX source once into an Abstract Syntax Tree (AST).
+2. It resolves label, reference, and citation symbols across all files.
+3. It constructs an Intermediate Representation called the Auxiliary Reference Graph (ARG).
+4. It detects cycles with Tarjan's strongly connected components algorithm.
+5. It tracks values that affect document length using forward taint analysis.
+6. It classifies document convergence and generates an optimized build plan.
 
-## Problem
+---
 
-Three questions about a document *D* have no answer before execution:
+## How It Works
 
-1. Does the auxiliary-state fixpoint for *D* exist?
-2. If so, how many engine runs are needed to reach it?
-3. If not, which cross-reference structures are responsible?
-
-Existing tooling answers (1) and (2) only by executing. It answers (3) unevenly: Typst names the
-fact with a source span and a per-iteration value history, `labelschanged` names the offending label
-instances, Tectonic names the file that changed, and `latexmk` and ConTeXt report only that a cap was
-reached. All of them answer it *after* executing.
-
-Four further observations motivate the work:
-
-- **Fixed schedules are wrong in both directions.** The conventional `latex, bibtex, latex, latex`
-  sequence over-provisions simple documents and under-provisions ordinary ones.
-- **Every deployed system caps iteration with a hand-chosen constant and none derives it.**
-  `latexmk` 5, Tectonic 6, ConTeXt 9, Typst 5, `llmk` 5. Five independent implementations, five
-  magic numbers, no analysis.
-- **The engine's own rerun warning is unsound in both directions.** It misses changes to generated
-  lists (`rerunfilecheck`'s documentation states this in as many words), and it fires spuriously on
-  active characters in captions, per `labelschanged`'s documentation.
-- **The deployed convergence oracles disagree, and nothing characterises how.** Engine warning;
-  consecutive-run output checksum; consecutive-run *input* comparison; same-run read-then-written
-  comparison; layout-iteration hash. No published comparison was found.
-
-One earlier motivation has been **withdrawn by the audit**: dynamic detection does *not* necessarily
-cost an extra execution. That is true of output-comparison detectors only. latexrun compares tool
-inputs, and Tectonic compares files the engine read and then rewrote within a single run; both reach
-*N*, not *N+1*.
-
-## Core idea
-
-Lower the document to a graph whose nodes are *individual auxiliary fact instances* (this
-label's page number, that table-of-contents entry) and whose edges carry a **pass lag**: a fact
-written during run *p* is first readable during run *p+1*. Then:
-
-- propagate a **stable pass number** through the graph by monotone fixpoint;
-- find strongly connected components with Tarjan's algorithm;
-- classify each component by whether the fact values it carries can influence *how much content
-  the document generates*.
-
-That last step is what makes the analysis non-vacuous. Ordinary documents are genuinely cyclic (a
-table of contents occupies pages, which changes the page numbers recorded in the table of
-contents), yet they converge. Documents in which a fact value controls content generation may
-not converge at all. Separating these two cases is the technical core of the project.
-
-**The separation is bought with an unsound abstraction, and the price is known.** Splitting each
-fact into an `exists` component and a `value` component is what keeps ordinary documents acyclic,
-but it severs the edge by which a resolved value's *typeset width* changes a line break and hence a
-page break. Four published non-convergence mechanisms travel along exactly that edge, so AuxFlow
-cannot see them. The alternative, modelling the extent feedback, makes every document containing one
-`\ref` a single strongly connected component and the analysis vacuous. There is no third option
-without modelling line breaking. AuxFlow takes the unsound branch, declares it, and measures it;
-see [docs/RELATED-WORK.md](docs/RELATED-WORK.md) section 7.4.
-
-## Contribution
-
-Stated after the concessions, because there are many. Full derivation in
-[docs/RELATED-WORK.md](docs/RELATED-WORK.md).
-
-**What AuxFlow does not claim.** Static pass numbering is Bochmann (CACM, 1976) and Alblas (1981).
-Bounding fixpoint rounds by a structural graph parameter is Hecht and Ullman (1975), including the
-"N passes to propagate, one to confirm" decomposition. Instance-level dependency graph plus Tarjan
-SCC plus per-component fixpoint over the condensation is Jones (TOPLAS, 1990). Static analysis of
-circular dependency graphs with a well-definedness obligation is Farrow (1986). Conservative static
-termination analysis where evaluation generates more content to evaluate is Krishnan and Van Wyk
-(SLE, 2012). The fixed-rate versus data-dependent-rate schedulability line is Lee and Messerschmitt
-(1987). Naming the offending facts is anticipated at least six times, and Typst ships byte spans and
-per-iteration value histories today. Checksum verification is universal practice.
-
-**What survives.**
-
-- **A systematised taxonomy of LaTeX non-convergence mechanisms**, stating per mechanism whether a
-  dependency-based static criterion detects it. Nine mechanisms; the audit found no prior
-  systematisation. Four of the nine are provably invisible to AuxFlow's criterion, and that is
-  reported as a result.
-- **A controlled comparison of the five deployed convergence oracles**: verdict, soundness
-  direction, and executions consumed. Nothing comparable was found.
-- **An operational account of a declared LaTeX subset's auxiliary round trip.** No formal semantics
-  of TeX exists; Knuth disclaimed interest in one.
-- **Contingently:** that a static influence analysis from fact values to content-quantity-governing
-  constructs is a usable sufficient condition for the finite-height precondition of
-  circular-attribute-grammar fixpoint theory, that is, it decides whether classical fixed-graph
-  fixpoint reasoning applies to a document at all. This is what the classical work assumes or
-  delegates rather than decides. **The claim is blocked** pending full reads of Krishnan and Van Wyk
-  (2012) and Söderberg and Hedin (2013).
-
-## Compiler architecture
+AuxFlow implements a complete compiler pipeline:
 
 ```
-                Source (declared LaTeX subset)
-                            |
-                            v
-                          Lexer                 category codes 0-15
-                            |
-                            v
-                         Parser                 recursive descent
-                            |
-                            v
-                           AST                  multi-file forest + inclusion graph
-                            |
-                            v
-                   Semantic Analysis            six symbol tables, diagnostics
-                            |
-                            v
-              Auxiliary Reference Graph         instance-level facts, lag-weighted edges
-                            |
-                            v
-                   Static Analysis              content-quantity taint propagation
-                            |
-                            v
-                SCC / Fixpoint Analysis         Tarjan, then stable_pass on the condensation
-                            |
-                            v
-                     Classification             certified / benign-cyclic / amplifying / unknown
-                            |
-                            v
-                       Build Plan               derived schedule + diagnostics
-                            |
-                            v
-            Optional Runtime Verification       normalised auxiliary-state comparison
+                Source (LaTeX subset)
+                          |
+                          v
+                        Lexer                 Category codes 0-15
+                          |
+                          v
+                       Parser                 Recursive descent (1-token lookahead)
+                          |
+                          v
+                         AST                  Multi-file forest and inclusion graph
+                          |
+                          v
+                 Semantic Analysis            Symbol tables and static diagnostics
+                          |
+                          v
+            Auxiliary Reference Graph (ARG)   Fact instances with lagged typed edges
+                          |
+                          v
+                 Static Taint Analysis        Forward reachability to content volume
+                          |
+                          v
+               SCC and Fixpoint Analysis      Tarjan SCC, stable-pass recurrence
+                          |
+                          v
+                   Classification             CERTIFIED, BENIGN_CYCLIC, AMPLIFYING, UNKNOWN
+                          |
+                          v
+                     Build Plan               Optimized schedule with tool elimination
+                          |
+                          v
+                Runtime Verification          Normalized auxiliary fixpoint check
 ```
 
-Everything above the build plan is the compiler. Everything below it is optional and may be
-removed without the project ceasing to be a complete compiler.
+### 1. Lexer and Parser
+The lexer implements the sixteen TeX category codes in a single-pass scanner. It preserves source locations and tracks comments and verbatim blocks. The recursive-descent parser uses a signature table for macro arguments. It recovers from malformed input without stopping.
 
-## Current status
+### 2. Multi-File Symbol Resolution
+The semantic analyzer resolves cross-references with a two-pass algorithm. The declare pass records all definitions. The resolve pass binds uses across file boundaries.
 
-A prior-art audit was completed on 2026-08-27. Its evidence is in
-[research/sources/](research/sources/) (eight files, roughly 460 KB of search logs, verbatim quotes
-and per-source anticipation verdicts), indexed by
-[research/prior-art-log.md](research/prior-art-log.md). The audit changed the design's positioning
-substantially and closed two decisions that gated implementation: the taint criterion is scoped
-narrowly (D13), and the amplifying analysis is claimed against Krishnan and Van Wyk but not
-against Söderberg and Hedin (D14). Both are recorded in
-[docs/PROJECT.md](docs/PROJECT.md#open-technical-decisions).
+### 3. The Auxiliary Reference Graph (ARG)
+The ARG is AuxFlow's Intermediate Representation. Each vertex is a concrete fact instance with an exact source location. Edges carry dependency types and pass lags:
+- `AUX_ROUNDTRIP` (lag 1): Reads a fact written during the previous run.
+- `TOOL` (lag 1): Represents external tools like BibTeX.
+- `LAYOUT` (lag 0 or 1): Models pagination and list extents.
 
-All sixteen phases in [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md) are implemented,
-merged to `main`, and tracked to closure: 16 phase issues and 58 sub-issues on
-[the project board](https://github.com/users/upayanmazumder/projects/8), all closed. The compiler
-(`src/auxflow/`) has a lexer, parser, AST, symbol tables, semantic diagnostics, the Auxiliary
-Reference Graph, taint analysis, SCC detection, a stable-pass fixpoint, a four-state classifier, a
-build planner, and a runtime verifier, each reachable from the `auxflow` command-line tool. The
-test suite passes (245 tests, 1 skipped), `mypy --strict` reports no issues across 41 source
-files, and `ruff check`/`ruff format --check` are clean.
+List entries split into `exists` (structural presence) and `value` (typeset page) facts. This separation keeps standard documents acyclic.
 
-The benchmark corpus (`bench/corpus/`) has fifteen documents. The measurement harness
-(`bench/harness/`) ran the full evaluation: fifteen documents across seven baselines, ten
-repetitions each, 1,050 records in `bench/results/published/`. Gate 1 (the classifier separates
-the amplifying headline case from the certified control, and the three declared false negatives
-misclassify exactly as predicted) and Gate 2 (the predicted run count is at least the measured
-ground truth for every certified document) both pass. `latexmk` and `latexrun` independently fail
-to converge on the same three documents AuxFlow's static analysis wrongly certifies, an external
-check that the declared false negatives are a real limitation rather than a corpus artifact. Full
-results and method in [docs/EVALUATION-REPORT.md](docs/EVALUATION-REPORT.md) and
-[docs/GATE-REPORT.md](docs/GATE-REPORT.md).
+### 4. Convergence Classification
+Documents classify into one of four states:
+- **`CERTIFIED`**: Acyclic dependency structure. Settle within a derived pass count ($P + 1$).
+- **`BENIGN_CYCLIC`**: Value-only cycles. Settle safely without changing document content volume.
+- **`AMPLIFYING`**: Reference values control content generation. May diverge infinitely. Refused by default.
+- **`UNKNOWN`**: Contains unmodelled packages or macros. Falls back to a conservative default schedule.
 
-Four decisions remain open (D4, D7, D11, D12 in [docs/PROJECT.md](docs/PROJECT.md)); none of them
-blocked implementation, and each is a scoping refinement rather than a missing capability. They
-are tracked on [issue #77](https://github.com/upayanmazumder/auxflow/issues/77), alongside the
-risk register (#75) and deferred scope (#76).
+### 5. Build Planner and Runtime Verifier
+The planner removes unused files and unnecessary tool invocations. It derives the minimal engine run count for certified documents. At runtime, the verifier normalizes auxiliary files into canonical records and checks for a genuine fixpoint.
 
-## Scope
+---
 
-**MVP (the compiler, no infrastructure):** lexer, parser, AST, symbol tables, semantic
-diagnostics, the Auxiliary Reference Graph, taint analysis, SCC detection, stable-pass fixpoint,
-four-state classifier, build-plan generation, plan executor with auxiliary-state verification,
-benchmark corpus and measurement harness.
+## CLI Usage
 
-**Stretch:** incremental invalidation, additional external tools, distributed execution,
-compiler-derived scheduling metadata, event-driven worker scaling.
+Install AuxFlow in editable mode:
 
-**Explicitly excluded:** implementing TeX, macro expansion, full package compatibility, machine
-learning, a custom cluster scheduler, a web interface.
+```bash
+pip install -e .
+```
 
-Full boundary in [docs/SCOPE.md](docs/SCOPE.md).
+Inspect the compiler pipeline on any document:
 
-## Research
+```bash
+# Print tokens with source positions
+auxflow tokens document.tex
 
-| Document | Contents |
+# View the multi-file AST
+auxflow ast document.tex
+
+# Inspect symbol tables (labels, refs, cites, packages)
+auxflow symbols document.tex
+
+# Run zero-engine semantic checks
+auxflow check document.tex
+
+# Export the Auxiliary Reference Graph in Graphviz DOT format
+auxflow graph document.tex
+
+# Classify document convergence
+auxflow classify document.tex
+
+# Inspect the generated build plan
+auxflow plan --explain document.tex
+
+# Execute the plan with runtime verification
+auxflow run document.tex
+```
+
+---
+
+## Benchmark Corpus and Evaluation
+
+The repository includes a 15-member benchmark corpus (`bench/corpus/`) covering non-convergence mechanisms and standard document structures:
+
+- Monotone divergence loops (Gaspar 2014)
+- Line-break width feedback oscillations
+- Float placement oscillations
+- Dynamic textual references (`varioref`)
+- Conditional font size switches (`ifthenelse`)
+- Same-page citation feedback (`biblatex`)
+- Realistic multi-chapter thesis with table of contents, lists, and bibliography
+
+Run the end-to-end demonstration script:
+
+```bash
+bash bench/demo.sh
+```
+
+Full experimental data from 1,050 containerized runs across 7 baselines is documented in [docs/EVALUATION-REPORT.md](docs/EVALUATION-REPORT.md) and [docs/GATE-REPORT.md](docs/GATE-REPORT.md).
+
+---
+
+## Documentation
+
+| Document | Description |
 |---|---|
-| [docs/PROJECT.md](docs/PROJECT.md) | Authoritative specification, objectives, open decisions |
-| [docs/RESEARCH-QUESTIONS.md](docs/RESEARCH-QUESTIONS.md) | Primary and secondary questions, variables |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Compiler core, runtime, optional infrastructure |
-| [docs/COMPILER-PIPELINE.md](docs/COMPILER-PIPELINE.md) | Every phase: input, output, algorithms |
-| [docs/LANGUAGE-SUBSET.md](docs/LANGUAGE-SUBSET.md) | The supported language and the fallback rule |
-| [docs/IR.md](docs/IR.md) | The Auxiliary Reference Graph |
-| [docs/STATIC-ANALYSIS.md](docs/STATIC-ANALYSIS.md) | Algorithms, pseudocode, complexity, guarantees |
-| [docs/NON-CONVERGENCE.md](docs/NON-CONVERGENCE.md) | Classification and diagnostics |
-| [docs/BUILD-PLANNER.md](docs/BUILD-PLANNER.md) | Analysis result to execution plan |
-| [docs/RUNTIME-VERIFICATION.md](docs/RUNTIME-VERIFICATION.md) | State-based verification |
-| [docs/EVALUATION.md](docs/EVALUATION.md) | Baselines, ground truth, metrics |
-| [docs/EVALUATION-REPORT.md](docs/EVALUATION-REPORT.md) | Measured results against the published method |
-| [docs/GATE-REPORT.md](docs/GATE-REPORT.md) | Gate 1 and Gate 2 pass/fail against the measured results |
-| [docs/BENCHMARKS.md](docs/BENCHMARKS.md) | Corpus design |
-| [docs/RELATED-WORK.md](docs/RELATED-WORK.md) | Prior art, conceded explicitly |
-| [docs/PATENT-NOTES.md](docs/PATENT-NOTES.md) | Prior-art risk; not a patent application |
-| [docs/FUTURE-INFRASTRUCTURE.md](docs/FUTURE-INFRASTRUCTURE.md) | Stretch-only distribution work |
-| [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md) | Phased plan with hours and risk |
-| [docs/SCOPE.md](docs/SCOPE.md) | Scope lock |
-| [docs/AGENT-PROMPT.md](docs/AGENT-PROMPT.md) | Standing prompt for an implementation agent working the plan stage by stage |
+| [docs/PROJECT.md](docs/PROJECT.md) | Project specification and open decisions |
+| [docs/COMPILER-PIPELINE.md](docs/COMPILER-PIPELINE.md) | Detailed compiler phase descriptions and algorithms |
+| [docs/LANGUAGE-SUBSET.md](docs/LANGUAGE-SUBSET.md) | Supported LaTeX subset and fallback policies |
+| [docs/IR.md](docs/IR.md) | Auxiliary Reference Graph specification |
+| [docs/STATIC-ANALYSIS.md](docs/STATIC-ANALYSIS.md) | Taint analysis, SCC algorithms, and stable-pass recurrence |
+| [docs/NON-CONVERGENCE.md](docs/NON-CONVERGENCE.md) | Diagnostic format and error reporting |
+| [docs/BUILD-PLANNER.md](docs/BUILD-PLANNER.md) | Plan lowering passes and safety invariants |
+| [docs/RUNTIME-VERIFICATION.md](docs/RUNTIME-VERIFICATION.md) | Canonical state normalization and fixpoint detection |
+| [docs/BENCHMARKS.md](docs/BENCHMARKS.md) | Benchmark corpus design and oracle specifications |
+| [docs/EVALUATION.md](docs/EVALUATION.md) | Measurement methodology and baselines |
+| [docs/EVALUATION-REPORT.md](docs/EVALUATION-REPORT.md) | Full empirical evaluation results |
+| [docs/GATE-REPORT.md](docs/GATE-REPORT.md) | Verification results for Gate 1 and Gate 2 |
+| [docs/RELATED-WORK.md](docs/RELATED-WORK.md) | Literature review and technical comparison |
 
-The phased plan is also filed on GitHub as [Project #8](https://github.com/users/upayanmazumder/projects/8):
-7 milestones, 16 phase issues, 58 sub-issues, a native dependency DAG, and tracking issues for
-the risk register, deferred scope, and open decisions. `bench/plan/` holds the machine-readable
-source (`implementation-plan.yaml`), its validator, the idempotent poster, and a reconciliation
-check that proves GitHub matches the artifact.
+---
 
-Raw notes and unprocessed evidence live in [research/](research/), kept deliberately separate
-from the specifications above.
-
-## Reproducibility
-
-All benchmark documents, baseline scripts, the measurement harness and results live under
-[bench/](bench/). The rules are fixed before any measurement is taken:
-
-- a pinned, publicly available TeX Live container image, recorded by digest;
-- `SOURCE_DATE_EPOCH` and `FORCE_SOURCE_DATE` set for every comparison;
-- at least ten repetitions per configuration, reported as median with p95 and interquartile
-  range;
-- ground truth defined by normalised auxiliary-state equivalence, not by PDF byte identity;
-- per-document results only. Corpus-wide means are not reported, because they are determined by
-  corpus composition.
-
-No performance claim appears anywhere in this repository without a committed script that
-regenerates it.
-
-## Licence
+## License
 
 MIT. See [LICENSE](LICENSE).
