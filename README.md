@@ -4,7 +4,7 @@ A static applicability test for fixpoint convergence in multi-pass document comp
 
 AuxFlow is a compiler and static analyser for a declared subset of LaTeX. It parses a document
 into an instance-level dependency graph of auxiliary facts, computes when each fact stabilises,
-and classifies the document's convergence behaviour — before the typesetting engine runs once.
+and classifies the document's convergence behaviour before the typesetting engine runs once.
 
 **Status: bootstrap / design phase. No compiler code has been written yet.** A prior-art audit was
 completed on 2026-08-27; it falsified two hypotheses and removed five claimed contributions, and its
@@ -21,15 +21,15 @@ until the corresponding `\label` has been recorded, which happens during a previ
 process iterates to a fixpoint.
 
 How many runs a given document needs is a property of its cross-reference structure. In current
-practice that property is discovered *dynamically* — run the engine, compare the auxiliary state
+practice that property is discovered *dynamically*: run the engine, compare the auxiliary state
 with the previous run's, repeat until nothing changes. AuxFlow asks a different question:
 
 > How much of this can be determined statically, from the source alone?
 
 AuxFlow is a conventional compiler front end (category-code lexer, recursive-descent parser,
 multi-file AST, symbol tables) feeding a purpose-built intermediate representation and two
-dataflow analyses. Its output is a classification, a build plan, and — for documents whose
-cross-reference structure may never converge — a diagnosis naming the facts responsible.
+dataflow analyses. Its output is a classification, a build plan, and, for documents whose
+cross-reference structure may never converge, a diagnosis naming the facts responsible.
 
 ## Problem
 
@@ -52,7 +52,7 @@ Four further observations motivate the work:
   `latexmk` 5, Tectonic 6, ConTeXt 9, Typst 5, `llmk` 5. Five independent implementations, five
   magic numbers, no analysis.
 - **The engine's own rerun warning is unsound in both directions.** It misses changes to generated
-  lists — `rerunfilecheck`'s documentation states this in as many words — and it fires spuriously on
+  lists (`rerunfilecheck`'s documentation states this in as many words), and it fires spuriously on
   active characters in captions, per `labelschanged`'s documentation.
 - **The deployed convergence oracles disagree, and nothing characterises how.** Engine warning;
   consecutive-run output checksum; consecutive-run *input* comparison; same-run read-then-written
@@ -65,8 +65,8 @@ inputs, and Tectonic compares files the engine read and then rewrote within a si
 
 ## Core idea
 
-Lower the document to a graph whose nodes are *individual auxiliary fact instances* — this
-label's page number, that table-of-contents entry — and whose edges carry a **pass lag**: a fact
+Lower the document to a graph whose nodes are *individual auxiliary fact instances* (this
+label's page number, that table-of-contents entry) and whose edges carry a **pass lag**: a fact
 written during run *p* is first readable during run *p+1*. Then:
 
 - propagate a **stable pass number** through the graph by monotone fixpoint;
@@ -74,16 +74,16 @@ written during run *p* is first readable during run *p+1*. Then:
 - classify each component by whether the fact values it carries can influence *how much content
   the document generates*.
 
-That last step is what makes the analysis non-vacuous. Ordinary documents are genuinely cyclic — a
+That last step is what makes the analysis non-vacuous. Ordinary documents are genuinely cyclic (a
 table of contents occupies pages, which changes the page numbers recorded in the table of
-contents — yet they converge. Documents in which a fact value controls content generation may
+contents), yet they converge. Documents in which a fact value controls content generation may
 not converge at all. Separating these two cases is the technical core of the project.
 
 **The separation is bought with an unsound abstraction, and the price is known.** Splitting each
 fact into an `exists` component and a `value` component is what keeps ordinary documents acyclic,
 but it severs the edge by which a resolved value's *typeset width* changes a line break and hence a
 page break. Four published non-convergence mechanisms travel along exactly that edge, so AuxFlow
-cannot see them. The alternative — model the extent feedback — makes every document containing one
+cannot see them. The alternative, modelling the extent feedback, makes every document containing one
 `\ref` a single strongly connected component and the analysis vacuous. There is no third option
 without modelling line breaking. AuxFlow takes the unsound branch, declares it, and measures it;
 see [docs/RELATED-WORK.md](docs/RELATED-WORK.md) section 7.4.
@@ -94,7 +94,7 @@ Stated after the concessions, because there are many. Full derivation in
 [docs/RELATED-WORK.md](docs/RELATED-WORK.md).
 
 **What AuxFlow does not claim.** Static pass numbering is Bochmann (CACM, 1976) and Alblas (1981).
-Bounding fixpoint rounds by a structural graph parameter is Hecht and Ullman (1975) — including the
+Bounding fixpoint rounds by a structural graph parameter is Hecht and Ullman (1975), including the
 "N passes to propagate, one to confirm" decomposition. Instance-level dependency graph plus Tarjan
 SCC plus per-component fixpoint over the condensation is Jones (TOPLAS, 1990). Static analysis of
 circular dependency graphs with a well-definedness obligation is Farrow (1986). Conservative static
@@ -109,13 +109,13 @@ per-iteration value histories today. Checksum verification is universal practice
   dependency-based static criterion detects it. Nine mechanisms; the audit found no prior
   systematisation. Four of the nine are provably invisible to AuxFlow's criterion, and that is
   reported as a result.
-- **A controlled comparison of the five deployed convergence oracles** — verdict, soundness
+- **A controlled comparison of the five deployed convergence oracles**: verdict, soundness
   direction, and executions consumed. Nothing comparable was found.
 - **An operational account of a declared LaTeX subset's auxiliary round trip.** No formal semantics
   of TeX exists; Knuth disclaimed interest in one.
 - **Contingently:** that a static influence analysis from fact values to content-quantity-governing
   constructs is a usable sufficient condition for the finite-height precondition of
-  circular-attribute-grammar fixpoint theory — i.e. that it decides whether classical fixed-graph
+  circular-attribute-grammar fixpoint theory, that is, it decides whether classical fixed-graph
   fixpoint reasoning applies to a document at all. This is what the classical work assumes or
   delegates rather than decides. **The claim is blocked** pending full reads of Krishnan and Van Wyk
   (2012) and Söderberg and Hedin (2013).
@@ -162,11 +162,11 @@ removed without the project ceasing to be a complete compiler.
 ## Current status
 
 Bootstrap and design phase. The repository contains specifications, research notes and scaffolding.
-`src/` holds package structure and docstrings only — no lexer, no parser, no analysis.
+`src/` holds package structure and docstrings only: no lexer, no parser, no analysis.
 
 A prior-art audit was completed on 2026-08-27. Its evidence is in
-[research/sources/](research/sources/) — eight files, roughly 460 KB of search logs, verbatim quotes
-and per-source anticipation verdicts — indexed by
+[research/sources/](research/sources/) (eight files, roughly 460 KB of search logs, verbatim quotes
+and per-source anticipation verdicts), indexed by
 [research/prior-art-log.md](research/prior-art-log.md). The audit changed the design's positioning
 substantially and left three open decisions that must close before implementation: how the taint
 criterion is scoped (D13), whether the amplifying class splits (D12), and whether the amplifying
