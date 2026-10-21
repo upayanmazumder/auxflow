@@ -1,0 +1,79 @@
+%% Four-state classifier. Sources: src/auxflow/analysis/classify_cycles.py,
+%% stable_pass.py, classify.py, src/auxflow/planner/lower.py, planner/__init__.py.
+flowchart TB
+    IN[/"ARG after taint (STRUCTURAL edges inserted)<br/>Tarjan components"/]
+
+    subgraph PC["Per component: classify_components"]
+        direction TB
+        TRIV{"|C| > 1, or a self-loop?"}
+        NOL["Trivial singleton:<br/>no label (acyclic)"]
+        STR{"Internal STRUCTURAL edge?"}
+        OPQ{"Any opaque member?"}
+        LA["Label AMPLIFYING"]
+        LU["Label UNKNOWN_CYCLE"]
+        LB["Label BENIGN"]
+        TRIV -- no --> NOL
+        TRIV -- yes --> STR
+        STR -- yes --> LA
+        STR -- no --> OPQ
+        OPQ -- yes --> LU
+        OPQ -- no --> LB
+    end
+
+    subgraph SP["stable_pass per fact, on the condensation in topological order"]
+        direction TB
+        SPA["AMPLIFYING or UNKNOWN_CYCLE member: None (unbounded)"]
+        SPB["BENIGN cycle: base + |C|, base = 1 + max bounded external pred (default 0)<br/>heuristic, open decision D7"]
+        SPS["Singleton: 1 if no preds; None if any pred is None;<br/>else 1 + max(stable_pass(g) + lag - 1); TOOL edge lag counts as 0"]
+        PP["P = max bounded stable_pass over facts stored in aux files<br/>(REF_USE, PAGEREF_USE excluded; 0 if none)"]
+        SPA ~~~ SPB ~~~ SPS --> PP
+    end
+
+    subgraph DOCS["Document state: classify"]
+        direction TB
+        D1{"Any AMPLIFYING component?"}
+        D2{"Any opaque fact?"}
+        D3{"Any non-trivial component?"}
+        SA["<b>AMPLIFYING</b><br/>predicted runs: none<br/>report: may not converge"]
+        SU["<b>UNKNOWN</b><br/>predicted runs: none<br/>report: OPAQUE facts"]
+        SB["<b>BENIGN_CYCLIC</b><br/>predicted runs = P + 1"]
+        SC["<b>CERTIFIED</b><br/>predicted runs = P + 1"]
+        D1 -- yes --> SA
+        D1 -- no --> D2
+        D2 -- yes --> SU
+        D2 -- no --> D3
+        D3 -- yes --> SB
+        D3 -- no --> SC
+    end
+
+    subgraph PLAN["Planner: build_plan"]
+        direction TB
+        PA{"--force given?"}
+        PAR["Refused: no steps<br/>CLI exits 1, suggests --force"]
+        PAF["3 pdflatex runs, stop condition cap,<br/>max 6 runs"]
+        PUB["3 pdflatex runs (conservative default),<br/>stop condition aux_fixpoint, max 6 runs"]
+        PCE["P + 1 pdflatex runs (derived count),<br/>stop condition planned_count,<br/>max runs = max(6, P + 1)"]
+        PA -- no --> PAR
+        PA -- yes --> PAF
+    end
+
+    IN --> TRIV
+    LA & LU & LB & NOL --> SP
+    PP --> D1
+    SA --> PA
+    SU --> PUB
+    SB --> PUB
+    SC --> PCE
+
+    classDef amp fill:#F8D7DA,stroke:#A71D2A,color:#3B0A0F
+    classDef unk fill:#E2E3E5,stroke:#41464B,color:#1F2326
+    classDef ben fill:#FFF3CF,stroke:#8A6D00,color:#3B2F00
+    classDef cert fill:#D4EDDA,stroke:#1E6B32,color:#0B2E15
+    classDef dec fill:#DCE8F3,stroke:#0D1B2A,color:#0D1B2A
+    classDef io fill:#FFFFFF,stroke:#5A5A5A,color:#0D1B2A
+    class LA,SA,PAR,PAF amp
+    class LU,SU unk
+    class LB,SB ben
+    class SC,PCE cert
+    class TRIV,STR,OPQ,D1,D2,D3,PA dec
+    class IN,NOL,SPA,SPB,SPS,PP,PUB io

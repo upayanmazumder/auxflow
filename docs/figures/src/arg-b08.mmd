@@ -1,0 +1,28 @@
+%% ARG of bench/corpus/b08_cycle/main.tex. Facts and the LAYOUT and AUX_ROUNDTRIP
+%% edges: `auxflow graph`. STRUCTURAL edges: inserted by taint
+%% (auxflow.analysis.taint), as reported by `auxflow classify`. Locations are line:column.
+flowchart TB
+    subgraph CYC["AMPLIFYING component (3 facts, stable_pass unbounded)"]
+        direction TB
+        F2["<b>f2 PAGEREF_USE</b><br/>key end:generated<br/>#92;pageref{end:generated}, main.tex 5:32<br/>read in the #92;whiledo condition"]
+        F0["<b>f0 CONTENT_VOLUME</b><br/>newpage command, main.tex 8:3<br/>loop body emits a page"]
+        F4["<b>f4 LABEL_PAGE</b><br/>key end:generated<br/>#92;label{end:generated}, main.tex 10:29"]
+    end
+
+    F1["<b>f1 COUNTER_READ</b><br/>key generatedpage<br/>#92;value{generatedpage}, main.tex 5:10<br/>read in the #92;whiledo condition<br/>not in a cycle, stable_pass 1"]
+    F3["<b>f3 LABEL_NUMBER</b><br/>key end:generated<br/>#92;label{end:generated}, main.tex 10:29<br/>no edges, stable_pass 1"]
+
+    F0 -- "LAYOUT, lag 0<br/>pagination sets page of label" --> F4
+    F4 -- "AUX_ROUNDTRIP, lag 1<br/>pageref reads label from a prior run" --> F2
+    F2 == "STRUCTURAL, lag 1 (added by taint)<br/>value reaches a content-generating construct" ==> F0
+    F1 -. "STRUCTURAL, lag 1 (added by taint)" .-> F0
+
+    classDef cyc fill:#F8D7DA,stroke:#A71D2A,stroke-width:2px,color:#3B0A0F
+    classDef plain fill:#FFFFFF,stroke:#5A5A5A,color:#0D1B2A
+    class F0,F2,F4 cyc
+    class F1,F3 plain
+    style CYC fill:#FFF5F5,stroke:#A71D2A,stroke-dasharray:6 4
+    linkStyle 0 stroke:#7F7F7F,stroke-width:2px
+    linkStyle 1 stroke:#1F77B4,stroke-width:2px
+    linkStyle 2 stroke:#C0392B,stroke-width:3px,stroke-dasharray:8 5
+    linkStyle 3 stroke:#C0392B,stroke-width:1.5px,stroke-dasharray:4 4

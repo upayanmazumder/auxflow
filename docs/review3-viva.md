@@ -1,8 +1,10 @@
-# AuxFlow — Review 3 Viva Preparation
+# AuxFlow: Review 3 Viva Preparation
 
 Static Analysis for Multi-Pass Document Compilation · Upayan Mazumder (24BDS0367) · Compiler Design Lab
 
-Companion guide for Review 3: Analysis, Optimization, Verification, and Evaluation (Phases 8–16).
+Companion guide for Review 3: Analysis, Optimization, Verification, and Evaluation (Phases 8 to 16).
+All 16 implementation phases are complete. Tests: 245 pass, 1 skipped. mypy --strict is clean on 41 files. ruff lint is clean on src, tests, and bench. This review presents Phases 8 to 16.
+Formal assessment document: `docs/review3-document.docx` and `docs/review3-document.pdf`.
 Framing remains conservative: AuxFlow provides static classification, safe build planning, and empirical verification.
 
 ---
@@ -38,24 +40,28 @@ Framing remains conservative: AuxFlow provides static classification, safe build
 - Logs explicit `PredictionMiss` records if actual runs exceed certified static predictions.
 
 ### 6. What was the evaluation setup and corpus design?
-- 15-member benchmark corpus (`b01_plain` to `b15_ibid`) covering mechanisms M1–M8.
+- 15-member benchmark corpus (`b01_plain` to `b15_ibid`) covering mechanisms M1 to M9 (`b09_thesis` covers M9).
 - 7 baselines tested: A (fixed), B (warnings), C (checksum), C′ (inputs), C″ (read/write), D (static), E (static+verify).
 - 1050 containerized runs inside a pinned Docker container (`auxflow-bench:v1`).
 - Independent ground truth $N^*$ computed via 8 unconditional passes with state and text equality.
+- Ground truth criterion is strengthened: every run from candidate $k$ through run 8 must match. This catches period-2 oscillation.
 
 ### 7. What were the key gate results?
 - **Gate 1 (Classification Separation): PASS.**
   - Identifies `b08_cycle` as `AMPLIFYING` with 3 named facts and spans.
   - Identifies `b05_toc` as `CERTIFIED` (no false positive).
-  - Matches declared false negatives on `b11_width`, `b12_float`, and `b13_varioref`.
-- **Gate 2 (EC1 Bound Bound): PASS.**
-  - Predicted $N \ge N^*$ holds for all certified documents.
+  - Matches declared false negatives on `b11_width`, `b12_float`, and `b13_varioref` (reported `CERTIFIED`).
+  - Reports `b07_footnote` and `b15_ibid` as `UNKNOWN`.
+- **Gate 2 (EC1 run-count bound): PASS.**
+  - Predicted $N \ge N^*$ holds for all certified documents, except the 3 declared false negatives.
   - Zero undeclared bound failures across the entire corpus.
 
 ### 8. What do external shipping tools show on the same corpus?
 - `latexmk` and `latexrun` fail to converge on `b11_width`, `b12_float`, and `b13_varioref`.
   - Confirms declared false negatives are real physical non-convergence, not benchmark artifacts.
 - Typst compiler independently flags `b08_cycle` with `error: loop seems to be infinite`.
+- Tectonic stops `b08_cycle` at its 6-pass limit.
+- Baseline E reports `cap_exceeded` at 6 runs on `b11_width`, `b12_float`, and `b13_varioref` in all 30 repetitions.
 - Baseline D static analysis executes in under 10 ms for all documents.
 
 ---

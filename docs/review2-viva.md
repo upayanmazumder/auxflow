@@ -1,8 +1,10 @@
-# AuxFlow — Review 2 Viva Preparation
+# AuxFlow: Review 2 Viva Preparation
 
 Static Analysis for Multi-Pass Document Compilation · Upayan Mazumder (24BDS0367) · Compiler Design Lab
 
-Companion guide for Review 2: Front-End, Semantic Analysis, and Intermediate Representation (Phases 1–7).
+Companion guide for Review 2: Front-End, Semantic Analysis, and Intermediate Representation (Phases 1 to 7).
+All 16 implementation phases are complete. Tests: 245 pass, 1 skipped. mypy --strict is clean on 41 files. ruff lint is clean on src, tests, and bench. This review presents Phases 1 to 7.
+Formal assessment document: `docs/review2-document.docx` and `docs/review2-document.pdf`.
 Framing remains conservative: AuxFlow is a compiler-based static analysis of dependency structure in multi-pass compilation.
 
 ---

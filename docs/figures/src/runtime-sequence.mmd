@@ -1,0 +1,53 @@
+%% auxflow run. Sources: src/auxflow/cli.py (_run_run, _cli_plan),
+%% src/auxflow/runtime/execute.py, src/auxflow/runtime/normalize.py.
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant C as CLI (auxflow run)
+    participant P as Planner (build_plan)
+    participant X as Executor (execute)
+    participant T as pdflatex / bibtex / makeindex
+    participant N as Normalizer (normalize_state)
+
+    U->>C: auxflow run [--force] [--strict] main.tex
+    C->>P: analyze, then build_plan(classification, stable_pass)
+    P-->>C: BuildPlan (steps, predicted_runs, max_runs, stop_condition)
+    C->>X: execute(plan, document directory, strict)
+
+    alt AMPLIFYING plan with no steps (no --force)
+        X-->>C: amplifying_refused, 0 runs
+    else UNKNOWN plan under --strict
+        X-->>C: opaque_abort, 0 runs
+    else missing input file, or no final verifying pdflatex step
+        X-->>C: missing_input or tool_error
+    end
+
+    loop each planned step, in plan order
+        X->>T: run step (pdflatex -interaction=nonstopmode -halt-on-error)
+        T-->>X: exit status (non-zero gives tool_error)
+        opt step is pdflatex
+            X->>N: read jobname.aux (follow @input), .toc, .lof, .lot, .bbl, .ind
+            N-->>X: normalized aux state (set of canonical records, relax excluded)
+            alt state equals previous state
+                X-->>C: CONVERGED, stop planned_count if all planned runs were used and the plan says planned_count, else aux_fixpoint
+            end
+        end
+    end
+
+    opt one run, empty state, plan says planned_count
+        X-->>C: CONVERGED, planned_count, 1 run
+    end
+
+    loop extension while runs < max_runs (cap: 6, or P + 1 if larger)
+        X->>T: rerun the last pdflatex step
+        T-->>X: exit status
+        X->>N: read and normalize aux files
+        N-->>X: normalized aux state
+        alt state equals previous state
+            X-->>C: CONVERGED, stop aux_fixpoint
+        end
+    end
+    X-->>C: cap_exceeded, stop cap (suspected non-convergence)
+
+    Note over X,C: After extension, if runs > predicted_runs, record PredictionMiss(document, predicted, observed) and log a warning
+    C-->>U: ExecReport as JSON (status, stop_condition, runs, message, prediction_miss), exit 0 only if CONVERGED

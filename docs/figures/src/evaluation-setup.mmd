@@ -1,0 +1,67 @@
+%% Evaluation setup. Sources: docs/EVALUATION-REPORT.md, bench/harness/run.py,
+%% container.py, groundtruth.py, report.py, reference_tools.py, bench/baselines/.
+flowchart TB
+    CORPUS[/"<b>bench/corpus</b><br/>15 documents b01 to b15<br/>expected.json written before implementation"/]
+
+    subgraph BASE["Baselines (bench/harness/run.py, 10 repetitions each)"]
+        direction TB
+        DYN["<b>Dynamic, shell scripts in bench/baselines</b><br/>A fixed.sh, B warning.sh, C checksum.sh,<br/>C' inputs.sh, C'' readwrite.sh<br/>(max 8 runs)"]
+        BD["<b>D: static analysis alone</b><br/>auxflow on the host, no container"]
+        BE["<b>E: static plus verification</b><br/>auxflow plan on the host, then<br/>plan_incontainer.py runs the plan"]
+    end
+
+    subgraph IMG["Pinned Docker image (bench/Dockerfile)"]
+        direction TB
+        SPEC["python:3.12-slim-bookworm, TeX Live (Debian bookworm),<br/>latexmk 4.79, biber 2.18, latexrun, Tectonic 0.15.0, Typst 0.11.0<br/>one container per repetition: --cpus=1, --network=none,<br/>SOURCE_DATE_EPOCH fixed"]
+    end
+
+    RES[("<b>results.jsonl</b><br/>15 documents x 7 baselines x 10 repetitions<br/>= 1,050 records, image digest in each")]
+
+    subgraph GT["Ground truth (bench/harness/groundtruth.py)"]
+        direction TB
+        GTS["MAX = 8 unconditional pdflatex passes,<br/>no stopping rule"]
+        GTN["N* = smallest k < MAX whose aux state and text layer<br/>match every run through MAX; else divergent(8)"]
+        GTS --> GTN
+    end
+    GTJ[("groundtruth.json")]
+
+    subgraph REP["bench/harness/report.py"]
+        direction TB
+        G1["<b>Gate 1</b>: classification separation<br/>b08 AMPLIFYING, b05 not, b11 to b13 as declared,<br/>b07 and b15 UNKNOWN"]
+        G2["<b>Gate 2 (EC1)</b>: every CERTIFIED document<br/>with predicted N has N >= N*"]
+        TAB["Mechanism-coverage and oracle-comparison tables,<br/>figures/executions.png"]
+    end
+
+    subgraph XC["External cross-check (bench/harness/reference_tools.py)"]
+        direction TB
+        XT["latexmk 4.79, latexrun, Tectonic 0.15.0 on the same corpus;<br/>Typst hand ports in bench/harness/typst-ports"]
+    end
+    XJ[("reference_tools.json")]
+
+    CORPUS --> DYN & BD & BE
+    CORPUS --> GTS
+    CORPUS --> XT
+    DYN --> SPEC
+    BE --> SPEC
+    SPEC --> RES
+    BD --> RES
+    GTS -.-> SPEC
+    GTN --> GTJ
+    XT -.-> SPEC
+    XT --> XJ
+    RES --> G1 & G2 & TAB
+    GTJ --> G2
+    GTJ --> TAB
+
+    classDef data fill:#FFFFFF,stroke:#5A5A5A,color:#0D1B2A
+    classDef base fill:#DCE8F3,stroke:#0D1B2A,color:#0D1B2A
+    classDef img fill:#FBE3C8,stroke:#A0522D,color:#0D1B2A
+    classDef gt fill:#FFF3CF,stroke:#8A6D00,color:#0D1B2A
+    classDef rep fill:#E3F1E3,stroke:#2E6B2E,color:#0D1B2A
+    classDef xc fill:#E8E0F5,stroke:#4B3A75,color:#0D1B2A
+    class CORPUS,RES,GTJ,XJ data
+    class DYN,BD,BE base
+    class SPEC img
+    class GTS,GTN gt
+    class G1,G2,TAB rep
+    class XT xc

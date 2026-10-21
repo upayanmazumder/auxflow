@@ -1,0 +1,81 @@
+%% AuxFlow compiler pipeline. Sources: src/auxflow/cli.py (COMMANDS, _analyze),
+%% docs/IMPLEMENTATION-PLAN.md (phase table), bench/harness/.
+%% Edges between stage groups link the subgraphs themselves, so each group keeps
+%% its own left-to-right direction.
+flowchart TB
+    SRC[/"LaTeX sources: main.tex and included files"/]
+
+    subgraph FE["Front end (Phases 2 to 6)"]
+        direction LR
+        LEX["<b>2 Lexer</b><br/>auxflow.lexer<br/>category codes<br/>CLI: tokens"]
+        PAR["<b>3 Parser</b><br/>auxflow.parser<br/>recursive descent<br/>(no subcommand)"]
+        AST["<b>4 AST, inclusion</b><br/>auxflow.ast<br/>multi-file forest<br/>CLI: ast"]
+        SYM["<b>5 Symbol tables</b><br/>auxflow.semantic<br/>declare, resolve<br/>CLI: symbols"]
+        CHK["<b>6 Semantic checks</b><br/>auxflow.semantic<br/>diagnostics, exit 1<br/>on error<br/>CLI: check"]
+        LEX -- "tokens" --> PAR
+        PAR -- "per-file<br/>AST" --> AST
+        AST -- "forest +<br/>inclusion<br/>graph" --> SYM
+        SYM -- "symbol<br/>tables" --> CHK
+    end
+
+    subgraph IRG["IR (Phase 7)"]
+        direction LR
+        LOW["<b>7 IR generation</b><br/>auxflow.ir<br/>lowers forest + tables to the Auxiliary Reference Graph (ARG)<br/>CLI: graph (Graphviz DOT)"]
+    end
+
+    subgraph AN["Analysis (Phases 8 to 11): modules under auxflow.analysis, in the order cli._analyze runs them"]
+        direction LR
+        TNT["<b>9 Taint</b><br/>analysis.taint<br/>seeds: values read<br/>in a loop condition"]
+        SCC["<b>8 SCC</b><br/>analysis.scc,<br/>classify_cycles<br/>iterative Tarjan"]
+        STP["<b>10 Stable pass</b><br/>analysis.condensation,<br/>stable_pass<br/>longest path"]
+        CLS["<b>11 Classify</b><br/>analysis.classify,<br/>report<br/>four states<br/>CLI: classify"]
+        TNT -- "ARG +<br/>STRUCTURAL<br/>edges" --> SCC
+        SCC -- "labels,<br/>condensation<br/>DAG" --> STP
+        STP -- "stable_pass,<br/>P" --> CLS
+    end
+
+    subgraph BE["Back end (Phases 12 to 13)"]
+        direction LR
+        subgraph NOENG["No TeX engine: tokens to plan"]
+            PLN["<b>12 Build planner</b><br/>auxflow.planner<br/>safety invariant,<br/>run count, tool steps<br/>CLI: plan --explain"]
+        end
+        subgraph WITHENG["Engine boundary: only run executes TeX"]
+            RUN["<b>13 Runtime verifier</b><br/>auxflow.runtime<br/>execute, normalize,<br/>compare states<br/>CLI: run"]
+            ENG[["pdflatex, bibtex,<br/>makeindex"]]
+        end
+        PLN -- "BuildPlan" --> RUN
+        RUN -- "planned<br/>steps" --> ENG
+        ENG -- "aux, toc, lof,<br/>lot, bbl, ind" --> RUN
+    end
+
+    subgraph EV["Evaluation (Phases 14 to 16)"]
+        direction LR
+        HAR["<b>14 Benchmark harness</b><br/>bench/harness, bench/baselines<br/>15 documents, 7 baselines<br/>ground truth N*"]
+        MEA["<b>15 Evaluation</b><br/>1,050 Docker runs<br/>report.py: Gate 1,<br/>Gate 2 (EC1)"]
+        DOC["<b>16 Documentation</b><br/>report, figures,<br/>demonstration"]
+        HAR -- "results.jsonl,<br/>groundtruth.json" --> MEA
+        MEA -- "tables,<br/>figures" --> DOC
+    end
+
+    SRC -- "source text" --> FE
+    FE -- "forest + resolved symbol tables" --> IRG
+    IRG -- "ARG facts and edges" --> AN
+    AN -- "classification + predicted runs (P + 1)" --> BE
+    BE -- "normalized aux state, ExecReport" --> EV
+
+    classDef fe fill:#DCE8F3,stroke:#0D1B2A,color:#0D1B2A
+    classDef ir fill:#E8E0F5,stroke:#4B3A75,color:#0D1B2A
+    classDef an fill:#FFF3CF,stroke:#8A6D00,color:#0D1B2A
+    classDef be fill:#E3F1E3,stroke:#2E6B2E,color:#0D1B2A
+    classDef ev fill:#F3E3E3,stroke:#7A2E2E,color:#0D1B2A
+    classDef io fill:#FFFFFF,stroke:#5A5A5A,color:#0D1B2A
+    classDef engine fill:#FBE3C8,stroke:#A0522D,color:#0D1B2A
+    class LEX,PAR,AST,SYM,CHK fe
+    class LOW ir
+    class TNT,SCC,STP,CLS an
+    class PLN,RUN be
+    class HAR,MEA,DOC ev
+    class SRC io
+    class ENG engine
+    style NOENG fill:#FFFFFF,stroke:#2E6B2E,stroke-dasharray:4 3
+    style WITHENG fill:#FFF8F0,stroke:#C0392B,stroke-width:2px,stroke-dasharray:6 4,color:#C0392B
