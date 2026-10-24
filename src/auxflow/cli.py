@@ -9,10 +9,12 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import textwrap
 from dataclasses import asdict, replace
 from pathlib import Path
 from time import perf_counter
 
+from auxflow import style
 from auxflow.analysis.classify import Classification, State, classify
 from auxflow.analysis.classify_cycles import classify_components
 from auxflow.analysis.condensation import build_condensation
@@ -28,7 +30,7 @@ from auxflow.parser import Diagnostic, Document, Span, parse
 from auxflow.planner.lower import build_plan
 from auxflow.planner.model import BuildPlan
 from auxflow.planner.serialize import to_json
-from auxflow.runtime.execute import execute
+from auxflow.runtime.execute import ExecReport, execute
 from auxflow.semantic.diagnostics import check_packages, check_symbols
 from auxflow.semantic.inclusion import check_inclusions
 from auxflow.semantic.resolve import declare, resolve
@@ -45,29 +47,125 @@ COMMANDS = (
 )
 
 
+_SUMMARIES = {
+    "check": "find undefined references, inclusion cycles, and unmodelled packages",
+    "classify": "say whether the document settles, and explain why",
+    "plan": "show the build plan (use --explain for a readable schedule)",
+    "run": "run the plan with a TeX engine and verify the result",
+    "graph": "export the dependency graph as Graphviz DOT",
+    "tokens": "print the token stream with source positions",
+    "ast": "print the syntax tree of every file",
+    "symbols": "print the label, reference, citation, and package tables",
+}
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build one subcommand per compiler phase with its documented arguments."""
     parser = argparse.ArgumentParser(
         prog="auxflow",
         description="Static convergence classification for multi-pass document compilation.",
     )
-    subparsers = parser.add_subparsers(dest="command")
+    subparsers = parser.add_subparsers(dest="command", metavar="COMMAND")
 
     for name in COMMANDS:
-        sub = subparsers.add_parser(name)
-        sub.add_argument("file", metavar="FILE")
+        sub = subparsers.add_parser(name, help=_SUMMARIES[name], description=_SUMMARIES[name])
+        sub.add_argument("file", metavar="FILE", help="the main .tex file")
         if name == "graph":
-            sub.add_argument("-o", dest="output", metavar="G.dot")
+            sub.add_argument(
+                "-o", dest="output", metavar="G.dot", help="write DOT here instead of stdout"
+            )
         if name == "classify":
-            sub.add_argument("-v", "--verbose", action="store_true")
-            sub.add_argument("--force", action="store_true")
+            sub.add_argument(
+                "-v", "--verbose", action="store_true", help="list every source location"
+            )
+            sub.add_argument(
+                "--force", action="store_true", help="exit 0 even when the result is AMPLIFYING"
+            )
         if name == "plan":
-            sub.add_argument("--explain", action="store_true")
+            sub.add_argument(
+                "--explain", action="store_true", help="print a readable schedule, not JSON"
+            )
         if name in {"plan", "run"}:
-            sub.add_argument("--force", action="store_true")
+            sub.add_argument(
+                "--force",
+                action="store_true",
+                help="plan an AMPLIFYING document anyway, capped at 6 runs",
+            )
         if name == "run":
-            sub.add_argument("--strict", action="store_true")
+            sub.add_argument(
+                "--strict", action="store_true", help="refuse to run UNKNOWN documents"
+            )
+    helper = subparsers.add_parser(
+        "help",
+        help="show help for AuxFlow or for one command",
+        description="Show an overview of AuxFlow, or the options of one command.",
+    )
+    helper.add_argument("topic", metavar="COMMAND", nargs="?")
+    parser.add_argument(
+        "--color",
+        choices=("auto", "always", "never"),
+        default="auto",
+        help="colour human-readable output (default: auto, honours NO_COLOR)",
+    )
     return parser
+
+
+_WORKFLOW = ("check", "classify", "plan", "run", "graph", "tokens", "ast", "symbols")
+
+
+def _overview() -> str:
+    """The text for `auxflow help` and for `auxflow` with no command."""
+
+    def heading(text: str) -> str:
+        return style.paint(text, "bold")
+
+    width = max(len(name) for name in _WORKFLOW)
+    commands = "\n".join(
+        f"  {style.paint(name.ljust(width), 'cyan')}  {_SUMMARIES[name]}" for name in _WORKFLOW
+    )
+    return "\n".join(
+        (
+            "AuxFlow: static convergence analysis for multi-pass LaTeX builds.",
+            "",
+            heading("Usage"),
+            "  auxflow [--color auto|always|never] COMMAND [OPTIONS] FILE",
+            "  auxflow help [COMMAND]",
+            "",
+            heading("Commands"),
+            commands,
+            "",
+            heading("Typical use"),
+            "  auxflow check thesis.tex             look for problems first",
+            "  auxflow classify thesis.tex          see whether it settles",
+            "  auxflow plan --explain thesis.tex    read the build schedule",
+            "  auxflow run thesis.tex               build and verify",
+            "",
+            heading("Exit status"),
+            "  0  success",
+            "  1  a problem was found: an error, an AMPLIFYING document without --force,",
+            "     or a build that failed or did not settle",
+            "  2  wrong command line",
+            "",
+            heading("Colour"),
+            "  Colour is on for terminals only. Set NO_COLOR=1 or use --color never to turn",
+            "  it off. JSON, DOT, token, and AST output is never coloured.",
+            "",
+            "Run 'auxflow help COMMAND' for the options of one command.",
+        )
+    )
+
+
+def _run_help(parser: argparse.ArgumentParser, topic: str | None) -> int:
+    if topic is None:
+        print(_overview())
+        return 0
+    for action in parser._actions:
+        if isinstance(action, argparse._SubParsersAction) and topic in action.choices:
+            print(action.choices[topic].format_help(), end="")
+            return 0
+    names = ", ".join((*_WORKFLOW, "help"))
+    print(f"auxflow: no command named {topic!r}. Commands: {names}.", file=sys.stderr)
+    return 2
 
 
 def _run_tokens(path: str) -> int:
@@ -180,8 +278,15 @@ def _run_check(path: str) -> int:
         )
     )
     for diagnostic in diagnostics:
-        print(f"{_span(diagnostic.span)}: {diagnostic.severity}: {diagnostic.message}")
-    return int(any(diagnostic.severity == "error" for diagnostic in diagnostics))
+        line = f"{_span(diagnostic.span)}: {diagnostic.severity}: {diagnostic.message}"
+        print(style.style_report(line))
+    errors = sum(diagnostic.severity == "error" for diagnostic in diagnostics)
+    warnings = len(diagnostics) - errors
+    if diagnostics:
+        print(f"Found {errors} error(s) and {warnings} warning(s).", file=sys.stderr)
+    else:
+        print(style.paint("No problems found.", "green", stream=sys.stderr), file=sys.stderr)
+    return int(errors > 0)
 
 
 def _run_graph(path: str, output: str | None) -> int:
@@ -207,6 +312,33 @@ def _analyze(forest: Forest) -> tuple[ARG, list[tuple[int, ...]], Classification
     return graph, components, classify(graph, components, labels, stable_pass), stable_pass
 
 
+_MEANING = {
+    State.CERTIFIED: (
+        "In plain terms: AuxFlow found no feedback loop in the parts of the document it "
+        "models. LaTeX should settle after {runs} {noun}."
+    ),
+    State.BENIGN_CYCLIC: (
+        "In plain terms: some references feed each other, but they do not change how much "
+        "content the document makes. LaTeX should settle after {runs} {noun}."
+    ),
+    State.AMPLIFYING: (
+        "In plain terms: a value from one pass changes how much content the next pass makes. "
+        "The document may keep changing. Break the loop, or use --force to try it under a cap."
+    ),
+    State.UNKNOWN: (
+        "In plain terms: the document uses commands or packages that AuxFlow does not model. "
+        "This does not mean it is broken. AuxFlow uses a safe default of three runs and "
+        "checks the result at run time. Use -v to list every location."
+    ),
+}
+
+
+def _meaning(classification: Classification) -> str:
+    runs = classification.predicted_runs
+    text = _MEANING[classification.state].format(runs=runs, noun="run" if runs == 1 else "runs")
+    return textwrap.fill(text, width=88)
+
+
 def _run_classify(path: str, *, verbose: bool, force: bool) -> int:
     forest, parse_diagnostics = _load_forest(path)
     _print_parse_diagnostics(parse_diagnostics)
@@ -214,7 +346,8 @@ def _run_classify(path: str, *, verbose: bool, force: bool) -> int:
     graph, _components, classification, stable_pass = _analyze(forest)
     report = render(graph, sources, classification, stable_pass, verbose=verbose)
     if report is not None:
-        print(report, end="")
+        print(style.style_report(report), end="")
+    print(_meaning(classification))
     return int(classification.state is State.AMPLIFYING and not force)
 
 
@@ -247,10 +380,10 @@ def _cli_plan(path: str, *, force: bool) -> tuple[BuildPlan, str | None]:
 def _run_plan(path: str, *, explain: bool, force: bool) -> int:
     plan, diagnosis = _cli_plan(path, force=force)
     if diagnosis is not None:
-        print(diagnosis, end="")
+        print(style.style_report(diagnosis), end="")
         return 1
     if explain:
-        print(f"auxflow: {plan.classification} plan")
+        print(style.style_report(f"auxflow: {plan.classification} plan"))
         for index, step in enumerate(plan.steps, 1):
             print(f"  {index}. {step.tool} ({step.jobname}): {step.reason}")
     else:
@@ -258,22 +391,49 @@ def _run_plan(path: str, *, explain: bool, force: bool) -> int:
     return 0
 
 
+def _run_summary(report: ExecReport) -> str:
+    if report.status == "CONVERGED":
+        noun = "run" if report.runs == 1 else "runs"
+        text = style.paint(
+            f"Done. The document settled after {report.runs} {noun}.", "green", stream=sys.stderr
+        )
+        if report.prediction_miss is not None:
+            miss = report.prediction_miss
+            text += (
+                f"\nNote: AuxFlow predicted {miss.predicted} but needed {miss.observed}. "
+                "This is recorded as a prediction miss."
+            )
+        return text
+    if report.status == "cap_exceeded":
+        return style.paint(
+            f"Stopped. The document was still changing after {report.runs} runs. "
+            "It may not converge.",
+            "red",
+            stream=sys.stderr,
+        )
+    return style.paint(f"Stopped. {report.message}", "red", stream=sys.stderr)
+
+
 def _run_run(path: str, *, force: bool, strict: bool) -> int:
     plan, diagnosis = _cli_plan(path, force=force)
     if diagnosis is not None:
-        print(diagnosis, end="")
+        print(style.style_report(diagnosis), end="")
     report = execute(plan, Path(path).absolute().parent, strict=strict)
     print(json.dumps(asdict(report), sort_keys=True))
+    print(_run_summary(report), file=sys.stderr)
     return report.exit_code
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    style.configure(args.color)
 
     if args.command is None:
-        parser.print_help()
+        print(_overview())
         return 1
+    if args.command == "help":
+        return _run_help(parser, args.topic)
     try:
         if args.command == "tokens":
             return _run_tokens(args.file)
