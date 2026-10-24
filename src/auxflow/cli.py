@@ -11,6 +11,7 @@ import json
 import sys
 import textwrap
 from dataclasses import asdict, replace
+from importlib import metadata
 from pathlib import Path
 from time import perf_counter
 
@@ -58,6 +59,41 @@ _SUMMARIES = {
     "symbols": "print the label, reference, citation, and package tables",
 }
 
+_EXAMPLES = {
+    "check": "example:\n  auxflow check thesis.tex",
+    "classify": "examples:\n  auxflow classify thesis.tex\n  auxflow classify -v thesis.tex",
+    "plan": "examples:\n  auxflow plan --explain thesis.tex\n  auxflow plan thesis.tex > plan.json",
+    "run": "examples:\n  auxflow run thesis.tex\n  auxflow run --strict thesis.tex",
+    "graph": "example:\n  auxflow graph thesis.tex -o thesis.dot",
+    "tokens": "example:\n  auxflow tokens thesis.tex",
+    "ast": "example:\n  auxflow ast thesis.tex",
+    "symbols": "example:\n  auxflow symbols thesis.tex",
+}
+
+
+def _version() -> str:
+    try:
+        return metadata.version("auxflow")
+    except metadata.PackageNotFoundError:
+        return "unknown"
+
+
+def _unreadable(path: str) -> str | None:
+    """Why `path` cannot be analysed, or `None` if it can be read as text."""
+    target = Path(path)
+    if not target.exists():
+        return f"cannot read {path!r}: no such file. Check the path."
+    if target.is_dir():
+        return f"cannot read {path!r}: it is a directory. Give the main .tex file."
+    try:
+        with target.open(encoding="utf-8") as handle:
+            handle.read(4096)
+    except UnicodeDecodeError:
+        return f"cannot read {path!r}: it is not UTF-8 text."
+    except OSError as error:
+        return f"cannot read {path!r}: {error.strerror or error}."
+    return None
+
 
 def build_parser() -> argparse.ArgumentParser:
     """Build one subcommand per compiler phase with its documented arguments."""
@@ -65,10 +101,17 @@ def build_parser() -> argparse.ArgumentParser:
         prog="auxflow",
         description="Static convergence classification for multi-pass document compilation.",
     )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {_version()}")
     subparsers = parser.add_subparsers(dest="command", metavar="COMMAND")
 
     for name in COMMANDS:
-        sub = subparsers.add_parser(name, help=_SUMMARIES[name], description=_SUMMARIES[name])
+        sub = subparsers.add_parser(
+            name,
+            help=_SUMMARIES[name],
+            description=_SUMMARIES[name],
+            epilog=_EXAMPLES[name],
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+        )
         sub.add_argument("file", metavar="FILE", help="the main .tex file")
         if name == "graph":
             sub.add_argument(
@@ -144,7 +187,7 @@ def _overview() -> str:
             "  0  success",
             "  1  a problem was found: an error, an AMPLIFYING document without --force,",
             "     or a build that failed or did not settle",
-            "  2  wrong command line",
+            "  2  wrong command line, or a file that cannot be read",
             "",
             heading("Colour"),
             "  Colour is on for terminals only. Set NO_COLOR=1 or use --color never to turn",
@@ -434,6 +477,10 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     if args.command == "help":
         return _run_help(parser, args.topic)
+    problem = _unreadable(args.file)
+    if problem is not None:
+        print(f"auxflow: {problem}", file=sys.stderr)
+        return 2
     try:
         if args.command == "tokens":
             return _run_tokens(args.file)
