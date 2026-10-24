@@ -15,7 +15,7 @@ from importlib import metadata
 from pathlib import Path
 from time import perf_counter
 
-from auxflow import style
+from auxflow import completion, style
 from auxflow.analysis.classify import Classification, State, classify
 from auxflow.analysis.classify_cycles import classify_components
 from auxflow.analysis.condensation import build_condensation
@@ -57,7 +57,17 @@ _SUMMARIES = {
     "tokens": "print the token stream with source positions",
     "ast": "print the syntax tree of every file",
     "symbols": "print the label, reference, citation, and package tables",
+    "completion": "print a tab-completion script for bash, zsh, or fish",
 }
+
+_COMPLETION_INSTALL = """install:
+  bash   eval "$(auxflow completion bash)"
+  zsh    eval "$(auxflow completion zsh)"
+  fish   auxflow completion fish | source
+
+to keep it, add that line to ~/.bashrc, ~/.zshrc, or ~/.config/fish/config.fish.
+Or save the script where your shell loads completions, for example:
+  auxflow completion fish > ~/.config/fish/completions/auxflow.fish"""
 
 _EXAMPLES = {
     "check": "example:\n  auxflow check thesis.tex",
@@ -144,6 +154,14 @@ def build_parser() -> argparse.ArgumentParser:
         description="Show an overview of AuxFlow, or the options of one command.",
     )
     helper.add_argument("topic", metavar="COMMAND", nargs="?")
+    finisher = subparsers.add_parser(
+        "completion",
+        help=_SUMMARIES["completion"],
+        description=_SUMMARIES["completion"],
+        epilog=_COMPLETION_INSTALL,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    finisher.add_argument("shell", choices=completion.SHELLS, help="the shell to generate for")
     parser.add_argument(
         "--color",
         choices=("auto", "always", "never"),
@@ -153,7 +171,17 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-_WORKFLOW = ("check", "classify", "plan", "run", "graph", "tokens", "ast", "symbols")
+_WORKFLOW = (
+    "check",
+    "classify",
+    "plan",
+    "run",
+    "graph",
+    "tokens",
+    "ast",
+    "symbols",
+    "completion",
+)
 
 
 def _overview() -> str:
@@ -206,7 +234,7 @@ def _run_help(parser: argparse.ArgumentParser, topic: str | None) -> int:
         if isinstance(action, argparse._SubParsersAction) and topic in action.choices:
             print(action.choices[topic].format_help(), end="")
             return 0
-    names = ", ".join((*_WORKFLOW, "help"))
+    names = ", ".join((*_WORKFLOW, "help", "completion"))
     print(f"auxflow: no command named {topic!r}. Commands: {names}.", file=sys.stderr)
     return 2
 
@@ -477,6 +505,9 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     if args.command == "help":
         return _run_help(parser, args.topic)
+    if args.command == "completion":
+        print(completion.generate(parser, args.shell), end="")
+        return 0
     problem = _unreadable(args.file)
     if problem is not None:
         print(f"auxflow: {problem}", file=sys.stderr)

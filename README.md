@@ -144,6 +144,18 @@ Run `auxflow help` for an overview of every command, typical use, and exit codes
 
 The images show real command output rendered from a pseudo-terminal.
 
+### Tab completion
+
+AuxFlow completes commands, options, `--color` values, and `.tex` file names in bash, zsh, and fish. Load it for the current shell:
+
+```bash
+eval "$(auxflow completion bash)"       # bash
+eval "$(auxflow completion zsh)"        # zsh
+auxflow completion fish | source        # fish
+```
+
+Add that line to `~/.bashrc`, `~/.zshrc`, or `~/.config/fish/config.fish` to keep it. The scripts are generated from the command parser, so they list every command and option.
+
 ## Quick demonstrations
 
 The [quickstart examples](examples/quickstart/README.md) show a certified reference,
