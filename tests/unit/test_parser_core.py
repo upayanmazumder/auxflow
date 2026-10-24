@@ -205,6 +205,71 @@ def test_verb_becomes_a_verbatim_block_node() -> None:
     assert verbatim.text == "|a{b|"
 
 
+def test_lstlisting_body_is_opaque_and_following_commands_remain_active() -> None:
+    source = (
+        "before\\begin{lstlisting}\n"
+        "\\begin{figure}\\includegraphics{missing}\\label{fake}\n"
+        "\\end{figure} \\pageref{fake}\n"
+        "\\end{lstlisting}\\pageref{real}"
+    )
+    result = _parse(source)
+    assert result.diagnostics == ()
+    before, listing, real_ref = result.document.children
+    assert isinstance(before, Text)
+    assert isinstance(listing, Environment) and listing.name == "lstlisting"
+    assert listing.span.start == source.index(r"\begin{lstlisting}")
+    assert listing.span.end == source.index(r"\pageref{real}")
+    (body,) = listing.children
+    assert isinstance(body, VerbatimBlock)
+    assert (
+        body.text
+        == source[
+            source.index(r"\begin{lstlisting}") + len(r"\begin{lstlisting}") : source.index(
+                r"\end{lstlisting}"
+            )
+        ]
+    )
+    assert body.span.start == source.index(r"\begin{lstlisting}") + len(r"\begin{lstlisting}")
+    assert body.span.end == source.index(r"\end{lstlisting}")
+    assert isinstance(real_ref, MacroCall) and real_ref.name == r"\pageref"
+
+
+def test_unterminated_lstlisting_does_not_parse_internal_controls() -> None:
+    source = r"\begin{lstlisting}\label{fake}\end{other}\pageref{fake}"
+    result = _parse(source)
+    (listing,) = result.document.children
+    assert isinstance(listing, Environment) and listing.name == "lstlisting"
+    assert listing.span.end == len(source)
+    (body,) = listing.children
+    assert isinstance(body, VerbatimBlock)
+    assert body.text == r"\label{fake}\end{other}\pageref{fake}"
+    assert body.span.end == len(source)
+    assert len(result.diagnostics) == 1
+    assert "unterminated environment" in result.diagnostics[0].message
+
+
+def test_broken_listing_end_marker_consumes_to_eof() -> None:
+    source = r"\begin{lstlisting}\ref{fake}\end{lstlisting"
+    result = _parse(source)
+    (listing,) = result.document.children
+    assert isinstance(listing, Environment) and listing.span.end == len(source)
+    (body,) = listing.children
+    assert isinstance(body, VerbatimBlock)
+    assert body.text == r"\ref{fake}\end{lstlisting"
+    assert len(result.diagnostics) == 1
+
+
+def test_verbatim_environment_keeps_nested_looking_controls_literal() -> None:
+    source = r"\begin{verbatim}\begin{table}\caption{x}\end{table}\end{verbatim}\label{real}"
+    result = _parse(source)
+    listing, label = result.document.children
+    assert isinstance(listing, Environment) and listing.name == "verbatim"
+    (body,) = listing.children
+    assert isinstance(body, VerbatimBlock)
+    assert body.text == r"\begin{table}\caption{x}\end{table}"
+    assert isinstance(label, MacroCall) and label.name == r"\label"
+
+
 # --- top-level document shape -----------------------------------------------
 
 

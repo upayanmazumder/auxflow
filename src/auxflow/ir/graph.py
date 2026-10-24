@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from dataclasses import dataclass, field, replace
+from pathlib import Path
 
 from auxflow.ast import Forest
 from auxflow.ir.model import Component, DepEdge, DepType, Fact, FactKind
@@ -31,6 +32,7 @@ _SAFE_BARE = {
     "\\listoftables",
     "\\newpage",
     "\\clearpage",
+    "\\verb",
     "\\%",
     "\\Huge",
     "\\small",
@@ -249,6 +251,15 @@ def lower(forest: Forest, tables: SymbolTables) -> ARG:
         for node, environment, control_role in _nodes(document):
             if isinstance(node, Sectioning):
                 list_entry(FactKind.TOC_ENTRY, "toc", node.span)
+            elif isinstance(node, Environment) and node.name == "lstlisting":
+                opaque = True
+                builder.fact(
+                    FactKind.OPAQUE,
+                    node.name,
+                    "value",
+                    node.span,
+                    metadata={"reason": "unmodelled environment"},
+                )
             elif isinstance(node, (Opaque, MacroDef)):
                 if isinstance(node, Opaque) or node.opaque:
                     opaque = True
@@ -283,6 +294,19 @@ def lower(forest: Forest, tables: SymbolTables) -> ARG:
                 )
             elif isinstance(node, MacroCall):
                 key = _argument_text(node)
+                if (
+                    node.name == "\\documentclass"
+                    and key
+                    and (Path(node.span.file_id).parent / f"{key}.cls").is_file()
+                ):
+                    opaque = True
+                    builder.fact(
+                        FactKind.OPAQUE,
+                        key,
+                        "value",
+                        node.span,
+                        metadata={"reason": "unmodelled local class"},
+                    )
                 if node.name == "\\label" and key:
                     label = tables.labels.lookup(key)
                     number = builder.fact(

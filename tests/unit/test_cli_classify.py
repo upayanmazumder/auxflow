@@ -64,3 +64,48 @@ def test_unknown_fixture_emits_unknown_report_and_exits_zero(
 
     assert exit_code == 0
     assert capsys.readouterr().out.startswith("auxflow: UNKNOWN --")
+
+
+def test_unknown_report_groups_repeated_commands_and_keeps_locations(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    doc = tmp_path / "doc.tex"
+    doc.write_text("\\foo\\foo\\bar")
+
+    assert cli.main(["classify", str(doc)]) == 0
+    summary = capsys.readouterr().out
+    assert "\\foo" in summary
+    assert "\\bar" in summary
+    assert "2 occurrences" in summary
+    assert f"{doc}:1:1" in summary
+    assert len(summary.splitlines()) < 20
+
+    assert cli.main(["classify", str(doc), "--verbose"]) == 0
+    detailed = capsys.readouterr().out
+    assert f"{doc}:1:5" in detailed
+
+
+def test_local_unmodelled_class_cannot_be_certified(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    (tmp_path / "Custom.cls").write_text("\\LoadClass{article}\n\\RequirePackage{acro}\n")
+    doc = tmp_path / "main.tex"
+    doc.write_text("\\documentclass{Custom}\n\\begin{document}\\label{x}\\ref{x}\\end{document}")
+
+    assert cli.main(["classify", str(doc)]) == 0
+    result = capsys.readouterr().out
+    assert result.startswith("auxflow: UNKNOWN")
+    assert "Custom" in result
+
+
+def test_inline_verb_text_does_not_change_reference_classification(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    doc = tmp_path / "main.tex"
+    doc.write_text(
+        "\\documentclass{article}\\begin{document}\\verb|\\pageref{missing}|"
+        "\\label{x}\\ref{x}\\end{document}"
+    )
+
+    assert cli.main(["classify", str(doc)]) == 0
+    assert capsys.readouterr().out.startswith("auxflow: CERTIFIED")

@@ -1,0 +1,11 @@
+\documentclass{article}
+\usepackage{ifthen}
+\newcounter{pagecount}
+\begin{document}
+\whiledo{\value{pagecount}<\pageref{end:generated}}{%
+  \stepcounter{pagecount}%
+  Another page is generated.
+  \newpage
+}
+\label{end:generated}
+\end{document}

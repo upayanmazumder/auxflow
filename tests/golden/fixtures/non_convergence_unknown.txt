@@ -1,6 +1,0 @@
-auxflow: UNKNOWN -- document contains constructs outside the analysable subset.
-
-    non_convergence_unknown.tex:1:1   unmodelled package
-
-  Facts originating in these files are treated as unknown. Emitting the
-  conservative default plan; correctness is delegated to runtime verification.
