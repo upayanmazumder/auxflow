@@ -138,6 +138,18 @@ Human-readable output is coloured when it goes to a terminal. Set `NO_COLOR=1` o
 
 Run `auxflow help` for an overview of every command, typical use, and exit codes. Run `auxflow help COMMAND` for the options of one command.
 
+### Tab completion
+
+AuxFlow completes commands, options, `--color` values, and `.tex` file names in bash, zsh, and fish. Load it for the current shell:
+
+```bash
+eval "$(auxflow completion bash)"       # bash
+eval "$(auxflow completion zsh)"        # zsh
+auxflow completion fish | source        # fish
+```
+
+Add that line to `~/.bashrc`, `~/.zshrc`, or `~/.config/fish/config.fish` to keep it. The scripts are generated from the command parser, so they list every command and option.
+
 ![auxflow help](docs/images/cli/help.png)
 
 ![auxflow classify on an amplifying document](docs/images/cli/classify-amplifying.png)
