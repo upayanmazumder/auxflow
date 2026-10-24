@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import textwrap
 from dataclasses import asdict, replace
 from pathlib import Path
 from time import perf_counter
@@ -46,28 +47,60 @@ COMMANDS = (
 )
 
 
+_SUMMARIES = {
+    "check": "find undefined references, inclusion cycles, and unmodelled packages",
+    "classify": "say whether the document settles, and explain why",
+    "plan": "show the build plan (use --explain for a readable schedule)",
+    "run": "run the plan with a TeX engine and verify the result",
+    "graph": "export the dependency graph as Graphviz DOT",
+    "tokens": "print the token stream with source positions",
+    "ast": "print the syntax tree of every file",
+    "symbols": "print the label, reference, citation, and package tables",
+}
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build one subcommand per compiler phase with its documented arguments."""
     parser = argparse.ArgumentParser(
         prog="auxflow",
         description="Static convergence classification for multi-pass document compilation.",
     )
-    subparsers = parser.add_subparsers(dest="command")
+    subparsers = parser.add_subparsers(dest="command", metavar="COMMAND")
 
     for name in COMMANDS:
-        sub = subparsers.add_parser(name)
-        sub.add_argument("file", metavar="FILE")
+        sub = subparsers.add_parser(name, help=_SUMMARIES[name], description=_SUMMARIES[name])
+        sub.add_argument("file", metavar="FILE", help="the main .tex file")
         if name == "graph":
-            sub.add_argument("-o", dest="output", metavar="G.dot")
+            sub.add_argument(
+                "-o", dest="output", metavar="G.dot", help="write DOT here instead of stdout"
+            )
         if name == "classify":
-            sub.add_argument("-v", "--verbose", action="store_true")
-            sub.add_argument("--force", action="store_true")
+            sub.add_argument(
+                "-v", "--verbose", action="store_true", help="list every source location"
+            )
+            sub.add_argument(
+                "--force", action="store_true", help="exit 0 even when the result is AMPLIFYING"
+            )
         if name == "plan":
-            sub.add_argument("--explain", action="store_true")
+            sub.add_argument(
+                "--explain", action="store_true", help="print a readable schedule, not JSON"
+            )
         if name in {"plan", "run"}:
-            sub.add_argument("--force", action="store_true")
+            sub.add_argument(
+                "--force",
+                action="store_true",
+                help="plan an AMPLIFYING document anyway, capped at 6 runs",
+            )
         if name == "run":
-            sub.add_argument("--strict", action="store_true")
+            sub.add_argument(
+                "--strict", action="store_true", help="refuse to run UNKNOWN documents"
+            )
+    helper = subparsers.add_parser(
+        "help",
+        help="show help for AuxFlow or for one command",
+        description="Show an overview of AuxFlow, or the options of one command.",
+    )
+    helper.add_argument("topic", metavar="COMMAND", nargs="?")
     parser.add_argument(
         "--color",
         choices=("auto", "always", "never"),
@@ -75,6 +108,64 @@ def build_parser() -> argparse.ArgumentParser:
         help="colour human-readable output (default: auto, honours NO_COLOR)",
     )
     return parser
+
+
+_WORKFLOW = ("check", "classify", "plan", "run", "graph", "tokens", "ast", "symbols")
+
+
+def _overview() -> str:
+    """The text for `auxflow help` and for `auxflow` with no command."""
+
+    def heading(text: str) -> str:
+        return style.paint(text, "bold")
+
+    width = max(len(name) for name in _WORKFLOW)
+    commands = "\n".join(
+        f"  {style.paint(name.ljust(width), 'cyan')}  {_SUMMARIES[name]}" for name in _WORKFLOW
+    )
+    return "\n".join(
+        (
+            "AuxFlow: static convergence analysis for multi-pass LaTeX builds.",
+            "",
+            heading("Usage"),
+            "  auxflow [--color auto|always|never] COMMAND [OPTIONS] FILE",
+            "  auxflow help [COMMAND]",
+            "",
+            heading("Commands"),
+            commands,
+            "",
+            heading("Typical use"),
+            "  auxflow check thesis.tex             look for problems first",
+            "  auxflow classify thesis.tex          see whether it settles",
+            "  auxflow plan --explain thesis.tex    read the build schedule",
+            "  auxflow run thesis.tex               build and verify",
+            "",
+            heading("Exit status"),
+            "  0  success",
+            "  1  a problem was found: an error, an AMPLIFYING document without --force,",
+            "     or a build that failed or did not settle",
+            "  2  wrong command line",
+            "",
+            heading("Colour"),
+            "  Colour is on for terminals only. Set NO_COLOR=1 or use --color never to turn",
+            "  it off. JSON, DOT, token, and AST output is never coloured.",
+            "",
+            "Run 'auxflow help COMMAND' for the options of one command.",
+        )
+    )
+
+
+def _run_help(parser: argparse.ArgumentParser, topic: str | None) -> int:
+    if topic is None:
+        print(_overview())
+        return 0
+    for action in parser._actions:
+        if isinstance(action, argparse._SubParsersAction) and topic in action.choices:
+            print(action.choices[topic].format_help(), end="")
+            return 0
+    names = ", ".join((*_WORKFLOW, "help"))
+    print(f"auxflow: no command named {topic!r}. Commands: {names}.", file=sys.stderr)
+    return 2
 
 
 def _run_tokens(path: str) -> int:
@@ -244,7 +335,8 @@ _MEANING = {
 
 def _meaning(classification: Classification) -> str:
     runs = classification.predicted_runs
-    return _MEANING[classification.state].format(runs=runs, noun="run" if runs == 1 else "runs")
+    text = _MEANING[classification.state].format(runs=runs, noun="run" if runs == 1 else "runs")
+    return textwrap.fill(text, width=88)
 
 
 def _run_classify(path: str, *, verbose: bool, force: bool) -> int:
@@ -338,8 +430,10 @@ def main(argv: list[str] | None = None) -> int:
     style.configure(args.color)
 
     if args.command is None:
-        parser.print_help()
+        print(_overview())
         return 1
+    if args.command == "help":
+        return _run_help(parser, args.topic)
     try:
         if args.command == "tokens":
             return _run_tokens(args.file)

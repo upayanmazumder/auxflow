@@ -79,7 +79,7 @@ def test_amplifying_explanation_stays_hedged_and_names_the_escape_hatch(
     )
 
     assert cli.main(["classify", str(doc)]) == 1
-    out = capsys.readouterr().out
+    out = " ".join(capsys.readouterr().out.split())
 
     assert "may keep changing" in out
     assert "--force" in out
