@@ -12,7 +12,7 @@ prompted it.
 
 from __future__ import annotations
 
-from collections import deque
+from collections import defaultdict, deque
 
 from auxflow.analysis.classify import Classification, State
 from auxflow.analysis.scc import tarjan
@@ -147,18 +147,26 @@ def render_benign(
     return "\n".join(lines) + "\n"
 
 
-def render_unknown(arg: ARG, sources: dict[str, str], classification: Classification) -> str:
+def render_unknown(
+    arg: ARG, sources: dict[str, str], classification: Classification, *, verbose: bool = False
+) -> str:
     lines = ["auxflow: UNKNOWN -- document contains constructs outside the analysable subset.", ""]
+    groups: dict[tuple[str, str | None], list[Fact]] = defaultdict(list)
     for fact_id in sorted(classification.opaque_fact_ids):
         fact = arg.facts[fact_id]
-        position = _position(sources, fact)
-        reason = str(fact.metadata.get("reason", "not modelled"))
-        lines.append(f"    {position}   {reason}")
+        groups[(str(fact.metadata.get("reason", "not modelled")), fact.key)].append(fact)
+    for (reason, key), facts in groups.items():
+        name = f"{reason}: {key}" if key is not None else reason
+        count = f" ({len(facts)} occurrences)" if len(facts) > 1 else ""
+        lines.append(f"    {name}{count}  {_position(sources, facts[0])}")
+        if verbose:
+            for fact in facts[1:]:
+                lines.append(f"      {_position(sources, fact)}")
 
     lines += [
         "",
-        "  Facts originating in these files are treated as unknown. Emitting the",
-        "  conservative default plan; correctness is delegated to runtime verification.",
+        "  These constructs have unmodelled effects. The plan uses the",
+        "  conservative default and requires runtime verification.",
     ]
     return "\n".join(lines) + "\n"
 
@@ -209,7 +217,7 @@ def render(
     if classification.state is State.AMPLIFYING:
         return render_amplifying(arg, sources, classification)
     if classification.state is State.UNKNOWN:
-        return render_unknown(arg, sources, classification)
+        return render_unknown(arg, sources, classification, verbose=verbose)
     if classification.state is State.BENIGN_CYCLIC:
         if not verbose:
             return None

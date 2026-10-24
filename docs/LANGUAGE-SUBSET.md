@@ -138,6 +138,28 @@ Modelling that extent requires line breaking, which is out of scope. Treating ev
 as pagination-affecting makes the analysis vacuous. `b07` and `b15` instead remain opaque and
 are refused under strict mode. These cases state the subset boundary by convergence mechanism.
 
+## Diagnosing larger projects
+
+`auxflow check` lists unmodelled packages declared directly in the document and packages
+loaded by a local class or local package file. These warnings report declarations only.
+They do not prove the package's macros or layout effects are safe.
+
+The classifier reports repeated unsupported constructs by name and occurrence count.
+Use `auxflow classify -v FILE` for each source location. A local unmodelled class
+makes a document UNKNOWN even when its main `.tex` file uses only supported commands.
+An external class that AuxFlow cannot inspect also remains outside the stated model.
+
+The package inventory does not parse installed TeX packages or cache dependency
+graphs. A package's presence on a machine does not establish its convergence
+behavior. Project graphs depend on local document content and must be rebuilt
+when that content changes.
+Do not interpret a CERTIFIED result as a guarantee about arbitrary class internals.
+
+Literal commands inside `verbatim` and `lstlisting` do not produce reference facts.
+`lstlisting` remains an unmodelled environment, so its document can still be UNKNOWN.
+Graphic files can be referenced relative to the entry document or the including file.
+`auxflow check` reports a missing graphic only when neither location has the file.
+
 ## Non-goals for the subset
 
 - Not a specification of LaTeX, nor a subset anyone else should adopt.

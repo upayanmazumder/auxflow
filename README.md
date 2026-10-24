@@ -89,10 +89,21 @@ The planner removes unused files and unnecessary tool invocations. It derives th
 
 ## CLI Usage
 
-Install AuxFlow in editable mode:
+Python 3.12 or later is required. On systems with an externally managed Python (for example Arch Linux), install into a virtual environment:
 
 ```bash
-pip install -e .
+python -m venv .venv
+source .venv/bin/activate        # bash or zsh
+source .venv/bin/activate.fish   # fish
+pip install -e ".[dev]"
+```
+
+The prompt shows `(.venv)` after activation. Use `pip install -e .` instead if you do not need the test, type-check, and lint tools. To skip activation, call `.venv/bin/auxflow` directly.
+
+Check the install:
+
+```bash
+auxflow classify bench/corpus/b01_plain/main.tex
 ```
 
 Inspect the compiler pipeline on any document:
@@ -122,6 +133,17 @@ auxflow plan --explain document.tex
 # Execute the plan with runtime verification
 auxflow run document.tex
 ```
+
+## Quick demonstrations
+
+The [quickstart examples](examples/quickstart/README.md) show a certified reference,
+a multi-file contents list, and a document with an amplifying cycle.
+The examples include commands and expected classifications.
+
+For a project with a custom class or packages, start with `auxflow check FILE` and
+`auxflow classify FILE`. UNKNOWN means that AuxFlow cannot establish the static bound.
+It does not mean the document fails to compile. Do not treat package discovery as
+proof that a package's typesetting effects are modelled.
 
 ---
 

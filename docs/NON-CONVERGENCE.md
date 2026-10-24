@@ -196,14 +196,18 @@ Reporting benign cycles at normal verbosity would train the user to ignore the a
 
 ### Unknown
 
-```
+The default report groups the same unsupported construct across a project.
+It shows the first source location and the number of occurrences. `-v` shows
+every location.
+
+```text
 auxflow: UNKNOWN -- document contains constructs outside the analysable subset.
 
-    chapters/methods.tex:88:3   \csname is not analysable
-    main.tex:12:1               package 'exotic' is not modelled
+    unsupported control sequence: \csname (3 occurrences)  chapters/methods.tex:88:3
+    unmodelled package: exotic  main.tex:12:1
 
-  Facts originating in these files are treated as unknown. Emitting the
-  conservative default plan; correctness is delegated to runtime verification.
+  These constructs have unmodelled effects. The plan uses the
+  conservative default and requires runtime verification.
 ```
 
 ### Certified, with an explanation of the bound

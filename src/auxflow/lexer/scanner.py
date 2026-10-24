@@ -15,8 +15,7 @@ from __future__ import annotations
 from auxflow.lexer.catcode import CatCode, catcode_of
 from auxflow.lexer.tokens import Token
 
-_VERBATIM_ENV_OPEN = "{verbatim}"
-_VERBATIM_ENV_CLOSE = "\\end{verbatim}"
+_LITERAL_ENVIRONMENTS = ("verbatim", "lstlisting")
 
 
 def tokenize(source: str, file_id: str) -> list[Token]:
@@ -39,11 +38,12 @@ def tokenize(source: str, file_id: str) -> list[Token]:
     unterminated `\verb` conservatively consumes to end of input rather than
     silently dropping content.
 
-    `\begin{verbatim}...\end{verbatim}`: the `\begin`/`\end` control
-    sequences and the `{verbatim}` group tokenise normally (the parser needs
-    them to recognise the environment); only the body between them is one
-    opaque VERBATIM token. An unterminated environment consumes to end of
-    input.
+    `\begin{verbatim}...\end{verbatim}` and
+    `\begin{lstlisting}...\end{lstlisting}`: the `\begin`/`\end`
+    control sequences and braced environment names tokenise normally (the
+    parser needs them to recognise the environment); only the body between
+    them is one opaque VERBATIM token. An unterminated environment consumes
+    to end of input. `lstlisting` remains unmodelled package behavior.
 
     Every other character is a single-character token carrying its own
     category code.
@@ -102,15 +102,20 @@ def tokenize(source: str, file_id: str) -> list[Token]:
                 end = close + 1 if close != -1 else n
                 emit(CatCode.VERBATIM, source[i:end], v_line, v_col, v_offset)
                 advance(end - i)
-            elif text == "\\begin" and source.startswith(_VERBATIM_ENV_OPEN, i):
-                for _ in _VERBATIM_ENV_OPEN:
-                    emit_single_char()
-                v_line, v_col, v_offset = line, col, i
-                close = source.find(_VERBATIM_ENV_CLOSE, i)
-                end = close if close != -1 else n
-                if end > i:
-                    emit(CatCode.VERBATIM, source[i:end], v_line, v_col, v_offset)
-                    advance(end - i)
+            elif text == "\\begin":
+                for name in _LITERAL_ENVIRONMENTS:
+                    opening = "{" + name + "}"
+                    if not source.startswith(opening, i):
+                        continue
+                    for _ in opening:
+                        emit_single_char()
+                    v_line, v_col, v_offset = line, col, i
+                    close = source.find("\\end{" + name + "}", i)
+                    end = close if close != -1 else n
+                    if end > i:
+                        emit(CatCode.VERBATIM, source[i:end], v_line, v_col, v_offset)
+                        advance(end - i)
+                    break
             continue
 
         if code == CatCode.COMMENT:
