@@ -134,6 +134,8 @@ auxflow plan --explain document.tex
 auxflow run document.tex
 ```
 
+Human-readable output is coloured when it goes to a terminal. Set `NO_COLOR=1` or pass `--color never` to turn colour off. Pass `--color always` to keep it in a pipe. JSON, DOT, token and AST output is never coloured. `classify` ends with a short "In plain terms" sentence. `check` and `run` print a one-line summary on stderr, so stdout stays machine-readable.
+
 ## Quick demonstrations
 
 The [quickstart examples](examples/quickstart/README.md) show a certified reference,
