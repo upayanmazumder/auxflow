@@ -6,6 +6,11 @@ Every number in this report traces to a committed script and a results file unde
 
 **No performance improvement is promised.** The experiments determine whether one exists.
 
+**Update, 2026-10-24.** The published results below were measured before a classifier change.
+The current classifier reports `b11_width`, `b12_float` and `b13_varioref` as UNKNOWN, not
+CERTIFIED, so they are no longer false negatives of the static analysis. The published numbers
+and `expected.json` files are historical and were not regenerated.
+
 ## Environment
 
 - Image: `bench/Dockerfile` built from `python:3.12-slim-bookworm`

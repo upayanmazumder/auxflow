@@ -48,7 +48,7 @@ def test_local_class_reports_transitive_requirements_with_provenance(tmp_path: P
     root.write_text(r"\documentclass[final]{MyClass}", encoding="utf-8")
     class_file = tmp_path / "MyClass.cls"
     class_file.write_text(
-        r"\RequirePackage[margin=1in]{geometry,graphicx}"
+        r"\RequirePackage[margin=1in]{fancyhdr,tabularx}"
         "\n"
         r"\RequirePackage{helper}"
         "\n",
@@ -62,8 +62,8 @@ def test_local_class_reports_transitive_requirements_with_provenance(tmp_path: P
     assert warnings[0].message == f"unmodelled class: 'MyClass' (local file: '{class_file}')"
     assert warnings[0].span.file_id == str(root)
     assert [(item.message, item.span.file_id) for item in warnings[1:]] == [
-        ("unmodelled package: 'geometry' (required by 'MyClass.cls')", str(class_file)),
-        ("unmodelled package: 'graphicx' (required by 'MyClass.cls')", str(class_file)),
+        ("unmodelled package: 'fancyhdr' (required by 'MyClass.cls')", str(class_file)),
+        ("unmodelled package: 'tabularx' (required by 'MyClass.cls')", str(class_file)),
         ("unmodelled package: 'helper' (required by 'MyClass.cls')", str(class_file)),
         (
             "unmodelled package: 'exotic' (required by 'MyClass.cls' -> 'helper.sty')",
@@ -135,12 +135,12 @@ def test_standard_class_without_local_file_does_not_flood_warnings(
 def test_class_inventory_does_not_change_direct_package_warning(tmp_path: Path) -> None:
     root = tmp_path / "main.tex"
     root.write_text(r"\documentclass{MyClass}\usepackage{exotic}", encoding="utf-8")
-    (tmp_path / "MyClass.cls").write_text(r"\RequirePackage{graphicx}", encoding="utf-8")
+    (tmp_path / "MyClass.cls").write_text(r"\RequirePackage{tabularx}", encoding="utf-8")
 
     warnings = _project_warnings(root)
 
     assert [warning.message for warning in warnings] == [
         f"unmodelled class: 'MyClass' (local file: '{tmp_path / 'MyClass.cls'}')",
-        "unmodelled package: 'graphicx' (required by 'MyClass.cls')",
+        "unmodelled package: 'tabularx' (required by 'MyClass.cls')",
         "unmodelled package: 'exotic'",
     ]

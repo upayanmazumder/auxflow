@@ -11,6 +11,8 @@ docs/NON-CONVERGENCE.md "Testing":
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from auxflow.analysis.classify import State, classify
 from auxflow.analysis.classify_cycles import classify_components
 from auxflow.analysis.condensation import build_condensation
@@ -29,6 +31,7 @@ _B08_SOURCE = (
     "Last page label here\\label{l}.\n"
 )
 _B05_SOURCE = "\\tableofcontents\n\\section{One}\n\\label{p}\n\\pageref{p}\n"
+_CORPUS = Path(__file__).resolve().parents[2] / "bench" / "corpus"
 
 
 def _pipeline(source: str, file_id: str = "doc.tex"):
@@ -79,3 +82,83 @@ def test_b05_table_of_contents_is_not_classified_amplifying() -> None:
     # this lands CERTIFIED; NON-CONVERGENCE.md itself only requires "not
     # amplifying", which holds either way.
     assert result.state is State.CERTIFIED
+
+
+def test_width_sensitive_page_reference_does_not_claim_certified_bound() -> None:
+    source = (_CORPUS / "b11_width" / "main.tex").read_text(encoding="utf-8")
+    graph, result = _pipeline(source)
+
+    assert result.state is State.UNKNOWN
+    assert result.predicted_runs is None
+    assert any(
+        graph.facts[fact_id].source_location.start == source.index(r"\pageref")
+        for fact_id in result.opaque_fact_ids
+    )
+
+
+def test_float_placement_with_page_reference_does_not_claim_certified_bound() -> None:
+    source = (_CORPUS / "b12_float" / "main.tex").read_text(encoding="utf-8")
+    graph, result = _pipeline(source)
+
+    assert result.state is State.UNKNOWN
+    assert result.predicted_runs is None
+    assert any(
+        graph.facts[fact_id].source_location.start == source.index(r"\pageref")
+        for fact_id in result.opaque_fact_ids
+    )
+
+
+def test_varioref_page_feedback_does_not_claim_certified_bound() -> None:
+    source = (_CORPUS / "b13_varioref" / "main.tex").read_text(encoding="utf-8")
+    graph, result = _pipeline(source)
+
+    assert result.state is State.UNKNOWN
+    assert result.predicted_runs is None
+    assert any(
+        graph.facts[fact_id].source_location.start == source.index(r"\vpageref")
+        for fact_id in result.opaque_fact_ids
+    )
+
+
+def test_forward_references_with_arabic_numbering_remain_certified() -> None:
+    source = r"See \ref{target}, page \pageref{target}. Later\section{Target}\label{target}"
+    _graph, result = _pipeline(source)
+
+    assert result.state is State.CERTIFIED
+
+
+def test_roman_numbering_page_reference_has_unmodelled_width_feedback() -> None:
+    source = r"\pagenumbering{roman}\label{target}See page \pageref{target}."
+    graph, result = _pipeline(source)
+
+    assert result.state is State.UNKNOWN
+    assert any(
+        graph.facts[fact_id].source_location.start == source.index(r"\pageref")
+        for fact_id in result.opaque_fact_ids
+    )
+
+
+def test_roman_numbering_without_page_reference_remains_certified() -> None:
+    _graph, result = _pipeline(r"\pagenumbering{Roman}\label{a}See \ref{a}.")
+
+    assert result.state is State.CERTIFIED
+
+
+def test_varioref_short_form_still_has_unmodelled_page_dependent_text() -> None:
+    source = r"\usepackage{varioref}\label{target}See \vref{target}."
+    graph, result = _pipeline(source)
+
+    assert result.state is State.UNKNOWN
+    assert any(
+        graph.facts[fact_id].source_location.start == source.index(r"\vref")
+        for fact_id in result.opaque_fact_ids
+    )
+
+
+def test_backward_page_reference_and_isolated_float_remain_certified() -> None:
+    for source in (
+        r"\label{target}See page \pageref{target}.",
+        r"\begin{figure}\caption{Static image}\end{figure}",
+    ):
+        _graph, result = _pipeline(source)
+        assert result.state is State.CERTIFIED

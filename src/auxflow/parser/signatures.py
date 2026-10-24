@@ -38,6 +38,7 @@ SIGNATURES: dict[str, Signature] = {
     "\\include": Signature(("mandatory",)),
     "\\label": Signature(("mandatory",)),
     "\\ref": Signature(("mandatory",)),
+    "\\eqref": Signature(("mandatory",)),
     "\\pageref": Signature(("mandatory",)),
     "\\vref": Signature(("mandatory",)),
     "\\vpageref": Signature(("optional", "mandatory")),

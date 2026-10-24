@@ -138,6 +138,12 @@ Modelling that extent requires line breaking, which is out of scope. Treating ev
 as pagination-affecting makes the analysis vacuous. `b07` and `b15` instead remain opaque and
 are refused under strict mode. These cases state the subset boundary by convergence mechanism.
 
+### Inert packages and commands
+
+Some packages and commands write no auxiliary or cross-reference state. AuxFlow treats them as inert and does not mark a document UNKNOWN for using them. The packages are `inputenc`, `fontenc`, `ae`, `aecompl`, `lmodern`, `xcolor`, `parskip`, `geometry`, `setspace`, `multicol`, and `amsmath`. The commands are listed in `_INERT_COMMANDS` in `src/auxflow/ir/graph.py`. `\eqref` resolves like `\ref`. A local macro is inert only if every command in its body is inert. These constructs can still change pagination. The ARG does not model that, as with all layout.
+
+A page reference under `roman`, `Roman`, `alph`, or `Alph` page numbering makes the document UNKNOWN. The numeral width changes with its value, which can move line breaks and the reference's own target (b11, b12). `\vref` and `\vpageref` also make a document UNKNOWN (b13). References under arabic numbering are not treated this way, so b03 and b09 stay CERTIFIED.
+
 ## Diagnosing larger projects
 
 `auxflow check` lists unmodelled packages declared directly in the document and packages

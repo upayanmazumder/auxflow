@@ -65,15 +65,34 @@ def _argument_text(call: MacroCall, index: int = 0) -> str | None:
     return "".join(node.text for node in nodes if isinstance(node, Text))
 
 
+_MODELLED_PACKAGES = frozenset(
+    {
+        # Reference syntax or file dependencies with a narrow model.
+        "graphicx",
+        "varioref",
+        "ifthen",
+        # Encoding, font, colour, and layout packages. They write no auxiliary or
+        # cross-reference state. Their effect on pagination is not modelled.
+        "inputenc",
+        "fontenc",
+        "ae",
+        "aecompl",
+        "lmodern",
+        "xcolor",
+        "parskip",
+        "geometry",
+        "setspace",
+        "multicol",
+        "amsmath",
+    }
+)
+
+
 def _record_package(tables: SymbolTables, names: str) -> None:
     for name in names.split(","):
         name = name.strip()
         if name:
-            # These package calls have narrowly modelled reference syntax.
-            # Their effects on typeset extent remain outside the ARG.
-            tables.packages.insert(
-                name, frozenset(), None, modelled=name in {"graphicx", "varioref", "ifthen"}
-            )
+            tables.packages.insert(name, frozenset(), None, modelled=name in _MODELLED_PACKAGES)
 
 
 def _declare_node(node: Node, tables: SymbolTables, counter_kind: str) -> str:
@@ -143,7 +162,7 @@ def resolve(forest: Forest, tables: SymbolTables) -> SymbolTables:
             key = _argument_text(node)
             if not key:
                 continue
-            if node.name in {"\\ref", "\\pageref", "\\vref", "\\vpageref"}:
+            if node.name in {"\\ref", "\\eqref", "\\pageref", "\\vref", "\\vpageref"}:
                 kind: Literal["ref", "pageref"] = (
                     "pageref" if node.name in {"\\pageref", "\\vref", "\\vpageref"} else "ref"
                 )
