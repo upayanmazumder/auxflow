@@ -8,6 +8,7 @@ from pathlib import Path
 
 from auxflow.ast import Forest
 from auxflow.ir.model import Component, DepEdge, DepType, Fact, FactKind
+from auxflow.lexer.catcode import CatCode
 from auxflow.parser.nodes import (
     ControlConstruct,
     CounterOp,
@@ -37,6 +38,32 @@ _SAFE_BARE = {
     "\\Huge",
     "\\small",
 }
+# Typesetting commands that write no auxiliary or cross-reference state. They can
+# shift pagination, which the ARG deliberately does not model (docs/LANGUAGE-SUBSET.md).
+_INERT_COMMANDS = {
+    "\\item",
+    "\\ldots",
+    "\\pi",
+    "\\int",
+    "\\frac",
+    "\\\\",
+    "\\textbf",
+    "\\textit",
+    "\\emph",
+    "\\textcolor",
+    "\\color",
+    "\\colorbox",
+    "\\definecolor",
+    "\\pagestyle",
+    "\\title",
+    "\\author",
+    "\\date",
+    "\\today",
+    "\\maketitle",
+    "\\setstretch",
+    "\\newcommand",
+    "\\renewcommand",
+}
 _KNOWN_CALLS = {
     "\\equal",
     "\\documentclass",
@@ -47,6 +74,7 @@ _KNOWN_CALLS = {
     "\\label",
     "\\ref",
     "\\pageref",
+    "\\eqref",
     "\\vref",
     "\\vpageref",
     "\\cite",
@@ -171,6 +199,7 @@ def lower(forest: Forest, tables: SymbolTables) -> ARG:
     label_numbers: dict[str, int] = {}
     label_pages: dict[str, int] = {}
     pending_refs: list[tuple[str, int, bool]] = []
+    variable_width_numbering = False
     cite_uses: list[int] = []
     bibliography: list[int] = []
     list_extents: dict[str, int] = {}
@@ -247,6 +276,21 @@ def lower(forest: Forest, tables: SymbolTables) -> ARG:
         if source is not None:
             builder.edge(source, exists, 1, DepType.LAYOUT, "bibliography body adds a toc entry")
 
+    # A document-local macro is inert when its body uses only commands that
+    # write no auxiliary state. Bodies are never expanded (docs/LANGUAGE-SUBSET.md).
+    inert_commands = _SAFE_BARE | _INERT_COMMANDS | _KNOWN_CALLS
+    safe_macros = {
+        node.name
+        for document in forest.documents.values()
+        for node, _environment, _control_role in _nodes(document)
+        if isinstance(node, MacroDef)
+        and not node.opaque
+        and all(
+            token.text in inert_commands
+            for token in node.body_tokens
+            if token.catcode is CatCode.CONTROL_SEQUENCE
+        )
+    }
     for document in forest.documents.values():
         for node, environment, control_role in _nodes(document):
             if isinstance(node, Sectioning):
@@ -292,6 +336,8 @@ def lower(forest: Forest, tables: SymbolTables) -> ARG:
                     node.span,
                     metadata={"control_role": control_role},
                 )
+            elif isinstance(node, MacroCall) and node.name in safe_macros:
+                continue
             elif isinstance(node, MacroCall):
                 key = _argument_text(node)
                 if (
@@ -321,7 +367,7 @@ def lower(forest: Forest, tables: SymbolTables) -> ARG:
                     page = builder.fact(FactKind.LABEL_PAGE, key, "value", node.span)
                     label_numbers.setdefault(key, number)
                     label_pages.setdefault(key, page)
-                elif node.name in {"\\ref", "\\pageref", "\\vref", "\\vpageref"} and key:
+                elif node.name in {"\\ref", "\\eqref", "\\pageref", "\\vref", "\\vpageref"} and key:
                     is_page = node.name in {"\\pageref", "\\vref", "\\vpageref"}
                     use = builder.fact(
                         FactKind.PAGEREF_USE if is_page else FactKind.REF_USE,
@@ -331,6 +377,15 @@ def lower(forest: Forest, tables: SymbolTables) -> ARG:
                         metadata=({"control_role": control_role} if control_role else None),
                     )
                     pending_refs.append((key, use, is_page))
+                    if node.name in {"\\vref", "\\vpageref"}:
+                        opaque = True
+                        builder.fact(
+                            FactKind.OPAQUE,
+                            node.name,
+                            "value",
+                            node.span,
+                            metadata={"reason": "unmodelled page-dependent varioref text"},
+                        )
                 elif node.name == "\\caption" and environment in {"figure", "table"}:
                     kind = FactKind.LOF_ENTRY if environment == "figure" else FactKind.LOT_ENTRY
                     list_entry(kind, "lof" if environment == "figure" else "lot", node.span)
@@ -354,6 +409,8 @@ def lower(forest: Forest, tables: SymbolTables) -> ARG:
                         node.span,
                         metadata={"control_role": control_role},
                     )
+                elif node.name == "\\pagenumbering" and key in {"roman", "Roman", "alph", "Alph"}:
+                    variable_width_numbering = True
                 elif node.name == "\\usepackage" and key:
                     for name in key.split(","):
                         package = tables.packages.lookup(name.strip())
@@ -366,7 +423,11 @@ def lower(forest: Forest, tables: SymbolTables) -> ARG:
                                 node.span,
                                 metadata={"reason": "unmodelled package"},
                             )
-                elif node.name not in _KNOWN_CALLS and node.name not in _SAFE_BARE:
+                elif (
+                    node.name not in _KNOWN_CALLS
+                    and node.name not in _SAFE_BARE
+                    and node.name not in _INERT_COMMANDS
+                ):
                     opaque = True
                     builder.fact(
                         FactKind.OPAQUE,
@@ -389,6 +450,19 @@ def lower(forest: Forest, tables: SymbolTables) -> ARG:
             )
     for key, use, is_page in pending_refs:
         source = (label_pages if is_page else label_numbers).get(key)
+        if source is not None:
+            use_span = builder.facts[use].source_location
+            if is_page and variable_width_numbering:
+                # A numeral whose width depends on its value can change a line
+                # break and move its own target. The ARG omits this feedback.
+                opaque = True
+                builder.fact(
+                    FactKind.OPAQUE,
+                    "\\pageref",
+                    "value",
+                    use_span,
+                    metadata={"reason": "unmodelled variable-width page numbering"},
+                )
         if source is not None:
             builder.edge(
                 source,

@@ -79,3 +79,11 @@ def test_malformed_recognised_record_is_rejected_instead_of_appearing_stable() -
 def test_escaped_percent_does_not_start_a_comment() -> None:
     state = normalize_aux_file(r"\newlabel{x}{{A\%B}{2}}", ".aux")
     assert ("label", "x", r"A\%B", "2") in state
+
+
+def test_package_defined_scalar_label_remains_observable() -> None:
+    first = normalize_aux_file(r"\newlabel{RF1}{12}", ".aux")
+    second = normalize_aux_file(r"\newlabel{RF1}{13}", ".aux")
+
+    assert ("other", "newlabel", "RF1", "12") in first
+    assert first != second

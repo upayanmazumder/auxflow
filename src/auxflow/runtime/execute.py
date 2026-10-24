@@ -67,6 +67,7 @@ def _command(step: Step) -> list[str]:
         return [
             "pdflatex",
             "-interaction=nonstopmode",
+            "-no-shell-escape",
             "-halt-on-error",
             f"-jobname={step.jobname}",
             *step.args,

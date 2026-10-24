@@ -106,9 +106,13 @@ def _records(text: str, suffix: str) -> set[CanonicalRecord]:
         if name == "newlabel":
             key, index = _group(text, index)
             details, index = _group(text, index)
-            number, cursor = _group(details, 0)
-            page, _ = _group(details, cursor)
-            records.add(("label", _canonical(key), _canonical(number), _canonical(page)))
+            if details.startswith("{", _skip_space(details, 0)):
+                number, cursor = _group(details, 0)
+                page, _ = _group(details, cursor)
+                records.add(("label", _canonical(key), _canonical(number), _canonical(page)))
+            else:
+                # Packages may reuse \newlabel with a scalar value. Preserve it.
+                records.add(("other", "newlabel", _canonical(key), _canonical(details)))
         elif name == "@writefile":
             target, index = _group(text, index)
             content, index = _group(text, index)

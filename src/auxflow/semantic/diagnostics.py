@@ -8,7 +8,7 @@ from auxflow.ast import Forest, walk
 from auxflow.parser.diagnostics import Diagnostic
 from auxflow.parser.nodes import DocumentClass, MacroCall, UsePackage
 from auxflow.semantic.package_inventory import local_file, requirements
-from auxflow.semantic.resolve import SymbolTables, _argument_text
+from auxflow.semantic.resolve import _MODELLED_PACKAGES, SymbolTables, _argument_text
 
 # Avoid a warning on every ordinary document with a system-supplied base class.
 # This does not model or inspect their effects; a local override is still reported.
@@ -43,7 +43,7 @@ def check_packages(forest: Forest, tables: SymbolTables) -> list[Diagnostic]:
             return
         scanned_files.add(path)
         for name, span in requirements(path):
-            if name not in seen_requirements:
+            if name not in seen_requirements and name not in _MODELLED_PACKAGES:
                 seen_requirements.add(name)
                 chain = " -> ".join(repr(part) for part in provenance)
                 diagnostics.append(
