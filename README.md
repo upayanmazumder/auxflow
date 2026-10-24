@@ -137,6 +137,11 @@ auxflow run document.tex
 Human-readable output is coloured when it goes to a terminal. Set `NO_COLOR=1` or pass `--color never` to turn colour off. Pass `--color always` to keep it in a pipe. JSON, DOT, token and AST output is never coloured. `classify` ends with a short "In plain terms" sentence. `check` and `run` print a one-line summary on stderr, so stdout stays machine-readable.
 
 Run `auxflow help` for an overview of every command, typical use, and exit codes. Run `auxflow help COMMAND` for the options of one command.
+![auxflow help](docs/images/cli/help.png)
+
+![auxflow classify on an amplifying document](docs/images/cli/classify-amplifying.png)
+
+The images show real command output rendered from a pseudo-terminal.
 
 ### Tab completion
 
@@ -149,12 +154,6 @@ auxflow completion fish | source        # fish
 ```
 
 Add that line to `~/.bashrc`, `~/.zshrc`, or `~/.config/fish/config.fish` to keep it. The scripts are generated from the command parser, so they list every command and option.
-
-![auxflow help](docs/images/cli/help.png)
-
-![auxflow classify on an amplifying document](docs/images/cli/classify-amplifying.png)
-
-The images show real command output rendered from a pseudo-terminal.
 
 ## Quick demonstrations
 
