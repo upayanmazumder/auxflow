@@ -171,9 +171,7 @@ def build_parser() -> argparse.ArgumentParser:
         epilog=_EXAMPLES["info"],
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    info_parser.add_argument(
-        "--json", action="store_true", help="output machine-readable JSON"
-    )
+    info_parser.add_argument("--json", action="store_true", help="output machine-readable JSON")
     parser.add_argument(
         "--color",
         choices=("auto", "always", "never"),
@@ -254,8 +252,10 @@ def _run_help(parser: argparse.ArgumentParser, topic: str | None) -> int:
     print(f"auxflow: no command named {topic!r}. Commands: {names}.", file=sys.stderr)
     return 2
 
+
 def _run_info(*, as_json: bool = False) -> int:
     import platform
+
     version = _version()
     data = {
         "version": version,
@@ -293,7 +293,6 @@ def _run_info(*, as_json: bool = False) -> int:
     ]
     print("\n".join(lines))
     return 0
-
 
 
 def _run_tokens(path: str) -> int:
