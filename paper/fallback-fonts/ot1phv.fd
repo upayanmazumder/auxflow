@@ -1,0 +1,6 @@
+\ProvidesFile{ot1phv.fd}[2026/10/28 fallback: phv as Computer Modern sans]
+\DeclareFontFamily{OT1}{phv}{}
+\DeclareFontShape{OT1}{phv}{m}{n}{<->ssub*cmss/m/n}{}
+\DeclareFontShape{OT1}{phv}{m}{sl}{<->ssub*cmss/m/sl}{}
+\DeclareFontShape{OT1}{phv}{b}{n}{<->ssub*cmss/bx/n}{}
+\DeclareFontShape{OT1}{phv}{bx}{n}{<->ssub*cmss/bx/n}{}

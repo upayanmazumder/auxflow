@@ -1,0 +1,37 @@
+%% Runtime verification loop. Sources: src/auxflow/runtime/execute.py (execute), runtime/normalize.py.
+flowchart LR
+    PLAN(["BuildPlan"])
+    GATE{"Refuse?<br/>AMPLIFYING, no --force<br/>UNKNOWN, --strict<br/>missing input or tool"}
+    STEP["Run next engine<br/>step<br/>(600 s limit,<br/>no shell escape)"]
+    NORM["Normalise<br/>aux, toc, lof,<br/>lot, bbl, ind"]
+    EQ{"State equals<br/>previous<br/>state?"}
+    MORE{"Planned steps<br/>left?"}
+    EXT{"runs <<br/>max_runs?"}
+    OK(["CONVERGED"])
+    CAP(["cap_exceeded:<br/>suspected<br/>non-convergence"])
+    REF(["refused,<br/>0 runs"])
+    MISS["Record<br/>PredictionMiss if<br/>runs > predicted"]
+
+    PLAN --> GATE
+    GATE -- yes --> REF
+    GATE -- no --> STEP
+    STEP --> NORM --> EQ
+    EQ -- yes --> OK
+    EQ -- no --> MORE
+    MORE -- yes --> STEP
+    MORE -- "no: repeat last step" --> EXT
+    EXT -- yes --> STEP
+    EXT -- no --> CAP
+    OK -.-> MISS
+    CAP -.-> MISS
+
+    classDef ok fill:#D4EDDA,stroke:#1E6B32,color:#0B2E15
+    classDef bad fill:#F8D7DA,stroke:#A71D2A,color:#3B0A0F
+    classDef dec fill:#DCE8F3,stroke:#0D1B2A,color:#0D1B2A
+    classDef step fill:#FFF3CF,stroke:#8A6D00,color:#3B2F00
+    classDef io fill:#FFFFFF,stroke:#5A5A5A,color:#0D1B2A
+    class OK ok
+    class CAP,REF bad
+    class GATE,EQ,MORE,EXT dec
+    class STEP,NORM step
+    class PLAN,MISS io
