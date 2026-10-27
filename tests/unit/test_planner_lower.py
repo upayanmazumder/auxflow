@@ -132,3 +132,65 @@ def test_amplifying_refuses_without_force_and_force_uses_capped_floor() -> None:
     assert [step.tool for step in forced.steps] == ["pdflatex"] * 3
     assert forced.steps[-1].verify_after
     assert forced.stop_condition == "cap"
+
+
+def test_benign_cyclic_plan_max_runs_covers_heuristic_prediction() -> None:
+    r"""D7 runtime fallback (implemented): for BENIGN_CYCLIC plans the
+    max_runs cap is max(MAX_RUNS_UNDER_FORCE, predicted_runs) so the
+    runtime fixpoint loop has enough headroom to converge even when the
+    heuristic prediction exceeds the force cap.
+
+    Uses a synthetic 2-node LAYOUT cycle (the same ARG as
+    test_benign_cyclic_state_on_a_synthetic_pure_layout_cycle in
+    test_analysis_classify.py): predicted_runs == 4 (P=3, N=P+1=4).
+    """
+    from auxflow.analysis.classify_cycles import classify_components
+    from auxflow.analysis.condensation import build_condensation
+    from auxflow.analysis.scc import tarjan
+    from auxflow.analysis.stable_pass import compute_stable_pass
+    from auxflow.ast.forest import Forest
+    from auxflow.ir.graph import ARG
+    from auxflow.ir.model import DepEdge, DepType, Fact, FactKind
+    from auxflow.parser.spans import Span
+    from auxflow.planner.lower import build_plan
+
+    _SPAN = Span("synthetic.tex", 0, 1)
+    facts = {
+        0: Fact(0, FactKind.OPAQUE, None, "value", "engine", None, _SPAN),
+        1: Fact(1, FactKind.OPAQUE, None, "value", "engine", None, _SPAN),
+    }
+    edges = [
+        DepEdge(0, 1, 1, DepType.LAYOUT, "cycle edge"),
+        DepEdge(1, 0, 1, DepType.LAYOUT, "cycle edge"),
+    ]
+    arg = ARG(facts=facts, edges=edges)
+    components = tarjan(arg)
+    labels = classify_components(arg, components)
+    condensation = build_condensation(arg, components)
+    stable_pass = compute_stable_pass(arg, condensation, labels)
+    classification = classify(arg, components, labels, stable_pass)
+
+    assert classification.state.name == "BENIGN_CYCLIC"
+    assert classification.predicted_runs == 4
+
+    # Build a minimal single-file forest with no documents — the planner
+    # only needs reachability for tool elimination; BENIGN_CYCLIC documents
+    # with no cited facts emit only engine steps.
+    document = parse(tokenize("", file_id="synthetic.tex"), file_id="synthetic.tex").document
+    forest = build_forest({"synthetic.tex": document})
+
+    plan = build_plan(
+        forest,
+        "synthetic.tex",
+        arg,
+        components,
+        classification,
+        stable_pass,
+        analysis_ms=0.0,
+    )
+
+    assert plan.classification == "BENIGN_CYCLIC"
+    assert plan.stop_condition == "aux_fixpoint"
+    assert plan.predicted_runs == 4
+    # The key D7 invariant: the runtime cap must cover the heuristic prediction.
+    assert plan.max_runs >= plan.predicted_runs

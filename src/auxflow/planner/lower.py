@@ -100,6 +100,13 @@ def build_plan(
 
     # 4. Only CERTIFIED plans use the derived count. Every other executable
     # state uses the conservative engine floor, including forced AMPLIFYING.
+    # For BENIGN_CYCLIC the heuristic prediction (open decision D7: base +
+    # |C|, not proven) drives the max_runs cap so the runtime fixpoint loop
+    # has enough headroom to converge even when the static prediction exceeds
+    # MAX_RUNS_UNDER_FORCE. This is the documented runtime-only fallback for
+    # D7: stop_condition is always "aux_fixpoint" for BENIGN_CYCLIC, so the
+    # runtime keeps running until the auxiliary state stabilises, bounded by
+    # max(MAX_RUNS_UNDER_FORCE, predicted_runs).
     stop_condition: Literal["planned_count", "aux_fixpoint", "cap"]
     if state is State.CERTIFIED:
         assert classification.predicted_runs is not None
@@ -127,7 +134,7 @@ def build_plan(
         state_name,
         classification.predicted_runs,
         steps,
-        max(MAX_RUNS_UNDER_FORCE, run_count),
+        max(MAX_RUNS_UNDER_FORCE, classification.predicted_runs or run_count),
         stop_condition,
         diagnostics,
         stats,
