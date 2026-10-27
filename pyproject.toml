@@ -1,10 +1,10 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
 name = "auxflow"
-version = "0.0.0"
+dynamic = ["version"]
 description = "Static convergence classification for multi-pass document compilation"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -15,6 +15,12 @@ requires-python = ">=3.12"
 # hand is part of the project.
 dependencies = []
 
+[project.urls]
+Homepage = "https://github.com/upayanmazumder/auxflow"
+Repository = "https://github.com/upayanmazumder/auxflow"
+Issues = "https://github.com/upayanmazumder/auxflow/issues"
+Changelog = "https://github.com/upayanmazumder/auxflow/releases"
+
 [project.optional-dependencies]
 dev = ["pytest>=8", "hypothesis>=6", "ruff>=0.6", "mypy>=1.11", "pydot>=3"]
 bench = ["matplotlib>=3.9", "pyyaml>=6"]
@@ -24,6 +30,12 @@ auxflow = "auxflow.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/auxflow"]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/auxflow/_version.py"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
