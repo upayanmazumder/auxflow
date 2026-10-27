@@ -10,6 +10,14 @@ readme = "README.md"
 license = { file = "LICENSE" }
 authors = [{ name = "Upayan Mazumder" }]
 requires-python = ">=3.12"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Software Development :: Compilers",
+    "Topic :: Text Processing :: Markup :: LaTeX",
+]
 # Deliberately dependency-free at the core. The analysis must not depend on a
 # third-party graph library: implementing Tarjan and the dataflow fixpoint by
 # hand is part of the project.

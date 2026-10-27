@@ -2,7 +2,7 @@
 
 Static analysis and build planning for multi-pass document compilation.
 
-[![PyPI](https://img.shields.io/pypi/v/auxflow)](https://pypi.org/project/auxflow/) [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/auxflow)](https://pypi.org/project/auxflow/)
+[![PyPI](https://img.shields.io/pypi/v/auxflow)](https://pypi.org/project/auxflow/) [![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)](https://pypi.org/project/auxflow/)
 
 AuxFlow is a compiler and static analyzer for LaTeX documents. It builds an instance-level dependency graph of cross-references, detects feedback cycles, and predicts how many passes the document needs to stabilize. All static checks complete before the typesetting engine runs.
 

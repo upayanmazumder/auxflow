@@ -148,7 +148,6 @@ def test_benign_cyclic_plan_max_runs_covers_heuristic_prediction() -> None:
     from auxflow.analysis.condensation import build_condensation
     from auxflow.analysis.scc import tarjan
     from auxflow.analysis.stable_pass import compute_stable_pass
-    from auxflow.ast.forest import Forest
     from auxflow.ir.graph import ARG
     from auxflow.ir.model import DepEdge, DepType, Fact, FactKind
     from auxflow.parser.spans import Span
