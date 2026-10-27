@@ -21,6 +21,14 @@ footer_content: >-
   MIT License &nbsp;·&nbsp;
   <a href="https://pypi.org/project/auxflow/"><code>pip install auxflow</code></a>
 
+# Apply the default just-the-docs layout to every page that doesn't
+# specify one explicitly. Without this, Jekyll renders bare HTML fragments.
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: "default"
+
 # figures/ and screenshots/ are paper assets, not site content
 exclude:
   - Gemfile
