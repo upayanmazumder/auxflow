@@ -71,3 +71,11 @@ Framing remains conservative: AuxFlow provides static classification, safe build
 - **Why did baseline B fail on b10_random?** Random state changes produce no cross-reference warning; baseline B declared convergence after 1 run while ground truth diverged.
 - **Why did b01_plain require 2 runs under verification?** pdfTeX writes `\@abspage@last{1}` on every run; the verifier needs 2 runs to confirm this bookkeeping value is stable.
 - **Where are all published results stored?** In `bench/results/published/results.jsonl`, `summary.md`, and `docs/EVALUATION-REPORT.md`.
+
+---
+
+## Package availability
+- AuxFlow v0.1.0 is published on PyPI: https://pypi.org/project/auxflow/
+- Install: `pipx install auxflow` (recommended) or `pip install auxflow`
+- Version is derived from the git tag via `hatch-vcs`. Future releases publish automatically when a GitHub Release is created.
+- Source: https://github.com/upayanmazumder/auxflow

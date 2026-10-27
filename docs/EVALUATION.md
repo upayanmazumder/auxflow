@@ -96,8 +96,7 @@ PDF byte equality is reported as a **secondary column**, never as ground truth, 
 documents where it disagrees with *N\** are shown explicitly — that disagreement is evidence for
 the methodology.
 
-This remains **open decision D6** until the corpus is authored and the exclusion list for
-normalisation is settled. It must be closed before any ground truth is generated.
+D6 is resolved: normalised auxiliary-state equality plus rendered-text equality is the adopted criterion, as recorded in the open-decisions register.
 
 ## Metrics
 

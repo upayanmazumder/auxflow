@@ -2,6 +2,8 @@
 
 Static analysis and build planning for multi-pass document compilation.
 
+[![PyPI](https://img.shields.io/pypi/v/auxflow)](https://pypi.org/project/auxflow/) [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/auxflow)](https://pypi.org/project/auxflow/)
+
 AuxFlow is a compiler and static analyzer for LaTeX documents. It builds an instance-level dependency graph of cross-references, detects feedback cycles, and predicts how many passes the document needs to stabilize. All static checks complete before the typesetting engine runs.
 
 ---
@@ -87,18 +89,28 @@ The planner removes unused files and unnecessary tool invocations. It derives th
 
 ---
 
-## CLI Usage
-
-Python 3.12 or later is required. On systems with an externally managed Python (for example Arch Linux), install into a virtual environment:
+## Installation
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate        # bash or zsh
-source .venv/bin/activate.fish   # fish
+pipx install auxflow
+```
+
+Or with pip inside a virtual environment:
+
+```bash
+pip install auxflow
+```
+
+Requires Python 3.12 or later. [`pipx`](https://pipx.pypa.io) is recommended for CLI tools: it creates an isolated environment automatically.
+
+To install from source for development:
+
+```bash
+python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-The prompt shows `(.venv)` after activation. Use `pip install -e .` instead if you do not need the test, type-check, and lint tools. To skip activation, call `.venv/bin/auxflow` directly.
+## CLI Usage
 
 Check the install:
 

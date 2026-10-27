@@ -1,0 +1,87 @@
+{
+  "edges": [
+    {
+      "dependency_type": "AUX_ROUNDTRIP",
+      "destination": 0,
+      "pass_lag": 1,
+      "reason": "ref reads label fig:plot from a prior run",
+      "source": 2
+    }
+  ],
+  "facts": [
+    {
+      "component": "value",
+      "consumer": null,
+      "dependencies": [
+        2
+      ],
+      "fact_id": 0,
+      "key": "fig:plot",
+      "kind": "REF_USE",
+      "metadata": {},
+      "opaque": true,
+      "producer": "engine",
+      "source_location": {
+        "end": 111,
+        "file_id": "simple_document.tex",
+        "start": 97
+      },
+      "stable_pass": null
+    },
+    {
+      "component": "value",
+      "consumer": null,
+      "dependencies": [],
+      "fact_id": 1,
+      "key": "\\linewidth",
+      "kind": "OPAQUE",
+      "metadata": {
+        "reason": "unsupported control sequence"
+      },
+      "opaque": true,
+      "producer": "engine",
+      "source_location": {
+        "end": 164,
+        "file_id": "simple_document.tex",
+        "start": 154
+      },
+      "stable_pass": null
+    },
+    {
+      "component": "value",
+      "consumer": null,
+      "dependencies": [],
+      "fact_id": 2,
+      "key": "fig:plot",
+      "kind": "LABEL_NUMBER",
+      "metadata": {
+        "counter_kind": "figure"
+      },
+      "opaque": true,
+      "producer": "engine",
+      "source_location": {
+        "end": 209,
+        "file_id": "simple_document.tex",
+        "start": 193
+      },
+      "stable_pass": null
+    },
+    {
+      "component": "value",
+      "consumer": null,
+      "dependencies": [],
+      "fact_id": 3,
+      "key": "fig:plot",
+      "kind": "LABEL_PAGE",
+      "metadata": {},
+      "opaque": true,
+      "producer": "engine",
+      "source_location": {
+        "end": 209,
+        "file_id": "simple_document.tex",
+        "start": 193
+      },
+      "stable_pass": null
+    }
+  ]
+}
