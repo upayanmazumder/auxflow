@@ -123,5 +123,6 @@ Browse the sections in the sidebar:
 - **[Reference](/reference/)**: Compiler phases, supported LaTeX subset, and dependency graph models.
 - **[Project](/project/)**: Formal specification, research questions, and literature comparison.
 - **[Evaluation](/evaluation/)**: 15-document benchmark corpus, test setup, and experimental results.
+- **[Paper](/paper/)**: The research paper (PDF) with its method, measurements, and limits.
 - **[Reviews](/reviews/)**: Viva defense notes, slide presentations, and assessment documents.
 - **[Changelog](/changelog.html)**: Interactive release notes and update history.

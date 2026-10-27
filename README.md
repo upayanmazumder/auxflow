@@ -118,6 +118,7 @@ Full documentation is available at **[auxflow.upayan.dev](https://auxflow.upayan
 - **[Technical Reference](https://auxflow.upayan.dev/reference/)**: Architecture, Compiler Pipeline, Intermediate Representation, and Static Analysis.
 - **[Project Details](https://auxflow.upayan.dev/project/)**: Formal Specifications, Research Questions, and Literature Review.
 - **[Evaluation & Benchmarks](https://auxflow.upayan.dev/evaluation/)**: 15-document Benchmark Corpus, Methodology, and Verification Reports.
+- **[Research Paper](https://auxflow.upayan.dev/paper/)**: The paper (PDF). Source and build notes are in [`paper/`](paper/).
 - **[Course Reviews](https://auxflow.upayan.dev/reviews/)**: Review Notes, Presentations, and Downloadable Documents.
 
 ---

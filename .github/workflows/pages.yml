@@ -26,6 +26,11 @@ jobs:
           bundler-cache: true
           working-directory: docs
 
+      - name: Publish the paper PDF
+        run: |
+          mkdir -p docs/paper
+          cp paper/main.pdf docs/paper/auxflow-paper.pdf
+
       - name: Build site
         run: bundle exec jekyll build --destination ../_site --baseurl ""
         working-directory: docs
