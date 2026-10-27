@@ -27,7 +27,7 @@ flowchart TB
 
     subgraph REP["bench/harness/report.py"]
         direction TB
-        G1["<b>Gate 1</b>: classification separation<br/>b08 AMPLIFYING, b05 not, b11 to b13 as declared,<br/>b07 and b15 UNKNOWN"]
+        G1["<b>Gate 1</b>: classification separation<br/>b08 AMPLIFYING, b05 not, b07 and b15 UNKNOWN,<br/>b11 to b13 UNKNOWN after the width guard<br/>(pre-registered: CERTIFIED, so the gate reports FAIL)"]
         G2["<b>Gate 2 (EC1)</b>: every CERTIFIED document<br/>with predicted N has N >= N*"]
         TAB["Mechanism-coverage and oracle-comparison tables,<br/>figures/executions.png"]
     end

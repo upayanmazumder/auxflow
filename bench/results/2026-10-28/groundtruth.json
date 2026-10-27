@@ -1,0 +1,876 @@
+{
+  "image_digest": "sha256:93feb7fb6c24e0990273a3b3f1cc80649db9f43921152f35529cc27c4f3675c8",
+  "max_runs": 8,
+  "results": [
+    {
+      "document": "b01_plain",
+      "max_runs": 8,
+      "n_star": 1,
+      "oscillating": false,
+      "per_run": [
+        {
+          "k": 1,
+          "pdflatex_rc": 0,
+          "state_hash": "3d2eb54a7cbd6d49f4e624835a96ab3370a791587cc0fe056d0b11f336e4cf58",
+          "text_hash": "72fc5eadde586685fa1ee98d41d913dbe4c128ca2be2dce37f56ce1d0e7dff6e"
+        },
+        {
+          "k": 2,
+          "pdflatex_rc": 0,
+          "state_hash": "3d2eb54a7cbd6d49f4e624835a96ab3370a791587cc0fe056d0b11f336e4cf58",
+          "text_hash": "72fc5eadde586685fa1ee98d41d913dbe4c128ca2be2dce37f56ce1d0e7dff6e"
+        },
+        {
+          "k": 3,
+          "pdflatex_rc": 0,
+          "state_hash": "3d2eb54a7cbd6d49f4e624835a96ab3370a791587cc0fe056d0b11f336e4cf58",
+          "text_hash": "72fc5eadde586685fa1ee98d41d913dbe4c128ca2be2dce37f56ce1d0e7dff6e"
+        },
+        {
+          "k": 4,
+          "pdflatex_rc": 0,
+          "state_hash": "3d2eb54a7cbd6d49f4e624835a96ab3370a791587cc0fe056d0b11f336e4cf58",
+          "text_hash": "72fc5eadde586685fa1ee98d41d913dbe4c128ca2be2dce37f56ce1d0e7dff6e"
+        },
+        {
+          "k": 5,
+          "pdflatex_rc": 0,
+          "state_hash": "3d2eb54a7cbd6d49f4e624835a96ab3370a791587cc0fe056d0b11f336e4cf58",
+          "text_hash": "72fc5eadde586685fa1ee98d41d913dbe4c128ca2be2dce37f56ce1d0e7dff6e"
+        },
+        {
+          "k": 6,
+          "pdflatex_rc": 0,
+          "state_hash": "3d2eb54a7cbd6d49f4e624835a96ab3370a791587cc0fe056d0b11f336e4cf58",
+          "text_hash": "72fc5eadde586685fa1ee98d41d913dbe4c128ca2be2dce37f56ce1d0e7dff6e"
+        },
+        {
+          "k": 7,
+          "pdflatex_rc": 0,
+          "state_hash": "3d2eb54a7cbd6d49f4e624835a96ab3370a791587cc0fe056d0b11f336e4cf58",
+          "text_hash": "72fc5eadde586685fa1ee98d41d913dbe4c128ca2be2dce37f56ce1d0e7dff6e"
+        },
+        {
+          "k": 8,
+          "pdflatex_rc": 0,
+          "state_hash": "3d2eb54a7cbd6d49f4e624835a96ab3370a791587cc0fe056d0b11f336e4cf58",
+          "text_hash": "72fc5eadde586685fa1ee98d41d913dbe4c128ca2be2dce37f56ce1d0e7dff6e"
+        }
+      ],
+      "status": "N*=1",
+      "wall_clock_ms": 4078.912437999861
+    },
+    {
+      "document": "b02_backref",
+      "max_runs": 8,
+      "n_star": 2,
+      "oscillating": false,
+      "per_run": [
+        {
+          "k": 1,
+          "pdflatex_rc": 0,
+          "state_hash": "1f6dd24df445fddb7adc048f6237e7258b823de2525bffe07a380ef6b9d94bc4",
+          "text_hash": "461c787d96cf504fae94c1a1775bd01c48c9c9ed3bbbc5b8e62816eaccf6ba86"
+        },
+        {
+          "k": 2,
+          "pdflatex_rc": 0,
+          "state_hash": "1f6dd24df445fddb7adc048f6237e7258b823de2525bffe07a380ef6b9d94bc4",
+          "text_hash": "54da8374fc0122f5ba600bb5927b9d1a0dda589f96661941180a61b0409ca3b8"
+        },
+        {
+          "k": 3,
+          "pdflatex_rc": 0,
+          "state_hash": "1f6dd24df445fddb7adc048f6237e7258b823de2525bffe07a380ef6b9d94bc4",
+          "text_hash": "54da8374fc0122f5ba600bb5927b9d1a0dda589f96661941180a61b0409ca3b8"
+        },
+        {
+          "k": 4,
+          "pdflatex_rc": 0,
+          "state_hash": "1f6dd24df445fddb7adc048f6237e7258b823de2525bffe07a380ef6b9d94bc4",
+          "text_hash": "54da8374fc0122f5ba600bb5927b9d1a0dda589f96661941180a61b0409ca3b8"
+        },
+        {
+          "k": 5,
+          "pdflatex_rc": 0,
+          "state_hash": "1f6dd24df445fddb7adc048f6237e7258b823de2525bffe07a380ef6b9d94bc4",
+          "text_hash": "54da8374fc0122f5ba600bb5927b9d1a0dda589f96661941180a61b0409ca3b8"
+        },
+        {
+          "k": 6,
+          "pdflatex_rc": 0,
+          "state_hash": "1f6dd24df445fddb7adc048f6237e7258b823de2525bffe07a380ef6b9d94bc4",
+          "text_hash": "54da8374fc0122f5ba600bb5927b9d1a0dda589f96661941180a61b0409ca3b8"
+        },
+        {
+          "k": 7,
+          "pdflatex_rc": 0,
+          "state_hash": "1f6dd24df445fddb7adc048f6237e7258b823de2525bffe07a380ef6b9d94bc4",
+          "text_hash": "54da8374fc0122f5ba600bb5927b9d1a0dda589f96661941180a61b0409ca3b8"
+        },
+        {
+          "k": 8,
+          "pdflatex_rc": 0,
+          "state_hash": "1f6dd24df445fddb7adc048f6237e7258b823de2525bffe07a380ef6b9d94bc4",
+          "text_hash": "54da8374fc0122f5ba600bb5927b9d1a0dda589f96661941180a61b0409ca3b8"
+        }
+      ],
+      "status": "N*=2",
+      "wall_clock_ms": 4146.688441000151
+    },
+    {
+      "document": "b03_fwdref",
+      "max_runs": 8,
+      "n_star": 2,
+      "oscillating": false,
+      "per_run": [
+        {
+          "k": 1,
+          "pdflatex_rc": 0,
+          "state_hash": "82b45e440c3dc06fd0b54a46cced1b0b1dbc8645e887c39f462f2da5ece3751c",
+          "text_hash": "7158ea14b835555a081851bae560156c65caac9e8280459ee66737117d6b7830"
+        },
+        {
+          "k": 2,
+          "pdflatex_rc": 0,
+          "state_hash": "82b45e440c3dc06fd0b54a46cced1b0b1dbc8645e887c39f462f2da5ece3751c",
+          "text_hash": "a1575bbdcb54f1ed42b9581debe604015be2784e646d0d47e6c82f5d50fce151"
+        },
+        {
+          "k": 3,
+          "pdflatex_rc": 0,
+          "state_hash": "82b45e440c3dc06fd0b54a46cced1b0b1dbc8645e887c39f462f2da5ece3751c",
+          "text_hash": "a1575bbdcb54f1ed42b9581debe604015be2784e646d0d47e6c82f5d50fce151"
+        },
+        {
+          "k": 4,
+          "pdflatex_rc": 0,
+          "state_hash": "82b45e440c3dc06fd0b54a46cced1b0b1dbc8645e887c39f462f2da5ece3751c",
+          "text_hash": "a1575bbdcb54f1ed42b9581debe604015be2784e646d0d47e6c82f5d50fce151"
+        },
+        {
+          "k": 5,
+          "pdflatex_rc": 0,
+          "state_hash": "82b45e440c3dc06fd0b54a46cced1b0b1dbc8645e887c39f462f2da5ece3751c",
+          "text_hash": "a1575bbdcb54f1ed42b9581debe604015be2784e646d0d47e6c82f5d50fce151"
+        },
+        {
+          "k": 6,
+          "pdflatex_rc": 0,
+          "state_hash": "82b45e440c3dc06fd0b54a46cced1b0b1dbc8645e887c39f462f2da5ece3751c",
+          "text_hash": "a1575bbdcb54f1ed42b9581debe604015be2784e646d0d47e6c82f5d50fce151"
+        },
+        {
+          "k": 7,
+          "pdflatex_rc": 0,
+          "state_hash": "82b45e440c3dc06fd0b54a46cced1b0b1dbc8645e887c39f462f2da5ece3751c",
+          "text_hash": "a1575bbdcb54f1ed42b9581debe604015be2784e646d0d47e6c82f5d50fce151"
+        },
+        {
+          "k": 8,
+          "pdflatex_rc": 0,
+          "state_hash": "82b45e440c3dc06fd0b54a46cced1b0b1dbc8645e887c39f462f2da5ece3751c",
+          "text_hash": "a1575bbdcb54f1ed42b9581debe604015be2784e646d0d47e6c82f5d50fce151"
+        }
+      ],
+      "status": "N*=2",
+      "wall_clock_ms": 4125.11348299995
+    },
+    {
+      "document": "b04_chain",
+      "max_runs": 8,
+      "n_star": 2,
+      "oscillating": false,
+      "per_run": [
+        {
+          "k": 1,
+          "pdflatex_rc": 0,
+          "state_hash": "df6a01f37d4d32084365f71839e0b7c3d3d947c545953526ff00da7fbef1c91f",
+          "text_hash": "425c14bf89af81178dd06a3ff6c8ae38df618a708eb514f0dae76ce439a2ad01"
+        },
+        {
+          "k": 2,
+          "pdflatex_rc": 0,
+          "state_hash": "df6a01f37d4d32084365f71839e0b7c3d3d947c545953526ff00da7fbef1c91f",
+          "text_hash": "1e7ae08c4e072eff1ab287f6049e884c8cf77255b6bd8a1a42d1a584a092a51b"
+        },
+        {
+          "k": 3,
+          "pdflatex_rc": 0,
+          "state_hash": "df6a01f37d4d32084365f71839e0b7c3d3d947c545953526ff00da7fbef1c91f",
+          "text_hash": "1e7ae08c4e072eff1ab287f6049e884c8cf77255b6bd8a1a42d1a584a092a51b"
+        },
+        {
+          "k": 4,
+          "pdflatex_rc": 0,
+          "state_hash": "df6a01f37d4d32084365f71839e0b7c3d3d947c545953526ff00da7fbef1c91f",
+          "text_hash": "1e7ae08c4e072eff1ab287f6049e884c8cf77255b6bd8a1a42d1a584a092a51b"
+        },
+        {
+          "k": 5,
+          "pdflatex_rc": 0,
+          "state_hash": "df6a01f37d4d32084365f71839e0b7c3d3d947c545953526ff00da7fbef1c91f",
+          "text_hash": "1e7ae08c4e072eff1ab287f6049e884c8cf77255b6bd8a1a42d1a584a092a51b"
+        },
+        {
+          "k": 6,
+          "pdflatex_rc": 0,
+          "state_hash": "df6a01f37d4d32084365f71839e0b7c3d3d947c545953526ff00da7fbef1c91f",
+          "text_hash": "1e7ae08c4e072eff1ab287f6049e884c8cf77255b6bd8a1a42d1a584a092a51b"
+        },
+        {
+          "k": 7,
+          "pdflatex_rc": 0,
+          "state_hash": "df6a01f37d4d32084365f71839e0b7c3d3d947c545953526ff00da7fbef1c91f",
+          "text_hash": "1e7ae08c4e072eff1ab287f6049e884c8cf77255b6bd8a1a42d1a584a092a51b"
+        },
+        {
+          "k": 8,
+          "pdflatex_rc": 0,
+          "state_hash": "df6a01f37d4d32084365f71839e0b7c3d3d947c545953526ff00da7fbef1c91f",
+          "text_hash": "1e7ae08c4e072eff1ab287f6049e884c8cf77255b6bd8a1a42d1a584a092a51b"
+        }
+      ],
+      "status": "N*=2",
+      "wall_clock_ms": 4149.283299000672
+    },
+    {
+      "document": "b05_toc",
+      "max_runs": 8,
+      "n_star": 3,
+      "oscillating": false,
+      "per_run": [
+        {
+          "k": 1,
+          "pdflatex_rc": 0,
+          "state_hash": "c9b96d3799f58843769e2536a55b3d1a6d50a101004c3549cb0da03d4440ba26",
+          "text_hash": "4c7e7f0b7f3e4d221b22929cc54aebd6e8a809f02bb31d0b34bc688f82786006"
+        },
+        {
+          "k": 2,
+          "pdflatex_rc": 0,
+          "state_hash": "66d04e78bfe7dc1b0a399514a8295b66819da364bdbfc568204cbf294000a0f5",
+          "text_hash": "346862a9c5f42fca5c16a093ae290fa4c0be77c105e1ffc624cd98b3cd6da674"
+        },
+        {
+          "k": 3,
+          "pdflatex_rc": 0,
+          "state_hash": "66d04e78bfe7dc1b0a399514a8295b66819da364bdbfc568204cbf294000a0f5",
+          "text_hash": "8f2c9eeb5d6861329031479a883ff5a8e86b04b23da8c475825ca01d9f3045a8"
+        },
+        {
+          "k": 4,
+          "pdflatex_rc": 0,
+          "state_hash": "66d04e78bfe7dc1b0a399514a8295b66819da364bdbfc568204cbf294000a0f5",
+          "text_hash": "8f2c9eeb5d6861329031479a883ff5a8e86b04b23da8c475825ca01d9f3045a8"
+        },
+        {
+          "k": 5,
+          "pdflatex_rc": 0,
+          "state_hash": "66d04e78bfe7dc1b0a399514a8295b66819da364bdbfc568204cbf294000a0f5",
+          "text_hash": "8f2c9eeb5d6861329031479a883ff5a8e86b04b23da8c475825ca01d9f3045a8"
+        },
+        {
+          "k": 6,
+          "pdflatex_rc": 0,
+          "state_hash": "66d04e78bfe7dc1b0a399514a8295b66819da364bdbfc568204cbf294000a0f5",
+          "text_hash": "8f2c9eeb5d6861329031479a883ff5a8e86b04b23da8c475825ca01d9f3045a8"
+        },
+        {
+          "k": 7,
+          "pdflatex_rc": 0,
+          "state_hash": "66d04e78bfe7dc1b0a399514a8295b66819da364bdbfc568204cbf294000a0f5",
+          "text_hash": "8f2c9eeb5d6861329031479a883ff5a8e86b04b23da8c475825ca01d9f3045a8"
+        },
+        {
+          "k": 8,
+          "pdflatex_rc": 0,
+          "state_hash": "66d04e78bfe7dc1b0a399514a8295b66819da364bdbfc568204cbf294000a0f5",
+          "text_hash": "8f2c9eeb5d6861329031479a883ff5a8e86b04b23da8c475825ca01d9f3045a8"
+        }
+      ],
+      "status": "N*=3",
+      "wall_clock_ms": 4149.04438800022
+    },
+    {
+      "document": "b06_bib",
+      "max_runs": 8,
+      "n_star": 3,
+      "oscillating": false,
+      "per_run": [
+        {
+          "k": 1,
+          "pdflatex_rc": 0,
+          "state_hash": "e4f4680b8c7c98d47be5876774688b7fd75014fe798205a3851b27895466b0df",
+          "text_hash": "89748b689b56f1f863f4e6ff0df9eaf6116253bade451a570c4add0208e91b0e"
+        },
+        {
+          "k": 2,
+          "pdflatex_rc": 0,
+          "state_hash": "0c95fdacc3c8f2900c6bd4423accc2f759a4bce72c63fa4c3c7a9ae98a359598",
+          "text_hash": "65b702c2601d8def94524ebedf840ff5b314eedaf152cbcfd450c30924a94b98"
+        },
+        {
+          "k": 3,
+          "pdflatex_rc": 0,
+          "state_hash": "0c95fdacc3c8f2900c6bd4423accc2f759a4bce72c63fa4c3c7a9ae98a359598",
+          "text_hash": "1121550fb141b1c27e57e83f60b73afd41a66eec3f6a7f84765f52f8fb8ce06f"
+        },
+        {
+          "k": 4,
+          "pdflatex_rc": 0,
+          "state_hash": "0c95fdacc3c8f2900c6bd4423accc2f759a4bce72c63fa4c3c7a9ae98a359598",
+          "text_hash": "1121550fb141b1c27e57e83f60b73afd41a66eec3f6a7f84765f52f8fb8ce06f"
+        },
+        {
+          "k": 5,
+          "pdflatex_rc": 0,
+          "state_hash": "0c95fdacc3c8f2900c6bd4423accc2f759a4bce72c63fa4c3c7a9ae98a359598",
+          "text_hash": "1121550fb141b1c27e57e83f60b73afd41a66eec3f6a7f84765f52f8fb8ce06f"
+        },
+        {
+          "k": 6,
+          "pdflatex_rc": 0,
+          "state_hash": "0c95fdacc3c8f2900c6bd4423accc2f759a4bce72c63fa4c3c7a9ae98a359598",
+          "text_hash": "1121550fb141b1c27e57e83f60b73afd41a66eec3f6a7f84765f52f8fb8ce06f"
+        },
+        {
+          "k": 7,
+          "pdflatex_rc": 0,
+          "state_hash": "0c95fdacc3c8f2900c6bd4423accc2f759a4bce72c63fa4c3c7a9ae98a359598",
+          "text_hash": "1121550fb141b1c27e57e83f60b73afd41a66eec3f6a7f84765f52f8fb8ce06f"
+        },
+        {
+          "k": 8,
+          "pdflatex_rc": 0,
+          "state_hash": "0c95fdacc3c8f2900c6bd4423accc2f759a4bce72c63fa4c3c7a9ae98a359598",
+          "text_hash": "1121550fb141b1c27e57e83f60b73afd41a66eec3f6a7f84765f52f8fb8ce06f"
+        }
+      ],
+      "status": "N*=3",
+      "wall_clock_ms": 4146.904128000642
+    },
+    {
+      "document": "b07_footnote",
+      "max_runs": 8,
+      "n_star": 2,
+      "oscillating": false,
+      "per_run": [
+        {
+          "k": 1,
+          "pdflatex_rc": 0,
+          "state_hash": "e81ff5bb3a221b330670cc57a17842e0197dec7e1082c4f73b976bfad2e852d1",
+          "text_hash": "d463e2f2452542385c4a09ca88373cb589d42fdaaf841dc70328c12541690723"
+        },
+        {
+          "k": 2,
+          "pdflatex_rc": 0,
+          "state_hash": "e81ff5bb3a221b330670cc57a17842e0197dec7e1082c4f73b976bfad2e852d1",
+          "text_hash": "cf65f75bfcd6b148d16b2372c4bd5b0b8059b12515b0bda1ef626d5931e740d1"
+        },
+        {
+          "k": 3,
+          "pdflatex_rc": 0,
+          "state_hash": "e81ff5bb3a221b330670cc57a17842e0197dec7e1082c4f73b976bfad2e852d1",
+          "text_hash": "cf65f75bfcd6b148d16b2372c4bd5b0b8059b12515b0bda1ef626d5931e740d1"
+        },
+        {
+          "k": 4,
+          "pdflatex_rc": 0,
+          "state_hash": "e81ff5bb3a221b330670cc57a17842e0197dec7e1082c4f73b976bfad2e852d1",
+          "text_hash": "cf65f75bfcd6b148d16b2372c4bd5b0b8059b12515b0bda1ef626d5931e740d1"
+        },
+        {
+          "k": 5,
+          "pdflatex_rc": 0,
+          "state_hash": "e81ff5bb3a221b330670cc57a17842e0197dec7e1082c4f73b976bfad2e852d1",
+          "text_hash": "cf65f75bfcd6b148d16b2372c4bd5b0b8059b12515b0bda1ef626d5931e740d1"
+        },
+        {
+          "k": 6,
+          "pdflatex_rc": 0,
+          "state_hash": "e81ff5bb3a221b330670cc57a17842e0197dec7e1082c4f73b976bfad2e852d1",
+          "text_hash": "cf65f75bfcd6b148d16b2372c4bd5b0b8059b12515b0bda1ef626d5931e740d1"
+        },
+        {
+          "k": 7,
+          "pdflatex_rc": 0,
+          "state_hash": "e81ff5bb3a221b330670cc57a17842e0197dec7e1082c4f73b976bfad2e852d1",
+          "text_hash": "cf65f75bfcd6b148d16b2372c4bd5b0b8059b12515b0bda1ef626d5931e740d1"
+        },
+        {
+          "k": 8,
+          "pdflatex_rc": 0,
+          "state_hash": "e81ff5bb3a221b330670cc57a17842e0197dec7e1082c4f73b976bfad2e852d1",
+          "text_hash": "cf65f75bfcd6b148d16b2372c4bd5b0b8059b12515b0bda1ef626d5931e740d1"
+        }
+      ],
+      "status": "N*=2",
+      "wall_clock_ms": 2708.274775999598
+    },
+    {
+      "document": "b08_cycle",
+      "max_runs": 8,
+      "n_star": "divergent(8)",
+      "oscillating": false,
+      "per_run": [
+        {
+          "k": 1,
+          "pdflatex_rc": 0,
+          "state_hash": "f070128bcb05cd04920eb1a48688064ae07c1eaff3f0a5301990ebada6ee91f7",
+          "text_hash": "f62fe1296e818e8cc8b2ae7ed0c4fb21b7434a0c4a5ac1d731a3daae1bf0108f"
+        },
+        {
+          "k": 2,
+          "pdflatex_rc": 0,
+          "state_hash": "b35b8d5dd46b5285c2e44d3bc66559144fe20126f05a8dc308e3e70fee26333a",
+          "text_hash": "1ddbc52f4a8c7f3e844ea57c2e6ea505182896d48f122454cb90f97ac4aef13f"
+        },
+        {
+          "k": 3,
+          "pdflatex_rc": 0,
+          "state_hash": "1de3a1346eff6b4b79731c482f1221bcaffddde80f5a887cea17e2f5a6301774",
+          "text_hash": "e85f4b2f5bf495d8dbba590d344cf73b0d4bdc2406dc8cca2505bbc96676c7f4"
+        },
+        {
+          "k": 4,
+          "pdflatex_rc": 0,
+          "state_hash": "3755e66fbb2d9f2f51d8d6ba3653e5d12015ed2c07a435512ed3d559c3d6c249",
+          "text_hash": "7e3c00b2be980ee3dd385c876726407aa22dfb7eee02d01d1891a89f912b14f2"
+        },
+        {
+          "k": 5,
+          "pdflatex_rc": 0,
+          "state_hash": "6425298088205d7bc004c9aa4120a0777c845a36ae428f5cb018b477ae1a8a17",
+          "text_hash": "9cf6e53fa79af88aa543aec2839410c67addad6545ac0a18c1a8a67fedf6f296"
+        },
+        {
+          "k": 6,
+          "pdflatex_rc": 0,
+          "state_hash": "9fb59bf0d33d09fe46a299c39c17630edff3ba9d0f9ab023e0b73da5bd743f7a",
+          "text_hash": "7fc1e11156ce7e899e1d30a76622c6c3048121fd97ccb12fcff7cf6e0df64ae2"
+        },
+        {
+          "k": 7,
+          "pdflatex_rc": 0,
+          "state_hash": "c56d72e791c5c8d1d753a650f6b01922d0b7b7fbe7e79ff834c4e9c1a579d0ea",
+          "text_hash": "3ca53e38f26b6472686b9fb9b045e4e0c69b1ea0e49ca24f7c53f128c3f14ea3"
+        },
+        {
+          "k": 8,
+          "pdflatex_rc": 0,
+          "state_hash": "b0fe853f58d8f3ec3f7ed661a80e97bd00528bfb28319f6e7933593b53bb8bf4",
+          "text_hash": "87b32864a1ee7f3e4784e5284a9bbd189bb52daf2d3c393c18c252eebcfbde0c"
+        }
+      ],
+      "status": "divergent(8)",
+      "wall_clock_ms": 2537.984021999364
+    },
+    {
+      "document": "b09_thesis",
+      "max_runs": 8,
+      "n_star": 3,
+      "oscillating": false,
+      "per_run": [
+        {
+          "k": 1,
+          "pdflatex_rc": 0,
+          "state_hash": "4b7364827b918e2002fdf5e9f314ff969db9e8fd0768938fe8b5314df3d22fa6",
+          "text_hash": "c4e55298d7a3c92e9d4af68159daeaca9473b373126d361cf5b8c8e2015e1144"
+        },
+        {
+          "k": 2,
+          "pdflatex_rc": 0,
+          "state_hash": "da7b299294e08e6864b1ef2b48e8bfd549a2cf76a20b229f8b0a7df6f1b97d93",
+          "text_hash": "e3ab0d20e4fe65d90ca0877bef4f104822bde618fce8f4a5ecaebc94c9df5b96"
+        },
+        {
+          "k": 3,
+          "pdflatex_rc": 0,
+          "state_hash": "da7b299294e08e6864b1ef2b48e8bfd549a2cf76a20b229f8b0a7df6f1b97d93",
+          "text_hash": "66fb6a492ffa81baacf7c32213479841a667937ef913a66fd542cb439589f41c"
+        },
+        {
+          "k": 4,
+          "pdflatex_rc": 0,
+          "state_hash": "da7b299294e08e6864b1ef2b48e8bfd549a2cf76a20b229f8b0a7df6f1b97d93",
+          "text_hash": "66fb6a492ffa81baacf7c32213479841a667937ef913a66fd542cb439589f41c"
+        },
+        {
+          "k": 5,
+          "pdflatex_rc": 0,
+          "state_hash": "da7b299294e08e6864b1ef2b48e8bfd549a2cf76a20b229f8b0a7df6f1b97d93",
+          "text_hash": "66fb6a492ffa81baacf7c32213479841a667937ef913a66fd542cb439589f41c"
+        },
+        {
+          "k": 6,
+          "pdflatex_rc": 0,
+          "state_hash": "da7b299294e08e6864b1ef2b48e8bfd549a2cf76a20b229f8b0a7df6f1b97d93",
+          "text_hash": "66fb6a492ffa81baacf7c32213479841a667937ef913a66fd542cb439589f41c"
+        },
+        {
+          "k": 7,
+          "pdflatex_rc": 0,
+          "state_hash": "da7b299294e08e6864b1ef2b48e8bfd549a2cf76a20b229f8b0a7df6f1b97d93",
+          "text_hash": "66fb6a492ffa81baacf7c32213479841a667937ef913a66fd542cb439589f41c"
+        },
+        {
+          "k": 8,
+          "pdflatex_rc": 0,
+          "state_hash": "da7b299294e08e6864b1ef2b48e8bfd549a2cf76a20b229f8b0a7df6f1b97d93",
+          "text_hash": "66fb6a492ffa81baacf7c32213479841a667937ef913a66fd542cb439589f41c"
+        }
+      ],
+      "status": "N*=3",
+      "wall_clock_ms": 2863.9979790004872
+    },
+    {
+      "document": "b10_random",
+      "max_runs": 8,
+      "n_star": "divergent(8)",
+      "oscillating": false,
+      "per_run": [
+        {
+          "k": 1,
+          "pdflatex_rc": 0,
+          "state_hash": "69ac161bdebeb45899091ba4c8145fadcffa7f3e0ed2f90643088c1f7a64a220",
+          "text_hash": "8e4d6405fc36269ddd7645c3c1c1011bbd1e71d66945ff0cc0e3f1174d3a6913"
+        },
+        {
+          "k": 2,
+          "pdflatex_rc": 0,
+          "state_hash": "ae3c4c620b224df918e5195dc4312b56c5eec4906d2261e096329ede4a3e8b1d",
+          "text_hash": "8e4d6405fc36269ddd7645c3c1c1011bbd1e71d66945ff0cc0e3f1174d3a6913"
+        },
+        {
+          "k": 3,
+          "pdflatex_rc": 0,
+          "state_hash": "955cfd453c86f24ced89f060de726db15138055a9d7a7fb609c4b117347d801c",
+          "text_hash": "8e4d6405fc36269ddd7645c3c1c1011bbd1e71d66945ff0cc0e3f1174d3a6913"
+        },
+        {
+          "k": 4,
+          "pdflatex_rc": 0,
+          "state_hash": "9c99b4689bbf9885e7ccc6965fa505e9938bc13b3f072f9e7d29012366702564",
+          "text_hash": "8e4d6405fc36269ddd7645c3c1c1011bbd1e71d66945ff0cc0e3f1174d3a6913"
+        },
+        {
+          "k": 5,
+          "pdflatex_rc": 0,
+          "state_hash": "df8795adf5f7180ccf2882779948a6472379058b72c1d60d9142ca0993885d16",
+          "text_hash": "8e4d6405fc36269ddd7645c3c1c1011bbd1e71d66945ff0cc0e3f1174d3a6913"
+        },
+        {
+          "k": 6,
+          "pdflatex_rc": 0,
+          "state_hash": "f5ad5f57cdb9337da9bd2f7e2c2737adbd11a1ff42b9c6b79768ea9c54cda1f6",
+          "text_hash": "8e4d6405fc36269ddd7645c3c1c1011bbd1e71d66945ff0cc0e3f1174d3a6913"
+        },
+        {
+          "k": 7,
+          "pdflatex_rc": 0,
+          "state_hash": "95958a822fd4c3fc2e70471921cb62e09aa908fe997282cb53ebbbb2ff41bafd",
+          "text_hash": "8e4d6405fc36269ddd7645c3c1c1011bbd1e71d66945ff0cc0e3f1174d3a6913"
+        },
+        {
+          "k": 8,
+          "pdflatex_rc": 0,
+          "state_hash": "3a1ffddd52b6692fdb23760d1ac7532e1b7fe8806f3aa410de6973b5d0c18d00",
+          "text_hash": "8e4d6405fc36269ddd7645c3c1c1011bbd1e71d66945ff0cc0e3f1174d3a6913"
+        }
+      ],
+      "status": "divergent(8)",
+      "wall_clock_ms": 2631.3758810001673
+    },
+    {
+      "document": "b11_width",
+      "max_runs": 8,
+      "n_star": "divergent(8)",
+      "oscillating": true,
+      "per_run": [
+        {
+          "k": 1,
+          "pdflatex_rc": 0,
+          "state_hash": "add8c2c19b6a71810531f85bd3abebca0311b3b15b95d4c6b11025083bf5d56b",
+          "text_hash": "7376db2a1f983d0af22404bac97a71a9d5c7c42f3772ec0ef047f3e1871200b0"
+        },
+        {
+          "k": 2,
+          "pdflatex_rc": 0,
+          "state_hash": "72beb0e4949efe8f08326389c91e3dd641f16a430f4c7cafcb756f866aaea313",
+          "text_hash": "52e4a790fe5f44ef1cfaa767ad7da3919f54ddea75702afd0b4ae5ae37aa7455"
+        },
+        {
+          "k": 3,
+          "pdflatex_rc": 0,
+          "state_hash": "add8c2c19b6a71810531f85bd3abebca0311b3b15b95d4c6b11025083bf5d56b",
+          "text_hash": "d03b472dcdc5b29f6a16d9f00089d447ded384690a022416dffb74355659002f"
+        },
+        {
+          "k": 4,
+          "pdflatex_rc": 0,
+          "state_hash": "72beb0e4949efe8f08326389c91e3dd641f16a430f4c7cafcb756f866aaea313",
+          "text_hash": "52e4a790fe5f44ef1cfaa767ad7da3919f54ddea75702afd0b4ae5ae37aa7455"
+        },
+        {
+          "k": 5,
+          "pdflatex_rc": 0,
+          "state_hash": "add8c2c19b6a71810531f85bd3abebca0311b3b15b95d4c6b11025083bf5d56b",
+          "text_hash": "d03b472dcdc5b29f6a16d9f00089d447ded384690a022416dffb74355659002f"
+        },
+        {
+          "k": 6,
+          "pdflatex_rc": 0,
+          "state_hash": "72beb0e4949efe8f08326389c91e3dd641f16a430f4c7cafcb756f866aaea313",
+          "text_hash": "52e4a790fe5f44ef1cfaa767ad7da3919f54ddea75702afd0b4ae5ae37aa7455"
+        },
+        {
+          "k": 7,
+          "pdflatex_rc": 0,
+          "state_hash": "add8c2c19b6a71810531f85bd3abebca0311b3b15b95d4c6b11025083bf5d56b",
+          "text_hash": "d03b472dcdc5b29f6a16d9f00089d447ded384690a022416dffb74355659002f"
+        },
+        {
+          "k": 8,
+          "pdflatex_rc": 0,
+          "state_hash": "72beb0e4949efe8f08326389c91e3dd641f16a430f4c7cafcb756f866aaea313",
+          "text_hash": "52e4a790fe5f44ef1cfaa767ad7da3919f54ddea75702afd0b4ae5ae37aa7455"
+        }
+      ],
+      "status": "oscillating, not stable through run 8 (ground-truth definition's single-endpoint match was a phase coincidence)",
+      "wall_clock_ms": 2630.9820679998666
+    },
+    {
+      "document": "b12_float",
+      "max_runs": 8,
+      "n_star": "divergent(8)",
+      "oscillating": true,
+      "per_run": [
+        {
+          "k": 1,
+          "pdflatex_rc": 0,
+          "state_hash": "37c52ed3c7d9d03ded7e8052de956974ccf492f6289dcc1f713651f86dcc85e8",
+          "text_hash": "dca1779ea440871cbc0db6b44aa5d845dc082c727d4cc0e4a80f64799ad8eec3"
+        },
+        {
+          "k": 2,
+          "pdflatex_rc": 0,
+          "state_hash": "aa0729096f4aee1e933fab7e32ca869d4dfacd1852e78e9dad09777330114e5f",
+          "text_hash": "977078ce25e4d5597e821dde8047b27d1859e51104b49da78a0ab3899214b554"
+        },
+        {
+          "k": 3,
+          "pdflatex_rc": 0,
+          "state_hash": "37c52ed3c7d9d03ded7e8052de956974ccf492f6289dcc1f713651f86dcc85e8",
+          "text_hash": "00899b2f4d854d1e77c8679e2917c72234b55903d94be5bd58d58663499bc18b"
+        },
+        {
+          "k": 4,
+          "pdflatex_rc": 0,
+          "state_hash": "aa0729096f4aee1e933fab7e32ca869d4dfacd1852e78e9dad09777330114e5f",
+          "text_hash": "977078ce25e4d5597e821dde8047b27d1859e51104b49da78a0ab3899214b554"
+        },
+        {
+          "k": 5,
+          "pdflatex_rc": 0,
+          "state_hash": "37c52ed3c7d9d03ded7e8052de956974ccf492f6289dcc1f713651f86dcc85e8",
+          "text_hash": "00899b2f4d854d1e77c8679e2917c72234b55903d94be5bd58d58663499bc18b"
+        },
+        {
+          "k": 6,
+          "pdflatex_rc": 0,
+          "state_hash": "aa0729096f4aee1e933fab7e32ca869d4dfacd1852e78e9dad09777330114e5f",
+          "text_hash": "977078ce25e4d5597e821dde8047b27d1859e51104b49da78a0ab3899214b554"
+        },
+        {
+          "k": 7,
+          "pdflatex_rc": 0,
+          "state_hash": "37c52ed3c7d9d03ded7e8052de956974ccf492f6289dcc1f713651f86dcc85e8",
+          "text_hash": "00899b2f4d854d1e77c8679e2917c72234b55903d94be5bd58d58663499bc18b"
+        },
+        {
+          "k": 8,
+          "pdflatex_rc": 0,
+          "state_hash": "aa0729096f4aee1e933fab7e32ca869d4dfacd1852e78e9dad09777330114e5f",
+          "text_hash": "977078ce25e4d5597e821dde8047b27d1859e51104b49da78a0ab3899214b554"
+        }
+      ],
+      "status": "oscillating, not stable through run 8 (ground-truth definition's single-endpoint match was a phase coincidence)",
+      "wall_clock_ms": 2581.037806000495
+    },
+    {
+      "document": "b13_varioref",
+      "max_runs": 8,
+      "n_star": "divergent(8)",
+      "oscillating": true,
+      "per_run": [
+        {
+          "k": 1,
+          "pdflatex_rc": 0,
+          "state_hash": "3f25b960c4536818eec390b26e3fa4ab6bd2262c4f70e66d2d622b2fbd1c6f89",
+          "text_hash": "8546fa8f293eb1b1960610dce34be6812d33e2e9ef487f9a84ffdda188c894ce"
+        },
+        {
+          "k": 2,
+          "pdflatex_rc": 0,
+          "state_hash": "572dbf3ab78af94f2fba4bb51ff06b793fc9e4129dd06b6d4065cf7a08a41079",
+          "text_hash": "0369b576d6b84e05acfbb3b90eebae1996b4bb225e119c571c10d284d9480816"
+        },
+        {
+          "k": 3,
+          "pdflatex_rc": 0,
+          "state_hash": "3f25b960c4536818eec390b26e3fa4ab6bd2262c4f70e66d2d622b2fbd1c6f89",
+          "text_hash": "8546fa8f293eb1b1960610dce34be6812d33e2e9ef487f9a84ffdda188c894ce"
+        },
+        {
+          "k": 4,
+          "pdflatex_rc": 0,
+          "state_hash": "572dbf3ab78af94f2fba4bb51ff06b793fc9e4129dd06b6d4065cf7a08a41079",
+          "text_hash": "0369b576d6b84e05acfbb3b90eebae1996b4bb225e119c571c10d284d9480816"
+        },
+        {
+          "k": 5,
+          "pdflatex_rc": 0,
+          "state_hash": "3f25b960c4536818eec390b26e3fa4ab6bd2262c4f70e66d2d622b2fbd1c6f89",
+          "text_hash": "8546fa8f293eb1b1960610dce34be6812d33e2e9ef487f9a84ffdda188c894ce"
+        },
+        {
+          "k": 6,
+          "pdflatex_rc": 0,
+          "state_hash": "572dbf3ab78af94f2fba4bb51ff06b793fc9e4129dd06b6d4065cf7a08a41079",
+          "text_hash": "0369b576d6b84e05acfbb3b90eebae1996b4bb225e119c571c10d284d9480816"
+        },
+        {
+          "k": 7,
+          "pdflatex_rc": 0,
+          "state_hash": "3f25b960c4536818eec390b26e3fa4ab6bd2262c4f70e66d2d622b2fbd1c6f89",
+          "text_hash": "8546fa8f293eb1b1960610dce34be6812d33e2e9ef487f9a84ffdda188c894ce"
+        },
+        {
+          "k": 8,
+          "pdflatex_rc": 0,
+          "state_hash": "572dbf3ab78af94f2fba4bb51ff06b793fc9e4129dd06b6d4065cf7a08a41079",
+          "text_hash": "0369b576d6b84e05acfbb3b90eebae1996b4bb225e119c571c10d284d9480816"
+        }
+      ],
+      "status": "oscillating, not stable through run 8 (ground-truth definition's single-endpoint match was a phase coincidence)",
+      "wall_clock_ms": 2117.9748750000726
+    },
+    {
+      "document": "b14_ifthen",
+      "max_runs": 8,
+      "n_star": "divergent(8)",
+      "oscillating": true,
+      "per_run": [
+        {
+          "k": 1,
+          "pdflatex_rc": 0,
+          "state_hash": "94a1fe134d6568dee346c761261d027ad1d7f0dadaf03c47ce7929a477b51b62",
+          "text_hash": "5398916adc86258acb1f6ca7267d0960ab1abe1a7b057f9d7b3eed9242df1697"
+        },
+        {
+          "k": 2,
+          "pdflatex_rc": 0,
+          "state_hash": "ecfe3eb1fe5308308f4db1c4da01d4d92cdb9756ad6b3993a47fe469fc3abc07",
+          "text_hash": "64952bbdb7e45cb4dbb005b3aa5bdd584b66c35d60725e05cf4c4ffb280c8a92"
+        },
+        {
+          "k": 3,
+          "pdflatex_rc": 0,
+          "state_hash": "94a1fe134d6568dee346c761261d027ad1d7f0dadaf03c47ce7929a477b51b62",
+          "text_hash": "5398916adc86258acb1f6ca7267d0960ab1abe1a7b057f9d7b3eed9242df1697"
+        },
+        {
+          "k": 4,
+          "pdflatex_rc": 0,
+          "state_hash": "ecfe3eb1fe5308308f4db1c4da01d4d92cdb9756ad6b3993a47fe469fc3abc07",
+          "text_hash": "64952bbdb7e45cb4dbb005b3aa5bdd584b66c35d60725e05cf4c4ffb280c8a92"
+        },
+        {
+          "k": 5,
+          "pdflatex_rc": 0,
+          "state_hash": "94a1fe134d6568dee346c761261d027ad1d7f0dadaf03c47ce7929a477b51b62",
+          "text_hash": "5398916adc86258acb1f6ca7267d0960ab1abe1a7b057f9d7b3eed9242df1697"
+        },
+        {
+          "k": 6,
+          "pdflatex_rc": 0,
+          "state_hash": "ecfe3eb1fe5308308f4db1c4da01d4d92cdb9756ad6b3993a47fe469fc3abc07",
+          "text_hash": "64952bbdb7e45cb4dbb005b3aa5bdd584b66c35d60725e05cf4c4ffb280c8a92"
+        },
+        {
+          "k": 7,
+          "pdflatex_rc": 0,
+          "state_hash": "94a1fe134d6568dee346c761261d027ad1d7f0dadaf03c47ce7929a477b51b62",
+          "text_hash": "5398916adc86258acb1f6ca7267d0960ab1abe1a7b057f9d7b3eed9242df1697"
+        },
+        {
+          "k": 8,
+          "pdflatex_rc": 0,
+          "state_hash": "ecfe3eb1fe5308308f4db1c4da01d4d92cdb9756ad6b3993a47fe469fc3abc07",
+          "text_hash": "64952bbdb7e45cb4dbb005b3aa5bdd584b66c35d60725e05cf4c4ffb280c8a92"
+        }
+      ],
+      "status": "oscillating, not stable through run 8 (ground-truth definition's single-endpoint match was a phase coincidence)",
+      "wall_clock_ms": 2023.4993009999016
+    },
+    {
+      "document": "b15_ibid",
+      "max_runs": 8,
+      "n_star": 3,
+      "oscillating": false,
+      "per_run": [
+        {
+          "k": 1,
+          "pdflatex_rc": 0,
+          "state_hash": "8de2d6931f053a098a08689cc19b813e3647a5d73e3b35365cffde887e6129ce",
+          "text_hash": "0675eaf660196f21a2ff25ef11576b9bf6e0e1281b9963dc5568478f3a4029c2"
+        },
+        {
+          "k": 2,
+          "pdflatex_rc": 0,
+          "state_hash": "9cb2df3c773c3d92c80f1db25009b70d4025d72fc96503608e91bf9642e8c8c0",
+          "text_hash": "0eb3323f3771cf256ed39cc91a9d1508039ca60ddf56c8713cb3ced780d5e0c2"
+        },
+        {
+          "k": 3,
+          "pdflatex_rc": 0,
+          "state_hash": "9cb2df3c773c3d92c80f1db25009b70d4025d72fc96503608e91bf9642e8c8c0",
+          "text_hash": "cd06acbd827690692da18393d0bb6df65a1b752c2944ae06747e1eec84bc8181"
+        },
+        {
+          "k": 4,
+          "pdflatex_rc": 0,
+          "state_hash": "9cb2df3c773c3d92c80f1db25009b70d4025d72fc96503608e91bf9642e8c8c0",
+          "text_hash": "cd06acbd827690692da18393d0bb6df65a1b752c2944ae06747e1eec84bc8181"
+        },
+        {
+          "k": 5,
+          "pdflatex_rc": 0,
+          "state_hash": "9cb2df3c773c3d92c80f1db25009b70d4025d72fc96503608e91bf9642e8c8c0",
+          "text_hash": "cd06acbd827690692da18393d0bb6df65a1b752c2944ae06747e1eec84bc8181"
+        },
+        {
+          "k": 6,
+          "pdflatex_rc": 0,
+          "state_hash": "9cb2df3c773c3d92c80f1db25009b70d4025d72fc96503608e91bf9642e8c8c0",
+          "text_hash": "cd06acbd827690692da18393d0bb6df65a1b752c2944ae06747e1eec84bc8181"
+        },
+        {
+          "k": 7,
+          "pdflatex_rc": 0,
+          "state_hash": "9cb2df3c773c3d92c80f1db25009b70d4025d72fc96503608e91bf9642e8c8c0",
+          "text_hash": "cd06acbd827690692da18393d0bb6df65a1b752c2944ae06747e1eec84bc8181"
+        },
+        {
+          "k": 8,
+          "pdflatex_rc": 0,
+          "state_hash": "9cb2df3c773c3d92c80f1db25009b70d4025d72fc96503608e91bf9642e8c8c0",
+          "text_hash": "cd06acbd827690692da18393d0bb6df65a1b752c2944ae06747e1eec84bc8181"
+        }
+      ],
+      "status": "N*=3",
+      "wall_clock_ms": 4957.279589999416
+    }
+  ]
+}

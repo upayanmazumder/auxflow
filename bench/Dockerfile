@@ -94,7 +94,7 @@ COPY pyproject.toml README.md LICENSE /opt/auxflow/
 COPY src /opt/auxflow/src
 COPY bench/harness /opt/auxflow/bench/harness
 COPY bench/baselines /opt/auxflow/bench/baselines
-RUN pip install --no-cache-dir /opt/auxflow
+RUN SETUPTOOLS_SCM_PRETEND_VERSION=0.0.0+bench pip install --no-cache-dir /opt/auxflow
 
 RUN pdflatex --version | head -1 \
     && latexmk --version | head -1 \

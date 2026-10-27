@@ -34,6 +34,7 @@ htmlcov/
 
 # Exception: figures deliberately checked in for the paper
 !paper/figures/*.pdf
+!paper/main.pdf
 
 # Exception: review deliverables and presentations
 !docs/reviews/downloads/*.pdf
@@ -44,6 +45,8 @@ htmlcov/
 bench/results/*
 !bench/results/.gitkeep
 !bench/results/published/
+# The paper reads this result set, so it is committed too.
+!bench/results/2026-10-28/
 
 # Scratch
 /tmp/
