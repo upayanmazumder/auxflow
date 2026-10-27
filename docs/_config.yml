@@ -17,6 +17,9 @@ color_scheme: dark
 back_to_top: true
 back_to_top_text: "Back to top"
 
+mermaid:
+  version: "11.4.1"
+
 footer_content: >-
   MIT License &nbsp;·&nbsp;
   <a href="https://pypi.org/project/auxflow/"><code>pip install auxflow</code></a>
