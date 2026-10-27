@@ -8,28 +8,14 @@ nav_order: 1
 
 Three layers, in strict dependency order. Each layer may depend only on layers above it.
 
-```
-+---------------------------------------------------------------+
-|  LAYER 1  COMPILER CORE            src/auxflow/{lexer,parser,  |
-|  no I/O beyond reading source      ast,semantic,ir,analysis,   |
-|  no engine execution               planner,report}             |
-|  no network, no containers                                     |
-+---------------------------------------------------------------+
-                              |
-                              v   BuildPlan (JSON), Diagnostics
-+---------------------------------------------------------------+
-|  LAYER 2  EXECUTION / RUNTIME      src/auxflow/runtime         |
-|  invokes the engine                                            |
-|  observes auxiliary state                                      |
-|  verifies and extends the plan                                 |
-+---------------------------------------------------------------+
-                              |
-                              v   ExecReport, telemetry
-+---------------------------------------------------------------+
-|  LAYER 3  OPTIONAL INFRASTRUCTURE  not in this repository yet  |
-|  queue, workers, containers, autoscaling                       |
-|  STRETCH ONLY -- see FUTURE-INFRASTRUCTURE.md                  |
-+---------------------------------------------------------------+
+```mermaid
+flowchart TD
+  L1["Layer 1: Compiler Core<br><code>src/auxflow/{lexer,parser,ast,semantic,ir,analysis,planner,report}</code><br>Pure source analysis, no TeX engine needed"]
+  L2["Layer 2: Execution & Runtime<br><code>src/auxflow/runtime</code><br>Runs the engine and checks auxiliary fixpoints"]
+  L3["Layer 3: Optional Infrastructure<br>Build queues and parallel job scheduling"]
+
+  L1 -->|"BuildPlan (JSON), Diagnostics"| L2
+  L2 -->|"ExecReport, Telemetry"| L3
 ```
 
 **The load-bearing invariant: layer 1 is a complete project.** Delete layers 2 and 3 and what
@@ -39,40 +25,16 @@ reason the layering is enforced.
 
 ## Layer 1 — compiler core
 
-```
-        source tree
-             |
-    +--------v---------+
-    |     lexer/       |  catcode.py  tokens.py  scanner.py
-    +--------+---------+  category codes 0-15, verbatim, comments
-             |  Token[]
-    +--------v---------+
-    |     parser/      |  recursive.py  nodes.py  spans.py  verbatim.py
-    +--------+---------+  recursive descent, 1 token lookahead
-             |  AST (per file)
-    +--------v---------+
-    |      ast/        |  nodes.py  visitor.py  printer.py
-    +--------+---------+  node kinds, traversal, pretty printing
-             |  AST forest
-    +--------v---------+
-    |    semantic/     |  tables.py  resolve.py  inclusion.py  diagnostics.py
-    +--------+---------+  six symbol tables, multi-file scope resolution
-             |  tables + diagnostics
-    +--------v---------+
-    |       ir/        |  facts.py  edges.py  arg.py  lower.py  dot.py
-    +--------+---------+  Auxiliary Reference Graph
-             |  ARG
-    +--------v---------+
-    |    analysis/     |  taint.py  scc.py  stable_pass.py  classify.py
-    +--------+---------+  two dataflow analyses, Tarjan, classifier
-             |  classification + stable_pass
-    +--------v---------+
-    |     planner/     |  plan.py  lower_plan.py  conservative.py
-    +--------+---------+  BuildPlan generation
-             |
-    +--------v---------+
-    |     report/      |  diagnosis.py  explain.py
-    +------------------+  human-readable output
+```mermaid
+flowchart TD
+  Source["LaTeX Source Files"] --> Lexer["Lexer (lexer/)<br>Token stream with source positions"]
+  Lexer --> Parser["Parser (parser/)<br>Per-file ASTs"]
+  Parser --> AST["AST Forest (ast/)<br>Multi-file inclusion tree"]
+  AST --> Semantic["Semantic Analysis (semantic/)<br>Symbol tables and cross-references"]
+  Semantic --> IR["IR Generation (ir/)<br>Auxiliary Reference Graph (ARG)"]
+  IR --> Analysis["Static Analysis (analysis/)<br>Taint analysis, SCCs, and stable pass counts"]
+  Analysis --> Planner["Build Planner (planner/)<br>Optimized BuildPlan"]
+  Planner --> Report["Report & Diagnostics (report/)<br>CLI explanations"]
 ```
 
 Constraints on layer 1:
@@ -87,24 +49,14 @@ Constraints on layer 1:
 
 ## Layer 2 — execution and runtime
 
-```
-    BuildPlan --> executor.py --> engine invocation
-                       |
-                       v
-                  auxstate.py   read .aux .toc .lof .lot .bbl
-                       |
-                       v
-                 normalise.py   canonical record set
-                       |
-                       v
-                   verify.py    compare consecutive states, decide
-                       |
-              +--------+--------+
-              |                 |
-         satisfied          still changing
-              |                 |
-              v                 v
-          ExecReport      extend plan (bounded), log a prediction miss
+```mermaid
+flowchart TD
+  Plan["BuildPlan"] --> Exec["executor.py<br>Run typesetting engine"]
+  Exec --> Read["auxstate.py<br>Read .aux, .toc, .bbl"]
+  Read --> Norm["normalize.py<br>Sort and canonicalize records"]
+  Norm --> Check{"verify.py<br>Did state stabilize?"}
+  Check -->|Yes| Report["ExecReport<br>Build complete"]
+  Check -->|No| Extend["Extend Plan<br>Run extra pass up to safety cap"]
 ```
 
 Layer 2 exists to answer one question the compiler cannot: *was the prediction right?* It never

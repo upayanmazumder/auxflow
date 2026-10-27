@@ -217,31 +217,21 @@ and file defects above produce errors.
 
 ## Phase dependency graph
 
-```
-1 lexer --> 2 parser --> 3 ast --> 4 symbols --> 5 semantic
-                                        |
-                                        v
-                                     6 ir
-                                        |
-                          +-------------+-------------+
-                          v                           v
-                   7 taint analysis              9 scc analysis
-                          |                           |
-                          +-------------+-------------+
-                                        v
-                                8 stable_pass (on the condensation)
-                                        |
-                                        v
-                                 10 classification
-                                        |
-                                        v
-                                 11 optimisation
-                                        |
-                                        v
-                              12 build-plan generation
-                                        |
-                                        v
-                            13 runtime verification (optional)
+```mermaid
+flowchart TD
+  P1["1. Lexer"] --> P2["2. Parser"]
+  P2 --> P3["3. AST"]
+  P3 --> P4["4. Symbols"]
+  P4 --> P5["5. Semantic"]
+  P5 --> P6["6. IR (ARG)"]
+  P6 --> P7["7. Taint Analysis"]
+  P6 --> P9["9. SCC Analysis"]
+  P7 --> P8["8. Stable Pass Calculation"]
+  P9 --> P8
+  P8 --> P10["10. Classification"]
+  P10 --> P11["11. Optimization"]
+  P11 --> P12["12. Build Plan Generation"]
+  P12 --> P13["13. Runtime Verification (Optional)"]
 ```
 
 Phases 7 and 9 are independent of one another and both feed phase 8: taint supplies the edge

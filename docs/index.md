@@ -5,63 +5,82 @@ nav_order: 0
 
 # AuxFlow
 
-Static convergence classification for multi-pass document compilation.
+A compiler and static analysis tool for LaTeX documents.
 
 [![PyPI](https://img.shields.io/pypi/v/auxflow)](https://pypi.org/project/auxflow/) [![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)](https://pypi.org/project/auxflow/)
 
-AuxFlow is a compiler and static analyzer for LaTeX documents. It builds an instance-level dependency graph of cross-references, detects feedback cycles, and predicts how many passes the document needs to stabilize — before the typesetting engine runs.
+LaTeX documents often compile multiple times to settle page numbers, tables of contents, and citations.
+Standard tools rerun the engine until auxiliary files stop changing.
+AuxFlow inspects your code upfront, finds reference loops, and calculates the exact compile passes needed.
+
+```mermaid
+flowchart LR
+  TeX["LaTeX Source"] --> AF["AuxFlow Analysis"]
+  AF --> Plan["Optimized Build Plan<br>Runs engine only when needed"]
+  AF --> State["Convergence Report<br>CERTIFIED / CYCLIC / UNKNOWN"]
+```
 
 ---
 
-## Install
+## Installation
+
+Install using `pipx` (recommended):
 
 ```bash
 pipx install auxflow
 ```
 
-Or with pip inside a virtual environment:
+Or install with `pip`:
 
 ```bash
 pip install auxflow
 ```
 
----
-
-## How it works
-
-1. Parses LaTeX source into an AST.
-2. Resolves label, reference, and citation symbols across all files.
-3. Constructs an **Auxiliary Reference Graph (ARG)**.
-4. Detects cycles with Tarjan's SCC algorithm.
-5. Tracks values that affect document length via forward taint analysis.
-6. Classifies convergence and generates an optimized build plan.
-
-Documents classify into one of four states:
-
-| State | Meaning |
-|---|---|
-| `CERTIFIED` | Acyclic. Settles within a derived pass count. |
-| `BENIGN_CYCLIC` | Value-only cycles. Settles safely. |
-| `AMPLIFYING` | Reference values control content generation. May diverge. |
-| `UNKNOWN` | Contains unmodelled packages or macros. Conservative schedule. |
+Requires Python 3.12 or newer.
 
 ---
 
-## Quick start
+## Quick Start
+
+Check a document for broken references and syntax errors:
 
 ```bash
-# Classify a document
+auxflow check document.tex
+```
+
+Find the number of compile passes needed:
+
+```bash
 auxflow classify document.tex
+```
 
-# Inspect the ARG
-auxflow graph document.tex
+Build the document with automatic verification:
 
-# Run with runtime verification
+```bash
 auxflow run document.tex
 ```
 
 ---
 
+## Document States
+
+AuxFlow assigns every document one of four convergence states:
+
+| State | What it means |
+|:---|:---|
+| **CERTIFIED** | Stable reference structure. Needs a fixed number of runs. |
+| **BENIGN_CYCLIC** | Loops exist, but do not change content length. Settles safely. |
+| **AMPLIFYING** | Loops trigger infinite page growth. Refused by default. |
+| **UNKNOWN** | Uses packages outside the supported subset. Uses safe default runs. |
+
+---
+
 ## Documentation
 
-Use the sidebar to navigate the full documentation.
+Browse the sections in the sidebar:
+
+- **[Reference](/reference/)**: Compiler phases, supported LaTeX subset, and dependency graph models.
+- **[Project](/project/)**: Formal specification, research questions, and literature comparison.
+- **[Evaluation](/evaluation/)**: 15-document benchmark corpus, test setup, and experimental results.
+- **[Reviews](/reviews/)**: Viva defense notes, slide presentations, and assessment documents.
+- **[Changelog](/changelog.html)**: Interactive release notes and update history.

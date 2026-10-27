@@ -5,158 +5,135 @@ nav_order: 6
 
 # Changelog
 
-All notable changes and releases are documented here.
-This page loads releases dynamically from the [GitHub Releases API](https://api.github.com/repos/upayanmazumder/auxflow/releases).
+All releases and updates for AuxFlow.
+This page fetches release notes directly from [GitHub Releases](https://github.com/upayanmazumder/auxflow/releases).
 
-<div id="filter-controls" style="margin: 1.5rem 0; padding: 1rem; background: var(--color-bg-subtle, #1e2228); border: 1px solid var(--color-border-subtle, #30363d); border-radius: 6px;">
-  <label for="tag-filter" style="font-weight: bold; margin-right: 0.5rem;">Filter by version:</label>
-  <select id="tag-filter" style="padding: 0.4rem 0.8rem; background: var(--color-bg-default, #0d1117); color: inherit; border: 1px solid var(--color-border-default, #30363d); border-radius: 4px;">
+<div id="changelog-controls" style="margin: 1.5rem 0; padding: 1rem; background: var(--color-bg-subtle, #1e2228); border: 1px solid var(--color-border-subtle, #30363d); border-radius: 6px;">
+  <label for="release-select" style="font-weight: 600; margin-right: 0.5rem;">Select release:</label>
+  <select id="release-select" style="padding: 0.4rem 0.8rem; background: var(--color-bg-default, #0d1117); color: inherit; border: 1px solid var(--color-border-default, #30363d); border-radius: 4px;">
     <option value="all">All releases</option>
   </select>
   <span id="release-count" style="margin-left: 1rem; color: var(--color-fg-muted, #8b949e); font-size: 0.9em;"></span>
 </div>
 
-<div id="changelog-loading" style="padding: 2rem 0; text-align: center; color: var(--color-fg-muted, #8b949e);">
-  Loading releases from GitHub...
+<div id="changelog-feed">
+  <p id="changelog-status" style="color: var(--color-fg-muted, #8b949e);">Loading releases...</p>
 </div>
 
-<div id="changelog-container"></div>
-
 <noscript>
-  <div class="note">
-    JavaScript is disabled. View releases directly on <a href="https://github.com/upayanmazumder/auxflow/releases">GitHub Releases</a>.
-  </div>
+  <p>JavaScript is required for live release filtering. View releases directly on <a href="https://github.com/upayanmazumder/auxflow/releases">GitHub</a>.</p>
 </noscript>
 
 <script>
-(function() {
-  const container = document.getElementById('changelog-container');
-  const loading = document.getElementById('changelog-loading');
-  const select = document.getElementById('tag-filter');
-  const countEl = document.getElementById('release-count');
+window.addEventListener('DOMContentLoaded', function() {
+  var feed = document.getElementById('changelog-feed');
+  var status = document.getElementById('changelog-status');
+  var select = document.getElementById('release-select');
+  var count = document.getElementById('release-count');
 
-  const params = new URLSearchParams(window.location.search);
-  const versionParam = params.get('version') || params.get('tag') || 'all';
-  const limitParam = parseInt(params.get('limit') || '30', 10);
+  var urlParams = new URLSearchParams(window.location.search);
+  var targetVersion = urlParams.get('version') || urlParams.get('tag') || 'all';
 
-  function escapeHtml(str) {
-    if (!str) return '';
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+  function clean(str) {
+    var div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
   }
 
-  function formatBody(body) {
-    if (!body) return '<p><em>No release notes provided.</em></p>';
-    let html = escapeHtml(body);
-    // basic code blocks
-    html = html.replace(/```([a-z]*)\n([\s\S]*?)```/g, function(match, lang, code) {
-      return '<pre><code>' + code + '</code></pre>';
+  function renderRelease(rel) {
+    var wrapper = document.createElement('div');
+    wrapper.style.marginBottom = '2rem';
+    wrapper.style.paddingBottom = '1.5rem';
+    wrapper.style.borderBottom = '1px solid var(--color-border-subtle, #30363d)';
+
+    var date = new Date(rel.published_at).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     });
-    // inline code
-    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-    // headers
-    html = html.replace(/^### (.*$)/gim, '<h4>$1</h4>');
-    html = html.replace(/^## (.*$)/gim, '<h3>$1</h3>');
-    html = html.replace(/^# (.*$)/gim, '<h2>$1</h2>');
-    // links
-    html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-    // list items
-    html = html.replace(/^\s*-\s+(.*$)/gim, '<li>$1</li>');
-    html = html.replace(/(<li>.*<\/li>)/gim, '<ul>$1</ul>');
-    // line breaks to paragraphs
-    return html.replace(/\n\n+/g, '<br><br>');
+
+    var title = clean(rel.name || rel.tag_name);
+    var tag = clean(rel.tag_name);
+    var body = clean(rel.body);
+
+    body = body.replace(/```([a-z]*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+    body = body.replace(/`([^`]+)`/g, '<code>$1</code>');
+    body = body.replace(/\n\n+/g, '<br><br>');
+
+    wrapper.innerHTML =
+      '<div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; margin-bottom:0.75rem;">' +
+        '<h2 style="margin:0; font-size:1.4rem;"><a href="' + clean(rel.html_url) + '" target="_blank" rel="noopener">' + title + '</a></h2>' +
+        '<span style="background:var(--color-accent-emphasis, #1f6feb); color:#fff; padding:0.15rem 0.5rem; border-radius:12px; font-size:0.8rem; font-weight:600;">' + tag + '</span>' +
+        '<time style="color:var(--color-fg-muted, #8b949e); font-size:0.85rem;">' + date + '</time>' +
+      '</div>' +
+      '<div style="line-height:1.6; margin-top:0.75rem;">' + body + '</div>' +
+      '<div style="margin-top:0.85rem;"><a href="' + clean(rel.html_url) + '" target="_blank" rel="noopener" style="font-size:0.85rem;">View on GitHub &rarr;</a></div>';
+
+    return wrapper;
   }
 
-  function render(releases, selectedTag) {
-    container.innerHTML = '';
-    const filtered = selectedTag === 'all'
-      ? releases
-      : releases.filter(r => r.tag_name === selectedTag || r.tag_name === 'v' + selectedTag || r.name === selectedTag);
-
-    countEl.textContent = 'Showing ' + filtered.length + ' of ' + releases.length + ' release(s)';
-
-    if (filtered.length === 0) {
-      container.innerHTML = '<p>No releases match <code>' + escapeHtml(selectedTag) + '</code>. <a href="?version=all">View all releases</a></p>';
-      return;
-    }
-
-    filtered.forEach(r => {
-      const card = document.createElement('article');
-      card.className = 'release-entry';
-      card.style.cssText = 'margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--color-border-subtle, #30363d);';
-
-      const published = new Date(r.published_at).toLocaleDateString(undefined, {
-        year: 'numeric', month: 'short', day: 'numeric'
-      });
-
-      card.innerHTML =
-        '<div style="display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap;">' +
-          '<h2 style="margin: 0; font-size: 1.5rem;">' +
-            '<a href="' + escapeHtml(r.html_url) + '" target="_blank" rel="noopener">' + escapeHtml(r.name || r.tag_name) + '</a>' +
-          '</h2>' +
-          '<span style="background: var(--color-accent-emphasis, #1f6feb); color: #fff; padding: 0.15rem 0.5rem; border-radius: 12px; font-size: 0.8em; font-weight: 500;">' +
-            escapeHtml(r.tag_name) +
-          '</span>' +
-          (r.prerelease ? '<span style="background: #d29922; color: #fff; padding: 0.15rem 0.5rem; border-radius: 12px; font-size: 0.8em;">Pre-release</span>' : '') +
-          '<time style="color: var(--color-fg-muted, #8b949e); font-size: 0.9em;">Released on ' + published + '</time>' +
-        '</div>' +
-        '<div class="release-body" style="margin-top: 1rem; line-height: 1.6;">' +
-          formatBody(r.body) +
-        '</div>' +
-        '<div style="margin-top: 1rem; font-size: 0.85em;">' +
-          '<a href="' + escapeHtml(r.html_url) + '" target="_blank" rel="noopener">View release on GitHub &rarr;</a>' +
-        '</div>';
-
-      container.appendChild(card);
-    });
-  }
-
-  fetch('https://api.github.com/repos/upayanmazumder/auxflow/releases?per_page=' + limitParam)
-    .then(res => {
-      if (!res.ok) throw new Error('GitHub API HTTP ' + res.status);
+  fetch('https://api.github.com/repos/upayanmazumder/auxflow/releases')
+    .then(function(res) {
+      if (!res.ok) {
+        throw new Error('HTTP ' + res.status);
+      }
       return res.json();
     })
-    .then(releases => {
-      loading.style.display = 'none';
+    .then(function(releases) {
+      if (status) {
+        status.remove();
+      }
 
-      releases.forEach(r => {
-        const opt = document.createElement('option');
-        opt.value = r.tag_name;
-        opt.textContent = (r.name && r.name !== r.tag_name) ? r.name + ' (' + r.tag_name + ')' : r.tag_name;
+      if (!releases || releases.length === 0) {
+        feed.innerHTML = '<p>No releases found.</p>';
+        return;
+      }
+
+      for (var i = 0; i < releases.length; i++) {
+        var opt = document.createElement('option');
+        opt.value = releases[i].tag_name;
+        opt.textContent = releases[i].tag_name;
         select.appendChild(opt);
-      });
+      }
 
-      let initialSelection = 'all';
-      if (versionParam !== 'all') {
-        const match = releases.find(r => r.tag_name === versionParam || r.tag_name === 'v' + versionParam || r.name === versionParam);
-        if (match) {
-          initialSelection = match.tag_name;
-          select.value = match.tag_name;
+      function applyFilter(selected) {
+        feed.innerHTML = '';
+        var matched = 0;
+        for (var j = 0; j < releases.length; j++) {
+          var item = releases[j];
+          if (selected === 'all' || item.tag_name === selected || item.tag_name === 'v' + selected || item.name === selected) {
+            feed.appendChild(renderRelease(item));
+            matched++;
+          }
+        }
+        count.textContent = 'Showing ' + matched + ' of ' + releases.length + ' release(s)';
+        if (matched === 0) {
+          feed.innerHTML = '<p>No release matches <code>' + clean(selected) + '</code>. <a href="?version=all">Show all</a></p>';
         }
       }
 
+      if (targetVersion !== 'all') {
+        select.value = targetVersion;
+      }
+
       select.addEventListener('change', function() {
-        const val = this.value;
-        const newUrl = new URL(window.location);
+        var val = this.value;
+        var newUrl = new URL(window.location);
         if (val === 'all') {
           newUrl.searchParams.delete('version');
         } else {
           newUrl.searchParams.set('version', val);
         }
         window.history.pushState({}, '', newUrl);
-        render(releases, val);
+        applyFilter(val);
       });
 
-      render(releases, initialSelection);
+      applyFilter(targetVersion);
     })
-    .catch(err => {
-      loading.innerHTML =
-        '<p style="color: #f85149;">Unable to load changelogs directly from GitHub (' + escapeHtml(err.message) + ').</p>' +
-        '<p><a href="https://github.com/upayanmazumder/auxflow/releases" target="_blank" rel="noopener">Browse releases on GitHub &rarr;</a></p>';
+    .catch(function(err) {
+      feed.innerHTML =
+        '<p style="color:#cf222e;">Failed to load releases (' + clean(err.message) + ').</p>' +
+        '<p><a href="https://github.com/upayanmazumder/auxflow/releases" target="_blank" rel="noopener">Open GitHub Releases directly &rarr;</a></p>';
     });
-})();
+});
 </script>
