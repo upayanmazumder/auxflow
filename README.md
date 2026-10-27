@@ -78,6 +78,18 @@ Show installation environment and project links:
 ```bash
 auxflow info
 ```
+
+Check that TeX is installed and see how AuxFlow is set up:
+
+```bash
+auxflow doctor
+```
+
+`auxflow check`, `auxflow classify`, and `auxflow plan` accept `--json` for editors and CI.
+Locations print as `file:line:column`. Paths under the current directory print relative to it.
+`auxflow --quiet COMMAND` hides progress, next-step hints, and update notices.
+Results and errors still print, so scripts can rely on the output and the exit status.
+
 ---
 
 ## How It Works

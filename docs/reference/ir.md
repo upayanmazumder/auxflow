@@ -99,11 +99,11 @@ class DepEdge:
     destination: int
     pass_lag: int          # runs that must elapse before the value is observable
     dependency_type: DepType
-    reason: str            # printed verbatim by `auxflow plan --explain`
+    reason: str            # kept in the ARG and plan JSON, described in plain words by reports
 ```
 
-`reason` is not decoration. It is the string that appears in diagnostics and in the explained
-build plan, and writing it at edge-construction time is the only point where the justification
+`reason` is not decoration. It is kept in the serialized graph and plan. Cycle reports and
+`auxflow plan --explain` describe it in plain words. Writing it at edge-construction time is the only point where the justification
 is actually known.
 
 `STRUCTURAL` is the load-bearing edge type. It is never produced by the lowering rules directly;

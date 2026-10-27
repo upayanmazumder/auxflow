@@ -3,7 +3,9 @@ r"""Execute a BuildPlan and compare normalized state after each engine run."""
 from __future__ import annotations
 
 import logging
+import shutil
 import subprocess
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Literal
@@ -115,12 +117,24 @@ def _observed_state(directory: Path, jobname: str) -> AuxState:
     return normalize_state(contents)
 
 
+def _missing_tool(plan: BuildPlan) -> str | None:
+    """The first planned tool that is not on PATH, or `None` when all are present."""
+    for tool in dict.fromkeys(step.tool for step in plan.steps):
+        if shutil.which(tool) is None:
+            return (
+                f"{tool} was not found on PATH. Install a TeX distribution (TeX Live or MiKTeX),"
+                " or use 'auxflow plan' to analyse the document without TeX."
+            )
+    return None
+
+
 def execute(
     plan: BuildPlan,
     directory: Path,
     *,
     strict: bool = False,
     timeout: float = DEFAULT_TOOL_TIMEOUT,
+    progress: Callable[[str], None] | None = None,
 ) -> ExecReport:
     """Run planned steps, then extend only while auxiliary state changes.
 
@@ -141,9 +155,17 @@ def execute(
         return ExecReport("tool_error", None, 0, "plan has no engine steps")
     if not engine_steps[-1].verify_after:
         return ExecReport("tool_error", None, 0, "final engine step must request verification")
+    missing = _missing_tool(plan)
+    if missing is not None:
+        return ExecReport("tool_error", None, 0, missing)
+    notify = progress or (lambda _message: None)
     previous: AuxState | None = None
     runs = 0
     for step in plan.steps:
+        if step.tool == "pdflatex":
+            notify(f"pass {runs + 1} of {len(engine_steps)} (pdflatex)...")
+        else:
+            notify(f"running {step.tool}...")
         try:
             code = _execute_step(step, directory, timeout)
         except subprocess.TimeoutExpired:
@@ -176,6 +198,7 @@ def execute(
 
     last_engine = engine_steps[-1]
     while runs < plan.max_runs:
+        notify(f"extra pass {runs + 1} of at most {plan.max_runs} (files were still changing)...")
         try:
             code = _execute_step(last_engine, directory, timeout)
         except subprocess.TimeoutExpired:
