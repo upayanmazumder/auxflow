@@ -60,7 +60,7 @@ conclusion one run earlier because the inputs to run *N+1* are already known at 
 C″ reaches it earlier still, because a file that was read and rewritten identically within run *N* is
 evidence of stability without any further run. The previously stated hypothesis that the gap applies
 to "any consecutive-state comparison detector" is **falsified**; see H3′ in
-[RESEARCH-QUESTIONS.md](RESEARCH-QUESTIONS.md).
+[RESEARCH-QUESTIONS.md](/project/research-questions.html).
 
 ### Reference implementations to run alongside
 
@@ -86,7 +86,7 @@ Choosing this correctly matters more than any other decision in the evaluation.
 ### Definition
 
 Let *Â_k* be the normalised auxiliary state after run *k*, as defined in
-[RUNTIME-VERIFICATION.md](RUNTIME-VERIFICATION.md), and let *T_k* be the extracted text layer of
+[RUNTIME-VERIFICATION.md](/reference/runtime-verification.html), and let *T_k* be the extracted text layer of
 the rendered output.
 
 > **Ground truth *N\**** is the smallest *N* such that

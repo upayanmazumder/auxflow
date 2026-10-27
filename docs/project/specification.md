@@ -11,8 +11,8 @@ one, this one governs.
 
 **Revised 2026-08-27 after a prior-art audit.** The audit falsified two hypotheses and removed five
 claimed contributions. Its findings govern this document; the evidence is in
-[`research/sources/`](../research/sources/) and the analysis in
-[RELATED-WORK.md](RELATED-WORK.md). Anything in this repository that still reads as though the audit
+[`research/sources/`](https://github.com/upayanmazumder/auxflow/tree/main/research/sources/) and the analysis in
+[RELATED-WORK.md](/project/related-work.html). Anything in this repository that still reads as though the audit
 had not happened is a defect.
 
 ## Title
@@ -104,7 +104,7 @@ AuxFlow's difference is the absence of execution, and a dependency chain rather 
    published one-page counterexample diverges monotonically (Gaspar, *TUGboat* 35:1, 2014); the TeX
    FAQ documents a case that oscillates with period two; a Stack Exchange thread supplies
    counterexamples with no loop and no conditional at all. Nine distinct mechanisms are enumerated in
-   [RELATED-WORK.md](RELATED-WORK.md) section 7.3. Nobody has systematised them.
+   [RELATED-WORK.md](/project/related-work.html) section 7.3. Nobody has systematised them.
 
 **A previously stated motivation has been withdrawn.** "Dynamic detection costs an execution" is
 true only of output-comparison detectors. latexrun compares tool *inputs* and states the argument
@@ -112,10 +112,10 @@ explicitly before engineering around it; Tectonic compares files the engine read
 within a single run. Both reach *N*, not *N+1*.
 
 Preliminary measurements are recorded in
-[`research/preliminary-measurements.md`](../research/preliminary-measurements.md). They were taken
-in an unpinned environment and must be reproduced under [docs/EVALUATION.md](EVALUATION.md) before
+[`research/preliminary-measurements.md`](https://github.com/upayanmazumder/auxflow/blob/main/research/preliminary-measurements.md). They were taken
+in an unpinned environment and must be reproduced under [docs/EVALUATION.md](/evaluation/methodology.html) before
 appearing in any report. Prior-art evidence is in
-[`research/sources/`](../research/sources/) and [RELATED-WORK.md](RELATED-WORK.md).
+[`research/sources/`](https://github.com/upayanmazumder/auxflow/tree/main/research/sources/) and [RELATED-WORK.md](/project/related-work.html).
 
 ## Research question
 
@@ -125,13 +125,13 @@ appearing in any report. Prior-art evidence is in
 > succeed, for which does it fail, and how does it compare against the convergence oracles deployed
 > in current tools?
 
-Secondary questions in [RESEARCH-QUESTIONS.md](RESEARCH-QUESTIONS.md).
+Secondary questions in [RESEARCH-QUESTIONS.md](/project/research-questions.html).
 
 ## Hypotheses
 
 Revised after the prior-art audit. Two of the original four were falsified by the audit before any
 measurement was taken; they are recorded as struck in
-[RESEARCH-QUESTIONS.md](RESEARCH-QUESTIONS.md) rather than deleted.
+[RESEARCH-QUESTIONS.md](/project/research-questions.html) rather than deleted.
 
 - **H1′ (classification, restated).** For documents in the declared subset whose instability arises
   from a *modelled* mechanism, structural analysis of the auxiliary-fact graph distinguishes
@@ -150,8 +150,8 @@ measurement was taken; they are recorded as struck in
   *chain* with source spans having performed zero engine executions, whereas the tools that do
   report a cause report an endpoint and do so only after executing.
 
-All four are falsifiable. H2 in particular may fail; see [SCOPE.md](SCOPE.md) and
-[EVALUATION.md](EVALUATION.md) for why that is a result rather than a failure.
+All four are falsifiable. H2 in particular may fail; see [SCOPE.md](https://github.com/upayanmazumder/auxflow/blob/main/docs/SCOPE.md) and
+[EVALUATION.md](/evaluation/methodology.html) for why that is a result rather than a failure.
 
 ## Objectives
 
@@ -180,7 +180,7 @@ generation, plan execution with verification, the corpus and harness.
 
 Out of scope: implementing TeX; macro expansion; supporting arbitrary real-world documents;
 producing typeset output; beating existing tools on wall-clock time; machine learning; any
-production system. Full boundary in [SCOPE.md](SCOPE.md).
+production system. Full boundary in [SCOPE.md](https://github.com/upayanmazumder/auxflow/blob/main/docs/SCOPE.md).
 
 ## Non-goals
 
@@ -196,7 +196,7 @@ production system. Full boundary in [SCOPE.md](SCOPE.md).
 ## Expected contribution
 
 Stated in three strengths. The full derivation, with the prior art each concession answers, is in
-[RELATED-WORK.md](RELATED-WORK.md) section 13.
+[RELATED-WORK.md](/project/related-work.html) section 13.
 
 **Conservative — defensible now.** A declared subset of LaTeX with an operational account of its
 auxiliary-state round trip; an instance-level dependency graph of auxiliary fact instances carrying
@@ -213,8 +213,8 @@ statically whether classical fixed-graph fixpoint reasoning applies to a documen
 pre-execution verdict with source-level attribution for the loop-bounded-by-a-reference class, and
 demonstrably failing for the extent-driven class.
 
-**Overclaim — must never appear.** The full list is in [RELATED-WORK.md](RELATED-WORK.md) section 13
-and [PATENT-NOTES.md](PATENT-NOTES.md). The short form: AuxFlow did not invent static pass
+**Overclaim — must never appear.** The full list is in [RELATED-WORK.md](/project/related-work.html) section 13
+and [PATENT-NOTES.md](https://github.com/upayanmazumder/auxflow/blob/main/docs/PATENT-NOTES.md). The short form: AuxFlow did not invent static pass
 numbering, SCC-plus-condensation fixpoint, iteration bounds from graph structure, cycle
 classification, naming the offending facts, checksum verification, or the observation that
 non-convergence is undecidable. It does not detect all non-convergent documents even within its
@@ -233,7 +233,7 @@ Stated up front because they constrain what may be claimed.
 - **L2.** The abstraction that resolving a reference does not alter pagination is *not faithful*.
   Substituting `17` for `??` can change a line break and therefore a page break. Without this
   abstraction every document collapses into one strongly connected component and the analysis is
-  vacuous. The dichotomy is stated openly in [RELATED-WORK.md](RELATED-WORK.md) section 7.4: model
+  vacuous. The dichotomy is stated openly in [RELATED-WORK.md](/project/related-work.html) section 7.4: model
   extent feedback and be vacuous, or do not and be unsound for a named class. AuxFlow takes the
   second option.
 - **L3.** A cycle classified as amplifying is a *necessary* structural condition for one class of
@@ -263,18 +263,18 @@ obvious and low-risk have been made and are marked RESOLVED with a rationale.
 |---|---|---|
 | D1 | Implementation language | **RESOLVED: Python 3.12+.** The interesting logic is hand-written either way; Python keeps the front end short, makes the harness easy, and has no bearing on the research claims. Core package takes no third-party dependencies — Tarjan and the fixpoint are written by hand as part of the project. |
 | D2 | Parser architecture | **RESOLVED: hand-written recursive descent with one token of lookahead.** A parser generator would obscure category-code handling, which is the part with genuine subtlety. |
-| D3 | AST representation | **RESOLVED: frozen dataclasses, one class per node kind, mandatory `Span` on every node.** Spans are load-bearing: the diagnostics in [NON-CONVERGENCE.md](NON-CONVERGENCE.md) are worthless without them. |
-| D4 | Exact fact kind set | **OPEN.** A provisional set is given in [IR.md](IR.md). It will be revised once the corpus is authored, because fact kinds should be justified by documents that need them. Freeze before implementation phase 7. |
-| D5 | Pass-lag semantics for external tools | **RESOLVED: TOOL-edge effective lag is 0 for stable-pass purposes.** The auxiliary round trip is lag 1, sourced from `ltfiles.dtx`: `\begin{document}` inputs the previous run's `.aux` before reopening it for writing. The `DepEdge.pass_lag` field on a `bibtex` edge stays 1 (bibtex genuinely needs the prior run's `.aux`), but `auxflow.analysis.stable_pass` treats a `TOOL` edge's lag as 0 in the stable_pass recurrence specifically. This is the only setting that reproduces [IR.md](IR.md)'s worked bibliography-cascade example (`BBL.exists` stable_pass 1, "external tool runs after run 1"); resolved while implementing phase 10's stable-pass numbering rather than by a separate experiment, since the worked example is itself the targeted case. |
+| D3 | AST representation | **RESOLVED: frozen dataclasses, one class per node kind, mandatory `Span` on every node.** Spans are load-bearing: the diagnostics in [NON-CONVERGENCE.md](/reference/non-convergence.html) are worthless without them. |
+| D4 | Exact fact kind set | **OPEN.** A provisional set is given in [IR.md](/reference/ir.html). It will be revised once the corpus is authored, because fact kinds should be justified by documents that need them. Freeze before implementation phase 7. |
+| D5 | Pass-lag semantics for external tools | **RESOLVED: TOOL-edge effective lag is 0 for stable-pass purposes.** The auxiliary round trip is lag 1, sourced from `ltfiles.dtx`: `\begin{document}` inputs the previous run's `.aux` before reopening it for writing. The `DepEdge.pass_lag` field on a `bibtex` edge stays 1 (bibtex genuinely needs the prior run's `.aux`), but `auxflow.analysis.stable_pass` treats a `TOOL` edge's lag as 0 in the stable_pass recurrence specifically. This is the only setting that reproduces [IR.md](/reference/ir.html)'s worked bibliography-cascade example (`BBL.exists` stable_pass 1, "external tool runs after run 1"); resolved while implementing phase 10's stable-pass numbering rather than by a separate experiment, since the worked example is itself the targeted case. |
 | D6 | State equivalence definition | **RESOLVED: normalised auxiliary-state equality plus rendered-text equality, exclusion list `{\relax}`.** Implemented in `auxflow.runtime.normalize` (phase 13) and reused unchanged by the ground-truth sweep (`bench/harness/groundtruth_incontainer.py`) and by baselines B/C/C'/C'' (`bench/harness/normstate.py`), so every oracle in `docs/EVALUATION.md` shares one normalisation. `\relax` is excluded because the engine writes it as argument-free aux-file boilerplate with no state; every other record kind, including unrecognised ones, stays observable so a changing unknown record cannot look stable. Text equality is checked via `pdftotext -layout` to guard against auxiliary state settling before rendered output does, per `docs/EVALUATION.md`'s ground-truth definition. |
 | D7 | Benign-cycle bound | **OPEN.** Whether a benign cycle can be assigned a finite bound at all, or should always be reported as unbounded and deferred to runtime verification. The conservative option is the fallback; do not tune a constant against the corpus. |
-| D8 | Runtime verification strategy | **RESOLVED: normalised auxiliary-state comparison, never engine warnings.** See [RUNTIME-VERIFICATION.md](RUNTIME-VERIFICATION.md). |
+| D8 | Runtime verification strategy | **RESOLVED: normalised auxiliary-state comparison, never engine warnings.** See [RUNTIME-VERIFICATION.md](/reference/runtime-verification.html). |
 | D9 | Benchmark harness form | **RESOLVED: Python harness emitting JSONL, plus shell baseline scripts.** Baselines must be readable shell so a reviewer can confirm exactly what was executed. |
 | D10 | Containerised engine environment | **RESOLVED: `bench/Dockerfile`, `python:3.12-slim-bookworm` base pinned by digest.** TeX Live (including `latexmk`) from the Debian bookworm apt archive; `latexrun` pinned to one commit, Tectonic 0.15.0 and Typst 0.11.0 as pinned release binaries, `biber` for the `b15_ibid` cross-check, `labelschanged` built from its CTAN `.dtx`/`.ins` pair. `auxflow` itself is pip-installed into the image so baseline scripts and the ground-truth sweep share identical normalisation with the host (see D6). The built image's content digest is recorded in every `bench/results/*.jsonl` record. |
 | D11 | Whether opaque constructs invalidate the whole document or only the containing file | **OPEN.** Per-file is more useful but requires arguing that opacity cannot leak across an inclusion boundary. Currently specified as whole-document (conservative). |
 | **D12** | **Whether to split `AMPLIFYING` into a finite-height failure and a monotonicity failure** | **OPEN, added by the audit.** Gaspar's loop diverges monotonically (finite height fails); the width-driven and conditional cases oscillate with period two (monotonicity fails). The Magnusson and Hedin condition separates them, and so does synchronous dataflow's separation of rate inconsistency from deadlock. Splitting is a small, honest refinement; it also means the second class is largely undetectable, which is why it is a decision and not a foregone conclusion. |
 | **D13** | **Whether the taint criterion is stated as "quantity of generated content" or as "any layout-determining measurement"** | **RESOLVED: narrow ("quantity of generated content").** The wide form makes every document containing one `\ref` a single strongly connected component, so the analysis would be vacuous. The narrow form is unsound for M3, M4 and M6 in `b11`–`b13`, recorded as declared false negatives. M7 appears in `b07` as an `UNKNOWN` fallback because footnote syntax remains outside the subset. The corpus measures both outcomes. There is no third option without modelling line breaking. Decision: accept the narrow criterion and declared incompleteness; do not attempt the wide form. |
-| **D14** | **Whether the amplifying analysis may be claimed as a contribution at all** | **RESOLVED (split): yes, against Krishnan and Van Wyk; not claimed against Söderberg and Hedin.** Krishnan and Van Wyk (SLE 2012, DOI `10.1007/978-3-642-36089-3_4`) was read in full via Krishnan's PhD dissertation ("Composable Semantics Using Higher-Order Attribute Grammars", University of Minnesota, 2012, open access, `https://hdl.handle.net/11299/144010`, chapter 5), which is the source the SLE paper was drawn from. Their analysis operates at the **grammar level**: SCCs over a static non-terminal graph, proved terminating via a recursive path ordering on production symbols (term-rewriting theory). AuxFlow's taint analysis operates at the **instance level**: SCCs over a per-document value-dependency graph (the ARG), with taint propagated by reachability from control-construct reads to `CONTENT_VOLUME`. Different formal object (grammar specification vs. one document's fact graph) and different proof technique (rewrite-ordering vs. reachability). The differentiator in [RELATED-WORK.md](RELATED-WORK.md) section 3 survives against this paper. Söderberg and Hedin (SLE 2013, DOI `10.1007/978-3-319-02654-1_17`) remains **unread in full** — no open-access copy exists and institutional access was unavailable. No claim of novelty against that paper may appear in any report; it is recorded as an open risk (see RELATED-WORK.md section 3) rather than cleared. |
+| **D14** | **Whether the amplifying analysis may be claimed as a contribution at all** | **RESOLVED (split): yes, against Krishnan and Van Wyk; not claimed against Söderberg and Hedin.** Krishnan and Van Wyk (SLE 2012, DOI `10.1007/978-3-642-36089-3_4`) was read in full via Krishnan's PhD dissertation ("Composable Semantics Using Higher-Order Attribute Grammars", University of Minnesota, 2012, open access, `https://hdl.handle.net/11299/144010`, chapter 5), which is the source the SLE paper was drawn from. Their analysis operates at the **grammar level**: SCCs over a static non-terminal graph, proved terminating via a recursive path ordering on production symbols (term-rewriting theory). AuxFlow's taint analysis operates at the **instance level**: SCCs over a per-document value-dependency graph (the ARG), with taint propagated by reachability from control-construct reads to `CONTENT_VOLUME`. Different formal object (grammar specification vs. one document's fact graph) and different proof technique (rewrite-ordering vs. reachability). The differentiator in [RELATED-WORK.md](/project/related-work.html) section 3 survives against this paper. Söderberg and Hedin (SLE 2013, DOI `10.1007/978-3-319-02654-1_17`) remains **unread in full** — no open-access copy exists and institutional access was unavailable. No claim of novelty against that paper may appear in any report; it is recorded as an open risk (see RELATED-WORK.md section 3) rather than cleared. |
 
 ## Engineering principles
 

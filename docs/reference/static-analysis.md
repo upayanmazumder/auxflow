@@ -100,12 +100,12 @@ propagation.** A value that is never read in a control construct is never seeded
 pagination through *typeset extent* is invisible. Four published non-convergence mechanisms work
 exactly that way and are not detected: reference width changing a line break; `[!t]` floats with
 roman page numbering; `varioref`-style dynamic textual references; references in margin or foot
-notes. See [NON-CONVERGENCE.md](NON-CONVERGENCE.md) and
-[RELATED-WORK.md](RELATED-WORK.md) section 7.3.
+notes. See [NON-CONVERGENCE.md](/reference/non-convergence.html) and
+[RELATED-WORK.md](/project/related-work.html) section 7.3.
 
 Widening the seed rule to "any value rendered into the document body" would catch them and would
 also make every document containing one `\ref` a single strongly connected component, which is
-vacuous. That trade-off is **open decision D13** in [PROJECT.md](PROJECT.md) and is the most
+vacuous. That trade-off is **open decision D13** in [PROJECT.md](/project/specification.html) and is the most
 consequential unresolved question in the design. It must be argued in the report, not assumed.
 
 ---
@@ -186,7 +186,7 @@ predicted_runs <- P + 1
 
 `base + |C|` is a *heuristic*, not a proof. It is plausible for the list-and-pagination feedback
 being modelled, where one traversal of the cycle stabilises one fact, but it is not established
-in general. This is **open decision D7** in [PROJECT.md](PROJECT.md).
+in general. This is **open decision D7** in [PROJECT.md](/project/specification.html).
 
 If measurement shows it mispredicting, the correct response is to reclassify benign cycles as
 unbounded and defer to runtime verification. That is strictly more conservative: it costs
@@ -246,7 +246,7 @@ A2 is empirical.
   its resolved value does not alter pagination. **Not faithful, and known false for a published
   class.** A short placeholder becoming a longer number can change a line break and therefore a
   page break. Four reproducible counterexamples exist — see N6 and
-  [RELATED-WORK.md](RELATED-WORK.md) section 7.3. Without A2 the entire document is one strongly
+  [RELATED-WORK.md](/project/related-work.html) section 7.3. Without A2 the entire document is one strongly
   connected component and the analysis is vacuous, so the choice is between a vacuous analysis and
   an analysis that is unsound for a named class. AuxFlow takes the second and reports the class.
   Any ground-truth run count exceeding the prediction is an A2 violation and must be reported as

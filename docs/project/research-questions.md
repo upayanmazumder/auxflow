@@ -11,9 +11,9 @@ by the audit before any measurement was taken; they are recorded here as struck 
 because the reason they were wrong is more useful than the fact that they were.
 
 Evidence for every claim of prior art in this document is in
-[`research/sources/`](../research/sources/), indexed by
-[`research/prior-art-log.md`](../research/prior-art-log.md), and summarised in
-[RELATED-WORK.md](RELATED-WORK.md).
+[`research/sources/`](https://github.com/upayanmazumder/auxflow/tree/main/research/sources/), indexed by
+[`research/prior-art-log.md`](https://github.com/upayanmazumder/auxflow/blob/main/research/prior-art-log.md), and summarised in
+[RELATED-WORK.md](/project/related-work.html).
 
 ## Primary
 
@@ -24,7 +24,7 @@ Evidence for every claim of prior art in this document is in
 > deployed in current tools?
 
 Three parts, deliberately. The *decision* half is the only place a contribution can live, and even
-there it is contingent (see G1 in [RELATED-WORK.md](RELATED-WORK.md) section 12). The *mechanism
+there it is contingent (see G1 in [RELATED-WORK.md](/project/related-work.html) section 12). The *mechanism
 coverage* half is the part the audit showed to be genuinely unoccupied. The *comparison* half is
 what makes the whole thing measurable.
 
@@ -41,9 +41,9 @@ and is framed in the vocabulary of the prior work rather than around it.
 dependency-based static criterion over the declared subset detect it?
 
 *Why it matters:* this is contribution G3 and it is the least contingent thing the project has. The
-nine mechanisms are enumerated in [RELATED-WORK.md](RELATED-WORK.md) section 7.3. Four of them (M3,
+nine mechanisms are enumerated in [RELATED-WORK.md](/project/related-work.html) section 7.3. Four of them (M3,
 M4, M6, M7) are **known in advance** to be undetectable by AuxFlow's criterion, because they are
-cycles through the `.value` component that [IR.md](IR.md)'s `exists`/`value` split severs by
+cycles through the `.value` component that [IR.md](/reference/ir.html)'s `exists`/`value` split severs by
 construction.
 
 *Testable by:* one corpus member per mechanism, with the expected classification hand-written before
@@ -134,7 +134,7 @@ exclusion list.
 
 ## Hypotheses
 
-Restated. The full statements live in [PROJECT.md](PROJECT.md); the mapping and the audit outcome
+Restated. The full statements live in [PROJECT.md](/project/specification.html); the mapping and the audit outcome
 are here.
 
 | Hypothesis | Question | Primary metric | Audit status |
@@ -146,8 +146,8 @@ are here.
 | ~~**H4** For non-convergent documents, AuxFlow reports the responsible facts whereas dynamic tools report only after exhausting a retry cap~~ | ~~RQ6~~ | — | **FALSIFIED in its second half.** Typst reports the fact, a byte span and the full per-iteration value history; `labelschanged` reports the offending label instances with before and after values; Tectonic names the file |
 | **H4′** AuxFlow reports a *dependency chain* rather than an endpoint, and does so having performed zero engine executions | RQ6 | diagnosis content and executions consumed before a cause is reported | **new** |
 
-All four surviving hypotheses are falsifiable. H2 in particular may fail; see [SCOPE.md](SCOPE.md)
-and [EVALUATION.md](EVALUATION.md) for why that is a result rather than a failure.
+All four surviving hypotheses are falsifiable. H2 in particular may fail; see [SCOPE.md](https://github.com/upayanmazumder/auxflow/blob/main/docs/SCOPE.md)
+and [EVALUATION.md](/evaluation/methodology.html) for why that is a result rather than a failure.
 
 ## What would falsify the project's premise
 

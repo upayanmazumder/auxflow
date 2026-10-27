@@ -24,7 +24,7 @@ detection of auxiliary-file changes that base LaTeX does not report. A mechanism
 needed a package written to fill it is not a sound oracle.
 
 Preliminary measurements of this behaviour are in
-[`research/preliminary-measurements.md`](../research/preliminary-measurements.md).
+[`research/preliminary-measurements.md`](https://github.com/upayanmazumder/auxflow/blob/main/research/preliminary-measurements.md).
 
 Engine warnings are therefore retained **only as evaluation baseline B**, precisely because
 demonstrating their unsoundness is a result.
@@ -107,7 +107,7 @@ AuxFlow's verifier is therefore **not novel** and is not claimed to be. It is a 
 reimplementation of standard practice, included so that:
 
 - the executor can confirm or refute a static prediction;
-- baseline C in [EVALUATION.md](EVALUATION.md) is measured with exactly the same normalisation
+- baseline C in [EVALUATION.md](/evaluation/methodology.html) is measured with exactly the same normalisation
   as AuxFlow, making the comparison fair.
 
 Reimplementing rather than shelling out to an existing tool is a deliberate choice: it removes a
@@ -149,6 +149,6 @@ when the document reaches the cap after exceeding a certified prediction.
 - It does not modify the plan for future invocations. Any model improvement is offline and
   deliberate.
 - It does not judge output correctness, only auxiliary-state stability. Ground truth for the
-  evaluation additionally requires rendered-output stability; see [EVALUATION.md](EVALUATION.md).
+  evaluation additionally requires rendered-output stability; see [EVALUATION.md](/evaluation/methodology.html).
 - It does not detect non-convergence in the sense of a proof. Reaching the cap is evidence, not
   a demonstration.

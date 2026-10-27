@@ -24,10 +24,11 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/upayanmazumder/auxflow"
+Homepage = "https://auxflow.upayan.dev"
+Documentation = "https://auxflow.upayan.dev"
 Repository = "https://github.com/upayanmazumder/auxflow"
 Issues = "https://github.com/upayanmazumder/auxflow/issues"
-Changelog = "https://github.com/upayanmazumder/auxflow/releases"
+Changelog = "https://auxflow.upayan.dev/changelog.html"
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "hypothesis>=6", "ruff>=0.6", "mypy>=1.11", "pydot>=3"]

@@ -111,7 +111,7 @@ is enforced by a property test over randomly generated classifications, not mere
 
 Currently specified as **whole-document**: any opacity anywhere downgrades the entire document.
 Per-file granularity would be more useful and is recorded as open decision D11 in
-[PROJECT.md](PROJECT.md). Adopting it requires an argument that opacity cannot leak across an
+[PROJECT.md](/project/specification.html). Adopting it requires an argument that opacity cannot leak across an
 inclusion boundary, which is not obviously true — an opaque macro defined in one file can be
 called in another.
 

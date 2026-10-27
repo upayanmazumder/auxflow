@@ -1,228 +1,92 @@
 # AuxFlow
 
-Static analysis and build planning for multi-pass document compilation.
+A compiler and static analyzer for LaTeX documents.
 
-[![PyPI](https://img.shields.io/pypi/v/auxflow)](https://pypi.org/project/auxflow/) [![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)](https://pypi.org/project/auxflow/)
+[![PyPI](https://img.shields.io/pypi/v/auxflow)](https://pypi.org/project/auxflow/) [![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)](https://pypi.org/project/auxflow/) [![Docs](https://img.shields.io/badge/docs-auxflow.upayan.dev-blue)](https://auxflow.upayan.dev)
 
-AuxFlow is a compiler and static analyzer for LaTeX documents. It builds an instance-level dependency graph of cross-references, detects feedback cycles, and predicts how many passes the document needs to stabilize. All static checks complete before the typesetting engine runs.
+AuxFlow checks LaTeX cross-references and citations before the typesetting engine runs.
+It builds a dependency graph of all labels and references, detects cyclic loops, and calculates the exact compile passes the document needs.
 
----
-
-## Overview
-
-Document compilers like LaTeX are multi-pass systems. They write cross-references, table of contents entries, and citations to auxiliary files. The engine reads these files on subsequent passes to resolve references.
-
-Most build tools discover the required pass count dynamically. They run the engine repeatedly until auxiliary files stop changing, or they apply a fixed schedule.
-
-AuxFlow takes a compiler approach:
-
-1. It parses the LaTeX source once into an Abstract Syntax Tree (AST).
-2. It resolves label, reference, and citation symbols across all files.
-3. It constructs an Intermediate Representation called the Auxiliary Reference Graph (ARG).
-4. It detects cycles with Tarjan's strongly connected components algorithm.
-5. It tracks values that affect document length using forward taint analysis.
-6. It classifies document convergence and generates an optimized build plan.
-
----
-
-## How It Works
-
-AuxFlow implements a complete compiler pipeline:
-
-```
-                Source (LaTeX subset)
-                          |
-                          v
-                        Lexer                 Category codes 0-15
-                          |
-                          v
-                       Parser                 Recursive descent (1-token lookahead)
-                          |
-                          v
-                         AST                  Multi-file forest and inclusion graph
-                          |
-                          v
-                 Semantic Analysis            Symbol tables and static diagnostics
-                          |
-                          v
-            Auxiliary Reference Graph (ARG)   Fact instances with lagged typed edges
-                          |
-                          v
-                 Static Taint Analysis        Forward reachability to content volume
-                          |
-                          v
-               SCC and Fixpoint Analysis      Tarjan SCC, stable-pass recurrence
-                          |
-                          v
-                   Classification             CERTIFIED, BENIGN_CYCLIC, AMPLIFYING, UNKNOWN
-                          |
-                          v
-                     Build Plan               Optimized schedule with tool elimination
-                          |
-                          v
-                Runtime Verification          Normalized auxiliary fixpoint check
-```
-
-### 1. Lexer and Parser
-The lexer implements the sixteen TeX category codes in a single-pass scanner. It preserves source locations and tracks comments and verbatim blocks. The recursive-descent parser uses a signature table for macro arguments. It recovers from malformed input without stopping.
-
-### 2. Multi-File Symbol Resolution
-The semantic analyzer resolves cross-references with a two-pass algorithm. The declare pass records all definitions. The resolve pass binds uses across file boundaries.
-
-### 3. The Auxiliary Reference Graph (ARG)
-The ARG is AuxFlow's Intermediate Representation. Each vertex is a concrete fact instance with an exact source location. Edges carry dependency types and pass lags:
-- `AUX_ROUNDTRIP` (lag 1): Reads a fact written during the previous run.
-- `TOOL` (lag 1): Represents external tools like BibTeX.
-- `LAYOUT` (lag 0 or 1): Models pagination and list extents.
-
-List entries split into `exists` (structural presence) and `value` (typeset page) facts. This separation keeps standard documents acyclic.
-
-### 4. Convergence Classification
-Documents classify into one of four states:
-- **`CERTIFIED`**: Acyclic dependency structure. Settle within a derived pass count ($P + 1$).
-- **`BENIGN_CYCLIC`**: Value-only cycles. Settle safely without changing document content volume.
-- **`AMPLIFYING`**: Reference values control content generation. May diverge infinitely. Refused by default.
-- **`UNKNOWN`**: Contains unmodelled packages or macros. Falls back to a conservative default schedule.
-
-### 5. Build Planner and Runtime Verifier
-The planner removes unused files and unnecessary tool invocations. It derives the minimal engine run count for certified documents. At runtime, the verifier normalizes auxiliary files into canonical records and checks for a genuine fixpoint.
+For complete technical specifications, compiler architecture, and evaluation reports, visit the **[Documentation Website](https://auxflow.upayan.dev)**.
 
 ---
 
 ## Installation
 
+Install using `pipx` (recommended):
+
 ```bash
 pipx install auxflow
 ```
 
-Or with pip inside a virtual environment:
+Or install with `pip`:
 
 ```bash
 pip install auxflow
 ```
 
-Requires Python 3.12 or later. [`pipx`](https://pipx.pypa.io) is recommended for CLI tools: it creates an isolated environment automatically.
-
-To install from source for development:
-
-```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-```
-
-## CLI Usage
-
-Check the install:
-
-```bash
-auxflow classify bench/corpus/b01_plain/main.tex
-```
-
-Inspect the compiler pipeline on any document:
-
-```bash
-# Print tokens with source positions
-auxflow tokens document.tex
-
-# View the multi-file AST
-auxflow ast document.tex
-
-# Inspect symbol tables (labels, refs, cites, packages)
-auxflow symbols document.tex
-
-# Run zero-engine semantic checks
-auxflow check document.tex
-
-# Export the Auxiliary Reference Graph in Graphviz DOT format
-auxflow graph document.tex
-
-# Classify document convergence
-auxflow classify document.tex
-
-# Inspect the generated build plan
-auxflow plan --explain document.tex
-
-# Execute the plan with runtime verification
-auxflow run document.tex
-```
-
-Human-readable output is coloured when it goes to a terminal. Set `NO_COLOR=1` or pass `--color never` to turn colour off. Pass `--color always` to keep it in a pipe. JSON, DOT, token and AST output is never coloured. `classify` ends with a short "In plain terms" sentence. `check` and `run` print a one-line summary on stderr, so stdout stays machine-readable.
-
-Run `auxflow help` for an overview of every command, typical use, and exit codes. Run `auxflow help COMMAND` for the options of one command.
-
-![auxflow help](docs/images/cli/help.png)
-
-![auxflow classify on an amplifying document](docs/images/cli/classify-amplifying.png)
-
-The images show real command output rendered from a pseudo-terminal.
-
-### Tab completion
-
-AuxFlow completes commands, options, `--color` values, and `.tex` file names in bash, zsh, and fish. Load it for the current shell:
-
-```bash
-eval "$(auxflow completion bash)"       # bash
-eval "$(auxflow completion zsh)"        # zsh
-auxflow completion fish | source        # fish
-```
-
-Add that line to `~/.bashrc`, `~/.zshrc`, or `~/.config/fish/config.fish` to keep it. The scripts are generated from the command parser, so they list every command and option.
-
-## Quick demonstrations
-
-The [quickstart examples](examples/quickstart/README.md) show a certified reference,
-a multi-file contents list, and a document with an amplifying cycle.
-The examples include commands and expected classifications.
-
-For a project with a custom class or packages, start with `auxflow check FILE` and
-`auxflow classify FILE`. UNKNOWN means that AuxFlow cannot establish the static bound.
-It does not mean the document fails to compile. Do not treat package discovery as
-proof that a package's typesetting effects are modelled.
+AuxFlow requires Python 3.12 or newer.
 
 ---
 
-## Benchmark Corpus and Evaluation
+## Quick Start
 
-The repository includes a 15-member benchmark corpus (`bench/corpus/`) covering non-convergence mechanisms and standard document structures:
-
-- Monotone divergence loops (Gaspar 2014)
-- Line-break width feedback oscillations
-- Float placement oscillations
-- Dynamic textual references (`varioref`)
-- Conditional font size switches (`ifthenelse`)
-- Same-page citation feedback (`biblatex`)
-- Realistic multi-chapter thesis with table of contents, lists, and bibliography
-
-Run the end-to-end demonstration script:
+Check a LaTeX document:
 
 ```bash
-bash bench/demo.sh
+auxflow check document.tex
 ```
 
-Full experimental data from 1,050 containerized runs across 7 baselines is documented in [docs/EVALUATION-REPORT.md](docs/EVALUATION-REPORT.md) and [docs/GATE-REPORT.md](docs/GATE-REPORT.md).
+Find the number of required compilation passes:
+
+```bash
+auxflow classify document.tex
+```
+
+Build the document with automatic runtime checks:
+
+```bash
+auxflow run document.tex
+```
+
+Show all commands and options:
+
+```bash
+auxflow help
+```
+
+---
+
+## How It Works
+
+LaTeX documents write labels, tables of contents, and citations to helper files (`.aux`, `.toc`, `.bbl`).
+Standard build tools repeat the compile process until these files stop changing.
+
+AuxFlow analyzes your source code directly:
+
+1. **Scans and parses** your LaTeX files into an Abstract Syntax Tree.
+2. **Builds a dependency graph** of all references, lists, and citations.
+3. **Finds feedback cycles** and calculates whether values affect document length.
+4. **Assigns a convergence state**:
+   - `CERTIFIED`: Clean document with a fixed pass count.
+   - `BENIGN_CYCLIC`: Safe cycles that settle without changing length.
+   - `AMPLIFYING`: Loops that cause endless page expansion. Refused by default.
+   - `UNKNOWN`: Unrecognized packages or commands. Uses safe default runs.
+5. **Creates an optimized build plan** that skips redundant runs and unnecessary tool calls.
 
 ---
 
 ## Documentation
 
-| Document | Description |
-|---|---|
-| [docs/PROJECT.md](docs/PROJECT.md) | Project specification and open decisions |
-| [docs/COMPILER-PIPELINE.md](docs/COMPILER-PIPELINE.md) | Detailed compiler phase descriptions and algorithms |
-| [docs/LANGUAGE-SUBSET.md](docs/LANGUAGE-SUBSET.md) | Supported LaTeX subset and fallback policies |
-| [docs/IR.md](docs/IR.md) | Auxiliary Reference Graph specification |
-| [docs/STATIC-ANALYSIS.md](docs/STATIC-ANALYSIS.md) | Taint analysis, SCC algorithms, and stable-pass recurrence |
-| [docs/NON-CONVERGENCE.md](docs/NON-CONVERGENCE.md) | Diagnostic format and error reporting |
-| [docs/BUILD-PLANNER.md](docs/BUILD-PLANNER.md) | Plan lowering passes and safety invariants |
-| [docs/RUNTIME-VERIFICATION.md](docs/RUNTIME-VERIFICATION.md) | Canonical state normalization and fixpoint detection |
-| [docs/BENCHMARKS.md](docs/BENCHMARKS.md) | Benchmark corpus design and oracle specifications |
-| [docs/EVALUATION.md](docs/EVALUATION.md) | Measurement methodology and baselines |
-| [docs/EVALUATION-REPORT.md](docs/EVALUATION-REPORT.md) | Full empirical evaluation results |
-| [docs/GATE-REPORT.md](docs/GATE-REPORT.md) | Verification results for Gate 1 and Gate 2 |
-| [docs/RELATED-WORK.md](docs/RELATED-WORK.md) | Literature review and technical comparison |
+Full documentation is available at **[auxflow.upayan.dev](https://auxflow.upayan.dev)**:
+
+- **[Technical Reference](https://auxflow.upayan.dev/reference/)**: Architecture, Compiler Pipeline, Intermediate Representation, and Static Analysis.
+- **[Project Details](https://auxflow.upayan.dev/project/)**: Formal Specifications, Research Questions, and Literature Review.
+- **[Evaluation & Benchmarks](https://auxflow.upayan.dev/evaluation/)**: 15-document Benchmark Corpus, Methodology, and Verification Reports.
+- **[Course Reviews](https://auxflow.upayan.dev/reviews/)**: Review Notes, Presentations, and Downloadable Documents.
 
 ---
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT License. See [LICENSE](LICENSE).

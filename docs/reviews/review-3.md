@@ -5,7 +5,7 @@ nav_order: 3
 ---
 
 {: .note }
-**Downloads:** [Document (PDF)](downloads/review3-document.pdf) · [Document (DOCX)](downloads/review3-document.docx) · [Slides (PDF)](https://github.com/upayanmazumder/auxflow/raw/main/presentation/review3-auxflow.pdf)
+**Downloads:** [Document (PDF)](/reviews/downloads/review3-document.pdf) · [Document (DOCX)](/reviews/downloads/review3-document.docx) · [Slides (PDF)](https://github.com/upayanmazumder/auxflow/raw/main/presentation/review3-auxflow.pdf)
 
 # AuxFlow: Review 3 Viva Preparation
 

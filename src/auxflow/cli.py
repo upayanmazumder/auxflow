@@ -222,6 +222,7 @@ def _overview() -> str:
             "  it off. JSON, DOT, token, and AST output is never coloured.",
             "",
             "Run 'auxflow help COMMAND' for the options of one command.",
+            "Documentation: https://auxflow.upayan.dev",
         )
     )
 

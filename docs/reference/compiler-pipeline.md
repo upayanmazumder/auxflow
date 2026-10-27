@@ -133,9 +133,9 @@ and file defects above produce errors.
 - **Output** — the Auxiliary Reference Graph.
 - **Responsibility** — lower syntax into fact instances and lag-weighted dependency edges.
 - **Algorithm** — syntax-directed translation; one traversal, one rule per modelled construct.
-  Rules are tabulated in [STATIC-ANALYSIS.md](STATIC-ANALYSIS.md).
+  Rules are tabulated in [STATIC-ANALYSIS.md](/reference/static-analysis.html).
 - **Compiler-design relevance** — intermediate representation generation. Full specification in
-  [IR.md](IR.md).
+  [IR.md](/reference/ir.html).
 
 ## 7. Static dependency analysis (content-quantity taint)
 
@@ -156,7 +156,7 @@ and file defects above produce errors.
 - **Responsibility** — compute, for each fact, the earliest run after which its value no longer
   changes.
 - **Algorithm** — longest path over a DAG in topological order; the recurrence is in
-  [IR.md](IR.md).
+  [IR.md](/reference/ir.html).
 - **Complexity** — O(V + E).
 - **Compiler-design relevance** — monotone dataflow analysis with a least-fixpoint solution;
   the direct analogue of pass numbering in multi-pass attribute evaluation.
@@ -175,7 +175,7 @@ and file defects above produce errors.
 
 - **Input** — components, labels, taint set, opacity flags, `stable_pass`.
 - **Output** — one of four states plus a diagnosis.
-- **Algorithm** — decision procedure in [NON-CONVERGENCE.md](NON-CONVERGENCE.md).
+- **Algorithm** — decision procedure in [NON-CONVERGENCE.md](/reference/non-convergence.html).
 - **Compiler-design relevance** — static program classification; conservative approximation.
 
 ## 11. Optimisation
@@ -201,7 +201,7 @@ and file defects above produce errors.
 - **Responsibility** — lower the analysis into an ordered sequence of tool invocations, each
   carrying a `reason` traceable to a fact or a classification.
 - **Compiler-design relevance** — code generation, targeting a small tool instruction set rather
-  than a machine architecture. Specification in [BUILD-PLANNER.md](BUILD-PLANNER.md).
+  than a machine architecture. Specification in [BUILD-PLANNER.md](/reference/build-planner.html).
 
 ## 13. Runtime verification (optional)
 
@@ -209,7 +209,7 @@ and file defects above produce errors.
 - **Output** — artifacts, `ExecReport`.
 - **Responsibility** — execute the plan, observe the auxiliary state, confirm or extend.
 - **Algorithm** — normalised state comparison; see
-  [RUNTIME-VERIFICATION.md](RUNTIME-VERIFICATION.md).
+  [RUNTIME-VERIFICATION.md](/reference/runtime-verification.html).
 - **Compiler-design relevance** — runtime verification of a statically derived property; the
   empirical check on the analysis.
 

@@ -114,7 +114,7 @@ model, but there is no feedback path inside a single invocation.
 ## Layer 3 — optional infrastructure
 
 Not present in this repository. Specified in
-[FUTURE-INFRASTRUCTURE.md](FUTURE-INFRASTRUCTURE.md) so that the design is on record, and
+[FUTURE-INFRASTRUCTURE.md](https://github.com/upayanmazumder/auxflow/blob/main/docs/FUTURE-INFRASTRUCTURE.md) so that the design is on record, and
 deliberately unimplemented so that it cannot consume MVP effort.
 
 ## Command-line surface
@@ -182,7 +182,7 @@ exist for the design to be complete.
 ## Error handling posture
 
 - **Unsupported source construct** — not an error. Produces an opacity marker, downgrades the
-  classification, never aborts. See [LANGUAGE-SUBSET.md](LANGUAGE-SUBSET.md).
+  classification, never aborts. See [LANGUAGE-SUBSET.md](/reference/language-subset.html).
 - **Malformed source** (unbalanced braces, unterminated environment) — a diagnostic with a span;
   parsing continues in recovery mode so that a single defect does not suppress all later output.
 - **Missing included file** — a diagnostic; the file's facts become unknown.

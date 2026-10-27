@@ -23,7 +23,7 @@ input. Documents are committed as sources only — build artifacts are never com
    expected behaviour, never timings.
 4. **The realistic document must contain unreachable files**, otherwise dead-file elimination
    has nothing to eliminate and the corresponding claim cannot be tested.
-5. **Every non-convergence mechanism in [RELATED-WORK.md](RELATED-WORK.md) section 7.3 has a
+5. **Every non-convergence mechanism in [RELATED-WORK.md](/project/related-work.html) section 7.3 has a
    member, including the ones AuxFlow cannot detect.** A corpus containing only detectable
    mechanisms would produce a flattering and worthless coverage result.
 6. **An expected misclassification is written into `expected.json` before implementation, exactly
@@ -59,10 +59,10 @@ naming the mechanism. `b15_ibid` is the fourth undetectable member, but its pack
 and its expected classification is `UNKNOWN`. `b07_footnote` also uses the opaque fallback.
 
 The reason is structural and is not fixable by tuning: the three declared cases feed back
-through the *typeset extent* of a resolved value. The [IR.md](IR.md) `exists`/`value` split severs that edge by
+through the *typeset extent* of a resolved value. The [IR.md](/reference/ir.html) `exists`/`value` split severs that edge by
 construction. Removing the split would make every document containing one `\ref` a single strongly
-connected component and the analysis vacuous. See open decision D13 in [PROJECT.md](PROJECT.md) and
-[RELATED-WORK.md](RELATED-WORK.md) section 7.4.
+connected component and the analysis vacuous. See open decision D13 in [PROJECT.md](/project/specification.html) and
+[RELATED-WORK.md](/project/related-work.html) section 7.4.
 
 **If any of `b11`–`b13` is classified `AMPLIFYING` or `UNKNOWN`, investigate it.**
 An analysis that accidentally catches these has unexplained behaviour.
@@ -74,7 +74,7 @@ An analysis that accidentally catches these has unexplained behaviour.
 misclassification must be predicted, not discovered. `b07` and `b15` must remain `UNKNOWN`.
 
 Ground-truth run counts are deliberately absent from this table. They are produced by the
-harness under the protocol in [EVALUATION.md](EVALUATION.md) and recorded in
+harness under the protocol in [EVALUATION.md](/evaluation/methodology.html) and recorded in
 `bench/results/`, not asserted in documentation.
 
 ## `expected.json`

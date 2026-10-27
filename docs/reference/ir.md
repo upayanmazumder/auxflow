@@ -74,7 +74,7 @@ class Fact:
 
 `source_location` is mandatory on every fact, including synthetic ones such as
 `CONTENT_VOLUME` (which points at the construct that established pagination sensitivity). The
-diagnostics in [NON-CONVERGENCE.md](NON-CONVERGENCE.md) are the project's main user-visible
+diagnostics in [NON-CONVERGENCE.md](/reference/non-convergence.html) are the project's main user-visible
 output and they are worthless without spans.
 
 `Fact` rejects a missing or null `source_location`. Fact records and
@@ -107,7 +107,7 @@ build plan, and writing it at edge-construction time is the only point where the
 is actually known.
 
 `STRUCTURAL` is the load-bearing edge type. It is never produced by the lowering rules directly;
-it is added by the taint analysis (see [STATIC-ANALYSIS.md](STATIC-ANALYSIS.md)).
+it is added by the taint analysis (see [STATIC-ANALYSIS.md](/reference/static-analysis.html)).
 
 ## What `pass_lag` means
 
@@ -164,7 +164,7 @@ classified cyclic and no bound could ever be computed. With the split, ordinary 
 acyclic, while genuine amplifying feedback still forms a cycle because it passes through a
 `STRUCTURAL` edge.
 
-This is an abstraction, and it is not faithful — see limitation L2 in [PROJECT.md](PROJECT.md).
+This is an abstraction, and it is not faithful — see limitation L2 in [PROJECT.md](/project/specification.html).
 It is stated explicitly rather than buried because it is the assumption most likely to be
 attacked.
 

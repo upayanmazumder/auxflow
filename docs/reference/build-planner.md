@@ -14,7 +14,7 @@ The planner produces a **statically derived execution plan**, also referred to a
 **dependency-aware build plan** or a **derived schedule**.
 
 It does **not** produce a "minimum number of passes". Minimality is not established — see
-non-guarantee N4 in [STATIC-ANALYSIS.md](STATIC-ANALYSIS.md). Where a bound is derived it is
+non-guarantee N4 in [STATIC-ANALYSIS.md](/reference/static-analysis.html). Where a bound is derived it is
 *model-minimal*: the shortest the model supports, which may exceed the true requirement. Use
 that phrase, or none.
 
@@ -112,7 +112,7 @@ Recorded for completeness; none are implemented in the MVP.
 
 - Per-file auxiliary tooling is embarrassingly parallel across reachable files.
 - Independent documents are trivially parallel; this is the basis of the stretch work in
-  [FUTURE-INFRASTRUCTURE.md](FUTURE-INFRASTRUCTURE.md).
+  [FUTURE-INFRASTRUCTURE.md](https://github.com/upayanmazumder/auxflow/blob/main/docs/FUTURE-INFRASTRUCTURE.md).
 - Engine runs of a single document are inherently sequential — each consumes the previous run's
   output. No amount of analysis changes this, and claiming otherwise would be wrong.
 

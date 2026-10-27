@@ -7,8 +7,8 @@ nav_order: 3
 # Evaluation report
 
 Every number in this report traces to a committed script and a results file under
-`bench/results/published/`. Protocol in [EVALUATION.md](EVALUATION.md); corpus design in
-[BENCHMARKS.md](BENCHMARKS.md); harness in [../bench/harness/](../bench/harness/).
+`bench/results/published/`. Protocol in [EVALUATION.md](/evaluation/methodology.html); corpus design in
+[BENCHMARKS.md](/evaluation/benchmarks.html); harness in [../bench/harness/](https://github.com/upayanmazumder/auxflow/tree/main/bench/harness/).
 
 **No performance improvement is promised.** The experiments determine whether one exists.
 
@@ -202,7 +202,7 @@ netted against any engine saving.
 
 ## Threats to validity
 
-Unchanged from the pre-registered list in [EVALUATION.md](EVALUATION.md): corpus size (fifteen
+Unchanged from the pre-registered list in [EVALUATION.md](/evaluation/methodology.html): corpus size (fifteen
 documents, mostly synthetic), single machine, synthetic non-convergence (`b08` is a known
 constructed example), assumption A2 (measured via prediction misses, not provably bounded), and
 author bias (`expected.json` written before implementation). Two measured, specific instances

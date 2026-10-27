@@ -11,8 +11,8 @@ anticipation after reading an over-claiming introduction will discount everythin
 finds it cited in the first section will credit what remains.
 
 This document was rewritten after the prior-art audit of 2026-08-27. Raw evidence, with search
-logs, exact queries and verbatim quotes, is in [`research/sources/`](../research/sources/) and is
-indexed in [`research/prior-art-log.md`](../research/prior-art-log.md).
+logs, exact queries and verbatim quotes, is in [`research/sources/`](https://github.com/upayanmazumder/auxflow/tree/main/research/sources/) and is
+indexed in [`research/prior-art-log.md`](https://github.com/upayanmazumder/auxflow/blob/main/research/prior-art-log.md).
 
 **Verification status** is recorded per item. `SOURCED` means the primary source was opened and the
 quoted text read directly. `REPORTED` means second-hand and not yet confirmed. `INFERENCE` means
@@ -57,7 +57,7 @@ knows this literature.
    is therefore not a design insight — it is a named 1981 problem class. AuxFlow owes either a
    restriction argument or an explicit statement that it computes a conservative approximation.
 3. **No minimality claim is available.** Minimum-pass assignment is NP-complete (Räihä and Ukkonen).
-   Limitation L4 in [PROJECT.md](PROJECT.md) is now sourced rather than cautionary.
+   Limitation L4 in [PROJECT.md](/project/specification.html) is now sourced rather than cautionary.
 
 ---
 
@@ -113,7 +113,7 @@ the words changed.** It is standard technique and must be cited, not presented a
 Independently, SCC decomposition of a dataflow problem followed by fixpoint iteration over the
 condensation is documented prior art from Sharir, "A Strong-Connectivity Algorithm and Its
 Applications in Data Flow Analysis", 1981 — cited on the face of a granted US patent (SOURCED; see
-[PATENT-NOTES.md](PATENT-NOTES.md)).
+[PATENT-NOTES.md](https://github.com/upayanmazumder/auxflow/blob/main/docs/PATENT-NOTES.md)).
 
 ### The one place the classical theory does not reach
 
@@ -309,7 +309,7 @@ page-number case that oscillates and states that "such a sequence can obviously 
 ### 7.3 The mechanism taxonomy, and what AuxFlow's criterion misses
 
 Nine distinct mechanisms are identified and sourced in
-[`research/sources/area-d-non-convergence.md`](../research/sources/area-d-non-convergence.md),
+[`research/sources/area-d-non-convergence.md`](https://github.com/upayanmazumder/auxflow/blob/main/research/sources/area-d-non-convergence.md),
 Part 3. Summarised:
 
 | Mechanism | Behaviour | Caught by AuxFlow's taint seeds? |
@@ -337,7 +337,7 @@ the issues that latexmk is programmed to overcome." latexrun independently draws
 find its fixed point.
 
 *Not necessary* is new to the project and adverse. M3, M4, M6 and M7 are genuinely non-convergent
-and produce **no cycle in the ARG as specified**, because [IR.md](IR.md)'s `exists`/`value` split
+and produce **no cycle in the ARG as specified**, because [IR.md](/reference/ir.html)'s `exists`/`value` split
 severs the extent-feedback edge by construction. That split *is* assumption A2, and A2 is false for
 a published, reproducible class of documents.
 
@@ -402,8 +402,8 @@ Recorded prominently because the previous version of this document claimed some 
 
 Five independent systems, five different oracles, five hand-chosen caps, no derivation anywhere. All
 SOURCED from manuals and source code; details in
-[`research/sources/area-c-latex-tools.md`](../research/sources/area-c-latex-tools.md) and
-[`research/sources/tex-ecosystem-convergence-machinery.md`](../research/sources/tex-ecosystem-convergence-machinery.md).
+[`research/sources/area-c-latex-tools.md`](https://github.com/upayanmazumder/auxflow/blob/main/research/sources/area-c-latex-tools.md) and
+[`research/sources/tex-ecosystem-convergence-machinery.md`](https://github.com/upayanmazumder/auxflow/blob/main/research/sources/tex-ecosystem-convergence-machinery.md).
 
 | System | Oracle | Cap | Cause reported on cap exhaustion |
 |---|---|---|---|
@@ -430,7 +430,7 @@ increasingly "the engine tells you, with a span".
 ## 10. Document-domain research: nearly empty, and one dangerous thesis
 
 Searched extensively (exact queries in
-[`research/sources/area-b-latex-compilation.md`](../research/sources/area-b-latex-compilation.md)).
+[`research/sources/area-b-latex-compilation.md`](https://github.com/upayanmazumder/auxflow/blob/main/research/sources/area-b-latex-compilation.md)).
 
 - **No published work statically derives the number of engine runs for a document.** SOURCED
   negative, six recorded queries, ~70 sources examined.
@@ -713,8 +713,8 @@ conditional on the experiments.
 ## 16. Negative results from the prior-art search
 
 Recorded because absence of evidence is evidence only when the query is written down. All queries
-are in [`research/prior-art-log.md`](../research/prior-art-log.md) and in the per-area files under
-[`research/sources/`](../research/sources/).
+are in [`research/prior-art-log.md`](https://github.com/upayanmazumder/auxflow/blob/main/research/prior-art-log.md) and in the per-area files under
+[`research/sources/`](https://github.com/upayanmazumder/auxflow/tree/main/research/sources/).
 
 - **No tool or publication statically derives the number of engine runs for a document.** SOURCED
   negative; six web queries plus arXiv and DBLP queries; ~70 sources examined.

@@ -18,7 +18,7 @@ state after run *k*; run *k* reads *A_{k−1}* and writes *A_k*.
 > state it produced, so a further run would change nothing.
 
 Convergence is a property of the *auxiliary state*, not of the rendered output. The two are
-related but distinct, and the evaluation ground truth (see [EVALUATION.md](EVALUATION.md))
+related but distinct, and the evaluation ground truth (see [EVALUATION.md](/evaluation/methodology.html))
 requires both to be stable.
 
 ## What a dependency cycle means
@@ -56,7 +56,7 @@ a cross-reference is wrong regardless of how many runs are performed (Gaspar, *T
 2014, p. 16).
 
 AuxFlow separates the two cases with the taint analysis of
-[STATIC-ANALYSIS.md](STATIC-ANALYSIS.md): a feedback edge is `STRUCTURAL` when a fact value can
+[STATIC-ANALYSIS.md](/reference/static-analysis.html): a feedback edge is `STRUCTURAL` when a fact value can
 reach a content-generating construct.
 
 ## The four states
@@ -102,10 +102,10 @@ reach a content-generating construct.
     (`labelschanged` documentation);
   - references inside margin or foot notes (same).
 
-  All four travel along the `.value` → pagination edge that [IR.md](IR.md)'s `exists`/`value` split
+  All four travel along the `.value` → pagination edge that [IR.md](/reference/ir.html)'s `exists`/`value` split
   severs by construction. **An ARG cycle is therefore neither necessary nor sufficient for
   non-convergence.** The full nine-mechanism taxonomy is in
-  [RELATED-WORK.md](RELATED-WORK.md) section 7.3.
+  [RELATED-WORK.md](/project/related-work.html) section 7.3.
 - **Anything about constructs outside the subset.**
 - **Anything about engine termination**, which can fail for reasons unrelated to cross-references —
   including reasons with no cross-reference content at all, such as a generated auxiliary file
@@ -114,7 +114,7 @@ reach a content-generating construct.
 ## Two failure modes, conflated by one label
 
 `AMPLIFYING` currently covers two distinct failures with distinct causes, and the audit recommends
-splitting them (open decision D12 in [PROJECT.md](PROJECT.md)):
+splitting them (open decision D12 in [PROJECT.md](/project/specification.html)):
 
 - **Finite-height failure.** Gaspar's `\forloop` bounded by `\pageref` diverges *monotonically*: the
   recorded page value increases by exactly one every run, without bound. The value domain is
@@ -143,7 +143,7 @@ presented as new.
 
 AuxFlow's remaining differentiators are that it reports a *dependency chain* rather than an endpoint,
 and that it does so having performed **zero** engine executions. Both must be demonstrated
-side-by-side, not asserted. See RQ6 in [RESEARCH-QUESTIONS.md](RESEARCH-QUESTIONS.md).
+side-by-side, not asserted. See RQ6 in [RESEARCH-QUESTIONS.md](/project/research-questions.html).
 
 ## Required wording
 
@@ -241,7 +241,7 @@ Every element above is drawn from fields already in the IR. Specifically the rep
 `Fact.source_location` on every fact including synthetic ones; `DepEdge.reason` written at
 construction time; `DepEdge.dependency_type`; SCC membership; and `stable_pass` per fact.
 
-This is why those fields are mandatory in [IR.md](IR.md) rather than optional.
+This is why those fields are mandatory in [IR.md](/reference/ir.html) rather than optional.
 
 ## Testing
 
