@@ -13,18 +13,24 @@ For complete technical specifications, compiler architecture, and evaluation rep
 
 ## Installation
 
-Install using `pipx` (recommended):
+Install with the automated script (installs the package and sets your PATH):
+
+```bash
+curl -sSL https://auxflow.upayan.dev/install.sh | bash
+```
+
+Or install manually with `pipx`:
 
 ```bash
 pipx install auxflow
+pipx ensurepath
 ```
 
-Or install with `pip`:
+Or with `pip`:
 
 ```bash
-pip install auxflow
+pip install --user auxflow
 ```
-
 AuxFlow requires Python 3.12 or newer.
 
 ---

@@ -24,18 +24,24 @@ flowchart LR
 
 ## Installation
 
-Install using `pipx` (recommended):
+Install with the automated script (sets your PATH automatically):
+
+```bash
+curl -sSL https://auxflow.upayan.dev/install.sh | bash
+```
+
+Or install manually with `pipx`:
 
 ```bash
 pipx install auxflow
+pipx ensurepath
 ```
 
-Or install with `pip`:
+Or with `pip`:
 
 ```bash
-pip install auxflow
+pip install --user auxflow
 ```
-
 Requires Python 3.12 or newer.
 
 ---
