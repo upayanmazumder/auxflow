@@ -13,11 +13,14 @@ from auxflow import cli
 _ENGINE = r"""#!/usr/bin/env python3
 from pathlib import Path
 import sys
+import time
 
 count = Path("engine.count")
 run = int(count.read_text()) + 1 if count.exists() else 1
 count.write_text(str(run))
 mode = Path("mode.txt").read_text().strip()
+if mode == "hang":
+    time.sleep(5)
 value = 1 if mode == "stable" else min(run, 2) if mode == "one-extra" else run
 jobname = next(arg.split("=", 1)[1] for arg in sys.argv if arg.startswith("-jobname="))
 Path(f"{jobname}.aux").write_text(f"\\newlabel{{x}}{{{{{value}}}{{1}}}}\n")
@@ -72,6 +75,26 @@ def test_run_reports_prediction_miss_after_extension(
         "predicted": 2,
         "observed": 3,
     }
+
+
+def test_run_timeout_returns_a_failure_report(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capfd: pytest.CaptureFixture[str]
+) -> None:
+    source = _fixture(tmp_path, monkeypatch, r"\label{x}", "hang")
+
+    assert cli.main(["run", "--timeout", "0.05", str(source)]) == 1
+    _, report = _report(capfd)
+    assert report["status"] == "tool_error"
+    assert report["message"] == "pdflatex timed out after 0.05 seconds"
+    assert report["runs"] == 0
+
+
+@pytest.mark.parametrize("value", ["0", "-1", "inf", "nan", "invalid"])
+def test_run_rejects_nonpositive_or_nonfinite_timeout(value: str) -> None:
+    with pytest.raises(SystemExit) as error:
+        cli.build_parser().parse_args(["run", "--timeout", value, "main.tex"])
+
+    assert error.value.code == 2
 
 
 def test_run_refuses_amplifying_and_strict_unknown_before_execution(

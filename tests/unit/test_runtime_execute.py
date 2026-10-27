@@ -18,10 +18,13 @@ _ENGINE = r"""#!/usr/bin/env python3
 from pathlib import Path
 import sys
 
+import time
 count = Path("engine.count")
 run = int(count.read_text()) + 1 if count.exists() else 1
 count.write_text(str(run))
 mode = Path("mode.txt").read_text().strip()
+if mode == "hang" or (mode == "hang-after" and run >= 3):
+    time.sleep(5)
 if mode == "error":
     print("engine failed")
     sys.exit(7)
@@ -150,6 +153,48 @@ def test_tool_failure_keeps_original_log_and_stops(
     assert report.exit_code == 1
     assert capfd.readouterr().out == "engine failed\n"
     assert (tmp_path / "engine.count").read_text() == "1"
+
+
+def test_hung_engine_stops_at_configured_timeout(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = _setup(tmp_path, monkeypatch, "hang")
+
+    report = execute(_plan(source), tmp_path, timeout=0.05)
+
+    assert report.status == "tool_error"
+    assert report.exit_code == 1
+    assert report.runs == 0
+    assert report.message == "pdflatex timed out after 0.05 seconds"
+    assert (tmp_path / "engine.count").read_text() == "1"
+
+
+def test_extension_run_obeys_the_same_timeout(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = _setup(tmp_path, monkeypatch, "hang-after")
+
+    report = execute(_plan(source, runs=2), tmp_path, timeout=0.05)
+
+    assert report.status == "tool_error"
+    assert report.runs == 2
+    assert report.message == "pdflatex timed out after 0.05 seconds"
+    assert (tmp_path / "engine.count").read_text() == "3"
+
+
+def test_auxiliary_symlink_outside_work_directory_is_rejected(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = _setup(tmp_path, monkeypatch, "stable")
+    external = tmp_path.parent / f"{tmp_path.name}-private.toc"
+    external.write_text("external contents")
+    (tmp_path / "main.toc").symlink_to(external)
+
+    report = execute(_plan(source), tmp_path)
+
+    assert report.status == "tool_error"
+    assert report.runs == 1
+    assert "escapes work directory" in report.message
 
 
 def test_missing_input_aborts_before_any_tool_runs(

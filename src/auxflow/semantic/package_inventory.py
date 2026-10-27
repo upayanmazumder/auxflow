@@ -24,10 +24,13 @@ def local_file(name: str, suffix: str, source: Path, root: Path) -> Path | None:
     if not _LITERAL_NAME.fullmatch(name):
         return None
     relative = Path(f"{name}{suffix}")
+    project = root.parent.resolve()
     for directory in (source.parent, root.parent):
         candidate = directory / relative
         if candidate.is_file():
-            return candidate.resolve()
+            resolved = candidate.resolve()
+            if resolved.is_relative_to(project):
+                return resolved
     return None
 
 

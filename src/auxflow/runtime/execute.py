@@ -16,6 +16,7 @@ Outcome = Literal[
 ]
 StopCondition = Literal["planned_count", "aux_fixpoint", "cap"]
 _OBSERVED_SUFFIXES = (".aux", ".toc", ".lof", ".lot", ".bbl", ".ind")
+DEFAULT_TOOL_TIMEOUT = 600.0
 _LOG = logging.getLogger(__name__)
 
 
@@ -79,9 +80,9 @@ def _command(step: Step) -> list[str]:
     raise ValueError(f"unsupported plan tool: {step.tool}")
 
 
-def _execute_step(step: Step, directory: Path) -> int:
+def _execute_step(step: Step, directory: Path, timeout: float) -> int:
     # Inherit stdout/stderr: TeX's original log must remain unmodified.
-    return subprocess.run(_command(step), cwd=directory, check=False).returncode
+    return subprocess.run(_command(step), cwd=directory, check=False, timeout=timeout).returncode
 
 
 def _observed_state(directory: Path, jobname: str) -> AuxState:
@@ -106,13 +107,21 @@ def _observed_state(directory: Path, jobname: str) -> AuxState:
                 if argument.startswith("{") and argument.endswith("}"):
                     pending.append(path.parent / argument[1:-1])
     for suffix in _OBSERVED_SUFFIXES[1:]:
-        path = root / f"{jobname}{suffix}"
+        path = (root / f"{jobname}{suffix}").resolve()
+        if not path.is_relative_to(root):
+            raise ValueError(f"auxiliary include escapes work directory: {path}")
         if path.exists():
             contents[str(path)] = path.read_bytes().decode("utf-8", errors="surrogateescape")
     return normalize_state(contents)
 
 
-def execute(plan: BuildPlan, directory: Path, *, strict: bool = False) -> ExecReport:
+def execute(
+    plan: BuildPlan,
+    directory: Path,
+    *,
+    strict: bool = False,
+    timeout: float = DEFAULT_TOOL_TIMEOUT,
+) -> ExecReport:
     """Run planned steps, then extend only while auxiliary state changes.
 
     Observe each engine pass even when the plan's `verify_after` flag is false.
@@ -136,7 +145,11 @@ def execute(plan: BuildPlan, directory: Path, *, strict: bool = False) -> ExecRe
     runs = 0
     for step in plan.steps:
         try:
-            code = _execute_step(step, directory)
+            code = _execute_step(step, directory, timeout)
+        except subprocess.TimeoutExpired:
+            return ExecReport(
+                "tool_error", None, runs, f"{step.tool} timed out after {timeout:g} seconds"
+            )
         except (OSError, ValueError) as error:
             return ExecReport("tool_error", None, runs, str(error))
         if code != 0:
@@ -164,7 +177,11 @@ def execute(plan: BuildPlan, directory: Path, *, strict: bool = False) -> ExecRe
     last_engine = engine_steps[-1]
     while runs < plan.max_runs:
         try:
-            code = _execute_step(last_engine, directory)
+            code = _execute_step(last_engine, directory, timeout)
+        except subprocess.TimeoutExpired:
+            return ExecReport(
+                "tool_error", None, runs, f"{last_engine.tool} timed out after {timeout:g} seconds"
+            )
         except (OSError, ValueError) as error:
             return ExecReport("tool_error", None, runs, str(error))
         if code != 0:

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 import textwrap
 from dataclasses import asdict, replace
@@ -31,7 +32,8 @@ from auxflow.parser import Diagnostic, Document, Span, parse
 from auxflow.planner.lower import build_plan
 from auxflow.planner.model import BuildPlan
 from auxflow.planner.serialize import to_json
-from auxflow.runtime.execute import ExecReport, execute
+from auxflow.runtime import update
+from auxflow.runtime.execute import DEFAULT_TOOL_TIMEOUT, ExecReport, execute
 from auxflow.semantic.diagnostics import check_packages, check_symbols
 from auxflow.semantic.inclusion import check_inclusions
 from auxflow.semantic.resolve import declare, resolve
@@ -59,6 +61,7 @@ _SUMMARIES = {
     "symbols": "print the label, reference, citation, and package tables",
     "completion": "print a tab-completion script for bash, zsh, or fish",
     "info": "print version, platform, installation, and project links",
+    "update": "check for a newer release or upgrade this installation",
 }
 
 _COMPLETION_INSTALL = """install:
@@ -80,6 +83,7 @@ _EXAMPLES = {
     "ast": "example:\n  auxflow ast thesis.tex",
     "symbols": "example:\n  auxflow symbols thesis.tex",
     "info": "example:\n  auxflow info\n  auxflow info --json",
+    "update": "examples:\n  auxflow update --check\n  auxflow update",
 }
 
 
@@ -105,6 +109,16 @@ def _unreadable(path: str) -> str | None:
     except OSError as error:
         return f"cannot read {path!r}: {error.strerror or error}."
     return None
+
+
+def _positive_timeout(value: str) -> float:
+    try:
+        seconds = float(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("timeout must be a positive number of seconds") from error
+    if not math.isfinite(seconds) or seconds <= 0:
+        raise argparse.ArgumentTypeError("timeout must be a positive number of seconds")
+    return seconds
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -150,6 +164,13 @@ def build_parser() -> argparse.ArgumentParser:
             sub.add_argument(
                 "--strict", action="store_true", help="refuse to run UNKNOWN documents"
             )
+            sub.add_argument(
+                "--timeout",
+                type=_positive_timeout,
+                default=DEFAULT_TOOL_TIMEOUT,
+                metavar="SECONDS",
+                help="limit each TeX tool run (default: 600 seconds)",
+            )
     helper = subparsers.add_parser(
         "help",
         help="show help for AuxFlow or for one command",
@@ -172,6 +193,16 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     info_parser.add_argument("--json", action="store_true", help="output machine-readable JSON")
+    update_parser = subparsers.add_parser(
+        "update",
+        help=_SUMMARIES["update"],
+        description="Check PyPI for a release and optionally upgrade this installation.",
+        epilog=_EXAMPLES["update"],
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    update_parser.add_argument(
+        "--check", action="store_true", help="check for a newer version without installing"
+    )
     parser.add_argument(
         "--color",
         choices=("auto", "always", "never"),
@@ -192,6 +223,7 @@ _WORKFLOW = (
     "symbols",
     "completion",
     "info",
+    "update",
 )
 
 
@@ -292,6 +324,38 @@ def _run_info(*, as_json: bool = False) -> int:
         "  PyPI:        https://pypi.org/project/auxflow/",
     ]
     print("\n".join(lines))
+    return 0
+
+
+def _run_update(*, check_only: bool) -> int:
+    installed = _version()
+    try:
+        latest = update.latest_version()
+        newer = update.is_newer(latest, installed)
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        print(f"auxflow: update check failed: {error}", file=sys.stderr)
+        return 1
+    if not newer:
+        print(f"AuxFlow {installed} is current (PyPI: {latest}).")
+        return 0
+    if check_only:
+        print(f"AuxFlow {latest} is available (installed: {installed}).")
+        return 0
+    try:
+        if update.is_editable():
+            print(
+                "auxflow: editable installation detected. Use your package manager to update.",
+                file=sys.stderr,
+            )
+            return 1
+        code = update.install(latest)
+    except (OSError, ValueError) as error:
+        print(f"auxflow: update failed: {error}", file=sys.stderr)
+        return 1
+    if code:
+        print(f"auxflow: package installer exited with status {code}", file=sys.stderr)
+        return 1
+    print(f"AuxFlow {latest} installed. Restart AuxFlow to use it.")
     return 0
 
 
@@ -541,11 +605,11 @@ def _run_summary(report: ExecReport) -> str:
     return style.paint(f"Stopped. {report.message}", "red", stream=sys.stderr)
 
 
-def _run_run(path: str, *, force: bool, strict: bool) -> int:
+def _run_run(path: str, *, force: bool, strict: bool, timeout: float) -> int:
     plan, diagnosis = _cli_plan(path, force=force)
     if diagnosis is not None:
         print(style.style_report(diagnosis), end="")
-    report = execute(plan, Path(path).absolute().parent, strict=strict)
+    report = execute(plan, Path(path).absolute().parent, strict=strict, timeout=timeout)
     print(json.dumps(asdict(report), sort_keys=True))
     print(_run_summary(report), file=sys.stderr)
     return report.exit_code
@@ -566,10 +630,14 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "info":
         return _run_info(as_json=args.json)
+    if args.command == "update":
+        return _run_update(check_only=args.check)
     problem = _unreadable(args.file)
     if problem is not None:
         print(f"auxflow: {problem}", file=sys.stderr)
         return 2
+    if argv is None:
+        update.notify_and_check(_version())
     try:
         if args.command == "tokens":
             return _run_tokens(args.file)
@@ -586,7 +654,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "plan":
             return _run_plan(args.file, explain=args.explain, force=args.force)
         if args.command == "run":
-            return _run_run(args.file, force=args.force, strict=args.strict)
+            return _run_run(args.file, force=args.force, strict=args.strict, timeout=args.timeout)
     except BrokenPipeError:
         return 0
     raise AssertionError(f"unknown command: {args.command}")

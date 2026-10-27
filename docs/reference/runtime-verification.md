@@ -66,6 +66,20 @@ to included `.aux` files. It also reads the matching `.toc`, `.lof`, `.lot`,
 `.bbl` and `.ind` files when present. The final engine step must request
 verification. The executor refuses an unverified final step before execution.
 
+## Execution limits and trust
+
+`auxflow run` starts `pdflatex`, `bibtex`, and `makeindex` in the document directory.
+It passes `-no-shell-escape` to `pdflatex`, but it does not sandbox TeX or its packages.
+Only run documents and packages you trust.
+
+Each tool invocation has a 600-second limit by default.
+Use `auxflow run --timeout 30 document.tex` to set the limit in seconds.
+A timed-out tool stops the build and produces a non-zero `tool_error` report.
+The limit applies to each invocation, not the complete plan.
+The executor rejects auxiliary files that resolve outside the work directory.
+Static `\input` and `\include` files can refer to paths outside that directory.
+Do not treat static analysis as a security boundary for untrusted source files.
+
 ## When it is observed
 
 After every engine run in the plan, and after every extension run. Observation is cheap relative

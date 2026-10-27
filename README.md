@@ -13,24 +13,21 @@ For complete technical specifications, compiler architecture, and evaluation rep
 
 ## Installation
 
-Install with the automated script (installs the package and sets your PATH):
-
-```bash
-curl -sSL https://auxflow.upayan.dev/install.sh | bash
-```
-
-Or install manually with `pipx`:
+Install with `pipx` (recommended for command-line tools):
 
 ```bash
 pipx install auxflow
 pipx ensurepath
 ```
 
-Or with `pip`:
+Or install with `pip`:
 
 ```bash
 pip install --user auxflow
 ```
+
+The optional [installer script](install.sh) installs the published package and may edit your shell profiles. Inspect it before running it. Do not pipe a network download into a shell.
+
 AuxFlow requires Python 3.12 or newer.
 
 ---
@@ -54,6 +51,21 @@ Build the document with automatic runtime checks:
 ```bash
 auxflow run document.tex
 ```
+
+`auxflow run` starts local TeX tools. Run only documents and packages you trust. It is not a sandbox. Each tool has a 600-second limit by default. Use `auxflow run --timeout 30 document.tex` to change that limit.
+
+Check for a published update without installing it:
+
+```bash
+auxflow update --check
+```
+
+Run `auxflow update` to install a newer release into the current Python environment.
+Editable installations require a manual package-manager update.
+Normal commands can show a cached update notice on stderr.
+AuxFlow checks PyPI at most daily while a command runs, without waiting for the network.
+Short commands may finish before that check completes. No background service remains running.
+Set `AUXFLOW_NO_UPDATE_CHECK=1` to disable automatic checks.
 
 Show all commands and options:
 

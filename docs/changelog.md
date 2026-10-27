@@ -8,6 +8,14 @@ nav_order: 6
 All releases and updates for AuxFlow.
 This page fetches release notes directly from [GitHub Releases](https://github.com/upayanmazumder/auxflow/releases).
 
+## 0.3.0
+
+- `auxflow run` now limits each TeX tool invocation to 600 seconds by default. Use `--timeout SECONDS` to change the limit.
+- Runtime verification rejects auxiliary symlinks outside the work directory. Local package inventory also ignores files outside the project root.
+- Installation guidance now recommends `pipx` before the optional installer script. A corpus test guards ordinary table-of-contents classification.
+- `auxflow update --check` queries the latest PyPI release. `auxflow update` installs a newer release only when invoked explicitly.
+- Normal commands can show a cached update notice without waiting for the network. The check runs at most daily while a command remains active.
+
 <div id="changelog-controls" style="margin: 1.5rem 0; padding: 1rem; background: var(--color-bg-subtle, #1e2228); border: 1px solid var(--color-border-subtle, #30363d); border-radius: 6px;">
   <label for="release-select" style="font-weight: 600; margin-right: 0.5rem;">Select release:</label>
   <select id="release-select" style="padding: 0.4rem 0.8rem; background: var(--color-bg-default, #0d1117); color: inherit; border: 1px solid var(--color-border-default, #30363d); border-radius: 4px;">

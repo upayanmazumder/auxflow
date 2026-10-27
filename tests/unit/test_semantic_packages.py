@@ -10,6 +10,7 @@ from auxflow.ast import build_forest
 from auxflow.lexer import tokenize
 from auxflow.parser import parse
 from auxflow.semantic.diagnostics import check_packages
+from auxflow.semantic.package_inventory import local_file
 from auxflow.semantic.resolve import declare
 
 
@@ -144,3 +145,18 @@ def test_class_inventory_does_not_change_direct_package_warning(tmp_path: Path) 
         "unmodelled package: 'tabularx' (required by 'MyClass.cls')",
         "unmodelled package: 'exotic'",
     ]
+
+
+def test_local_package_inventory_rejects_parent_paths_and_external_symlinks(
+    tmp_path: Path,
+) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    root = project / "main.tex"
+    root.write_text(r"\documentclass{article}")
+    external = tmp_path / "external.cls"
+    external.write_text(r"\RequirePackage{exotic}")
+    (project / "linked.cls").symlink_to(external)
+
+    assert local_file("../external", ".cls", root, root) is None
+    assert local_file("linked", ".cls", root, root) is None
