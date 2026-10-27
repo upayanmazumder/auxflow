@@ -75,6 +75,27 @@ def test_update_installs_only_the_published_release_in_the_active_environment(
     assert "0.3.0 installed" in capsys.readouterr().out
 
 
+def test_update_uses_pipx_when_the_environment_has_no_pip(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "pipx_metadata.json").write_text("{}")
+    monkeypatch.setattr(update.sys, "prefix", str(tmp_path))
+    monkeypatch.setattr(update.importlib.util, "find_spec", lambda _name: None)
+    monkeypatch.setattr(update.shutil, "which", lambda _name: "/usr/bin/pipx")
+
+    assert update.install_command("0.3.0") == ["/usr/bin/pipx", "upgrade", "auxflow"]
+
+
+def test_update_explains_an_environment_without_pip_or_pipx(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(update.sys, "prefix", str(tmp_path))
+    monkeypatch.setattr(update.importlib.util, "find_spec", lambda _name: None)
+
+    with pytest.raises(OSError, match="no pip"):
+        update.install_command("0.3.0")
+
+
 def test_editable_installation_is_not_replaced(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
