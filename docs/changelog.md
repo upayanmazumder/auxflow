@@ -8,6 +8,18 @@ nav_order: 6
 All releases and updates for AuxFlow.
 This page fetches release notes directly from [GitHub Releases](https://github.com/upayanmazumder/auxflow/releases).
 
+## Unreleased
+
+- Reports and `auxflow check` print `file:line:column` instead of character offsets. Paths under the current directory print relative to it.
+- The cycle report uses plain words. `auxflow classify -v` adds the internal fact names. `auxflow plan --explain` describes each pass in plain words.
+- `auxflow run` names a missing TeX tool and suggests `auxflow plan`. It prints each pass on stderr.
+- `auxflow check` reports the convergence state, so it agrees with `auxflow classify`.
+- Mistyped commands suggest the nearest command.
+- New `auxflow doctor` command checks for `pdflatex`, `bibtex`, and `makeindex`.
+- New `--json` option on `check`, `classify`, and `plan`. New global `--quiet` option.
+- `auxflow classify` suggests a next step on stderr. `--force` on an AMPLIFYING document prints a warning.
+- When a TeX tool fails, `auxflow run` names the log file to read, such as `main.log`.
+
 ## 0.3.0
 
 - `auxflow run` now limits each TeX tool invocation to 600 seconds by default. Use `--timeout SECONDS` to change the limit.

@@ -151,6 +151,7 @@ def test_tool_failure_keeps_original_log_and_stops(
 
     assert report.status == "tool_error"
     assert report.exit_code == 1
+    assert report.message == "pdflatex exited with status 7. See main.log for the error."
     assert capfd.readouterr().out == "engine failed\n"
     assert (tmp_path / "engine.count").read_text() == "1"
 

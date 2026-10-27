@@ -17,27 +17,63 @@ from collections import defaultdict, deque
 from auxflow.analysis.classify import Classification, State
 from auxflow.analysis.scc import tarjan
 from auxflow.analysis.stable_pass import StablePass
+from auxflow.display import display_path, offset_to_line_col
 from auxflow.ir.graph import ARG
 from auxflow.ir.model import DepEdge, DepType, Fact, FactKind
 from auxflow.planner import MAX_RUNS_UNDER_FORCE
 
 
-def offset_to_line_col(text: str, offset: int) -> tuple[int, int]:
-    """1-indexed `(line, col)` of byte `offset` in `text`, matching the
-    lexer's own `Token.line`/`Token.col` convention."""
-    line = text.count("\n", 0, offset) + 1
-    line_start = text.rfind("\n", 0, offset) + 1
-    return line, offset - line_start + 1
-
-
 def _position(sources: dict[str, str], fact: Fact) -> str:
     span = fact.source_location
     line, col = offset_to_line_col(sources[span.file_id], span.start)
-    return f"{span.file_id}:{line}:{col}"
+    return f"{display_path(span.file_id)}:{line}:{col}"
 
 
 def _fact_label(fact: Fact) -> str:
     return f"{fact.kind.name}({fact.key})" if fact.key is not None else fact.kind.name
+
+
+_PLAIN = {
+    FactKind.LABEL_NUMBER: "number of label",
+    FactKind.LABEL_PAGE: "page of label",
+    FactKind.REF_USE: "reference to",
+    FactKind.PAGEREF_USE: "page reference to",
+    FactKind.TOC_ENTRY: "contents entry",
+    FactKind.LOF_ENTRY: "figure-list entry",
+    FactKind.LOT_ENTRY: "table-list entry",
+    FactKind.LIST_EXTENT: "length of a generated list",
+    FactKind.CITE_USE: "citation",
+    FactKind.BBL: "bibliography file",
+    FactKind.INDEX_ENTRY: "index entry",
+    FactKind.IND: "index file",
+    FactKind.COUNTER_READ: "counter",
+    FactKind.CONTENT_VOLUME: "amount of content the document generates",
+    FactKind.OPAQUE: "unmodelled construct",
+}
+_KEYED = frozenset(
+    {
+        FactKind.LABEL_NUMBER,
+        FactKind.LABEL_PAGE,
+        FactKind.REF_USE,
+        FactKind.PAGEREF_USE,
+        FactKind.CITE_USE,
+        FactKind.COUNTER_READ,
+    }
+)
+
+
+def _describe(fact: Fact, *, verbose: bool) -> str:
+    """Plain words for a fact. `verbose` appends the internal name for bug reports."""
+    phrase = _PLAIN[fact.kind]
+    if fact.key is not None and fact.kind in _KEYED:
+        phrase = f"{phrase} '{fact.key}'"
+    return f"{phrase} [{_fact_label(fact)}]" if verbose else phrase
+
+
+def _edge_reason(edge: DepEdge) -> str:
+    if edge.dependency_type is DepType.STRUCTURAL:
+        return "its value changes how much content is generated"
+    return edge.reason
 
 
 def _cycle_path(arg: ARG, members: tuple[int, ...], *, prefer: DepType | None = None) -> list[int]:
@@ -74,7 +110,9 @@ def _edge_between(arg: ARG, source: int, destination: int) -> DepEdge | None:
     return next((e for e in arg.edges if e.source == source and e.destination == destination), None)
 
 
-def render_amplifying(arg: ARG, sources: dict[str, str], classification: Classification) -> str:
+def render_amplifying(
+    arg: ARG, sources: dict[str, str], classification: Classification, *, verbose: bool = False
+) -> str:
     (component,) = classification.amplifying_components
     path = _cycle_path(arg, component, prefer=DepType.STRUCTURAL)
     path_edges = [_edge_between(arg, path[i], path[i + 1]) for i in range(len(path) - 1)]
@@ -92,26 +130,24 @@ def render_amplifying(arg: ARG, sources: dict[str, str], classification: Classif
     ]
     for i, fact_id in enumerate(path[:-1]):
         fact = arg.facts[fact_id]
-        label = _fact_label(fact)
+        label = _describe(fact, verbose=verbose)
         position = _position(sources, fact)
         if i == 0:
             lines.append(f"    {label}  {position}")
         else:
             edge = _edge_between(arg, path[i - 1], fact_id)
             assert edge is not None
-            reason = (
-                f"{edge.dependency_type.name}: {edge.reason}"
-                if edge.dependency_type is DepType.STRUCTURAL
-                else edge.reason
-            )
-            lines.append(f"      -> {label}  {position}  {reason}")
+            lines.append(f"      -> {label}  {position}  {_edge_reason(edge)}")
     start_fact = arg.facts[path[0]]
-    lines.append(f"      -> {_fact_label(start_fact)}  {_position(sources, start_fact)}")
+    lines.append(
+        f"      -> {_describe(start_fact, verbose=verbose)}  {_position(sources, start_fact)}"
+    )
 
     lines += [
         "",
         "  likely cause:",
-        f"    {structural.reason}",
+        f"    the {_describe(arg.facts[structural.source], verbose=verbose)} at "
+        f"{_position(sources, arg.facts[structural.source])}: {_edge_reason(structural)}.",
         "",
         "  Under the supported semantics no finite run count is guaranteed to stabilise",
         "  this structure.",
@@ -215,7 +251,7 @@ def render(
     """The report block for `classification`, or `None` when nothing should
     be printed at the current verbosity (a benign cycle outside `verbose`)."""
     if classification.state is State.AMPLIFYING:
-        return render_amplifying(arg, sources, classification)
+        return render_amplifying(arg, sources, classification, verbose=verbose)
     if classification.state is State.UNKNOWN:
         return render_unknown(arg, sources, classification, verbose=verbose)
     if classification.state is State.BENIGN_CYCLIC:

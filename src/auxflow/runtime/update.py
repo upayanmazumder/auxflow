@@ -131,3 +131,9 @@ def notify_and_check(installed: str) -> threading.Thread | None:
     )
     worker.start()
     return worker
+
+
+def cached_latest() -> str | None:
+    """The newest release seen by an earlier check, or `None`. This never uses the network."""
+    latest = _read_cache(_cache_path()).get("latest")
+    return latest if isinstance(latest, str) and _RELEASE.fullmatch(latest) else None

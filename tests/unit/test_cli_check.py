@@ -26,7 +26,7 @@ def test_undefined_reference_exits_nonzero_with_source_span(
     doc.write_text("\\ref{absent}")
 
     assert cli.main(["check", str(doc)]) == 1
-    assert capsys.readouterr().out == (f"{doc}:0-12: error: undefined reference: 'absent'\n")
+    assert capsys.readouterr().out == (f"{doc}:1:1: error: undefined reference: 'absent'\n")
 
 
 def test_warning_only_does_not_fail(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -34,7 +34,7 @@ def test_warning_only_does_not_fail(tmp_path: Path, capsys: pytest.CaptureFixtur
     doc.write_text("\\usepackage{exotic}")
 
     assert cli.main(["check", str(doc)]) == 0
-    assert f"{doc}:0-19: warning: unmodelled package: 'exotic'" in capsys.readouterr().out
+    assert f"{doc}:1:1: warning: unmodelled package: 'exotic'" in capsys.readouterr().out
 
 
 def test_cycle_exits_nonzero_with_closing_file_span(
@@ -47,4 +47,4 @@ def test_cycle_exits_nonzero_with_closing_file_span(
 
     assert cli.main(["check", str(main)]) == 1
     out = capsys.readouterr().out
-    assert f"{child}:0-14: error: inclusion cycle:" in out
+    assert f"{child}:1:1: error: inclusion cycle:" in out

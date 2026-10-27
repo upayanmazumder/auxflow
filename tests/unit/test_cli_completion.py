@@ -110,7 +110,7 @@ def test_bash_offers_every_command_and_only_command_options(tmp_path: Path) -> N
     commands = _bash_complete(script, "auxflow ", tmp_path)
     options = _bash_complete(script, "auxflow classify -", tmp_path)
 
-    assert commands == set(cli.COMMANDS) | {"help", "completion", "info", "update"}
+    assert commands == set(cli.COMMANDS) | {"help", "completion", "info", "update", "doctor"}
     assert {"--verbose", "--force", "-v"} <= options
     assert "--color" not in options
     assert "--strict" not in options
