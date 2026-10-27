@@ -117,6 +117,13 @@ def _observed_state(directory: Path, jobname: str) -> AuxState:
     return normalize_state(contents)
 
 
+def _failure(step: Step, code: int) -> str:
+    """Say which tool failed and where it wrote its log, so the error is easy to find."""
+    log = {"pdflatex": "log", "bibtex": "blg", "makeindex": "ilg"}.get(step.tool)
+    hint = f" See {step.jobname}.{log} for the error." if log else ""
+    return f"{step.tool} exited with status {code}.{hint}"
+
+
 def _missing_tool(plan: BuildPlan) -> str | None:
     """The first planned tool that is not on PATH, or `None` when all are present."""
     for tool in dict.fromkeys(step.tool for step in plan.steps):
@@ -175,7 +182,7 @@ def execute(
         except (OSError, ValueError) as error:
             return ExecReport("tool_error", None, runs, str(error))
         if code != 0:
-            return ExecReport("tool_error", None, runs, f"{step.tool} exited with status {code}")
+            return ExecReport("tool_error", None, runs, _failure(step, code))
         if step.tool != "pdflatex":
             continue
         runs += 1
@@ -208,7 +215,7 @@ def execute(
         except (OSError, ValueError) as error:
             return ExecReport("tool_error", None, runs, str(error))
         if code != 0:
-            return ExecReport("tool_error", None, runs, f"pdflatex exited with status {code}")
+            return ExecReport("tool_error", None, runs, _failure(last_engine, code))
         runs += 1
         try:
             current = _observed_state(directory, last_engine.jobname)

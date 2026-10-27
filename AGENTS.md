@@ -69,5 +69,5 @@ Use Python 3.12 or newer and pip for editable installs. The core has no third-pa
 - Add isolated unit tests for changed compiler phases. Use pytest fixtures such as `tmp_path` and `monkeypatch`. Run a focused `pytest tests/unit/test_<phase>_<topic>.py` before the full suite.
 - Keep `tests/property/test_safety_invariant.py` strict. Non-certified plans must retain the conservative run count. `tests/property/test_lexer_roundtrip.py` checks token coverage.
 - Change `tests/golden/fixtures/` snapshots only after deliberate review. Do not regenerate them automatically.
-- Use fake TeX executables on `PATH` for routine runtime tests. Mark tests that require a real engine with `engine`. Mark costly tests with `slow`. `make test-fast` and CI exclude both markers.
-- No coverage percentage is configured. `tests/README.md` expects unit coverage for each phase and corpus-level classification checks. `tests/e2e/` currently guards the table-of-contents corpus case.
+- Use fake TeX executables on `PATH` for routine runtime tests. `tests/e2e/test_real_engine.py` runs a real `pdflatex` and skips when it is missing. Mark tests that require a real engine with `engine`. Mark costly tests with `slow`. `make test-fast` and CI exclude both markers.
+- No coverage percentage is configured. `tests/README.md` expects unit coverage for each phase and corpus-level classification checks. `tests/e2e/` guards the table-of-contents corpus case and real-engine convergence.

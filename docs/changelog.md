@@ -18,6 +18,7 @@ This page fetches release notes directly from [GitHub Releases](https://github.c
 - New `auxflow doctor` command checks for `pdflatex`, `bibtex`, and `makeindex`.
 - New `--json` option on `check`, `classify`, and `plan`. New global `--quiet` option.
 - `auxflow classify` suggests a next step on stderr. `--force` on an AMPLIFYING document prints a warning.
+- When a TeX tool fails, `auxflow run` names the log file to read, such as `main.log`.
 
 ## 0.3.0
 
