@@ -17,19 +17,13 @@ color_scheme: dark
 back_to_top: true
 back_to_top_text: "Back to top"
 
-footer_content: 'MIT License · <a href="https://pypi.org/project/auxflow/">pip install auxflow</a>'
+footer_content: >-
+  MIT License &nbsp;·&nbsp;
+  <a href="https://pypi.org/project/auxflow/"><code>pip install auxflow</code></a>
 
-# Files that are not part of the public documentation site
+# figures/ and screenshots/ are paper assets, not site content
 exclude:
   - Gemfile
   - Gemfile.lock
-  - "*.docx"
-  - figures/src/
-  - AGENT-PROMPT.md
-  - PATENT-NOTES.md
-  - IMPLEMENTATION-PLAN.md
-  - FUTURE-INFRASTRUCTURE.md
-  - SCOPE.md
-  - review1-viva.md
-  - review2-viva.md
-  - review3-viva.md
+  - figures/
+  - screenshots/

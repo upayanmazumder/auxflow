@@ -1,6 +1,7 @@
 ---
 title: "Compiler pipeline"
-nav_order: 3
+parent: "Reference"
+nav_order: 2
 ---
 
 # Compiler pipeline

@@ -1,6 +1,7 @@
 ---
 title: "Auxiliary Reference Graph"
-nav_order: 5
+parent: "Reference"
+nav_order: 4
 ---
 
 # The Auxiliary Reference Graph

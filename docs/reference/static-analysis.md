@@ -1,6 +1,7 @@
 ---
 title: "Static analysis"
-nav_order: 6
+parent: "Reference"
+nav_order: 5
 ---
 
 # Static analysis

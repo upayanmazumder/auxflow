@@ -1,3 +1,12 @@
+---
+title: "Review 2"
+parent: "Reviews"
+nav_order: 2
+---
+
+{: .note }
+**Downloads:** [Document (PDF)](downloads/review2-document.pdf) · [Document (DOCX)](downloads/review2-document.docx) · [Slides (PDF)](https://github.com/upayanmazumder/auxflow/raw/main/presentation/review2-auxflow.pdf)
+
 # AuxFlow: Review 2 Viva Preparation
 
 Static Analysis for Multi-Pass Document Compilation · Upayan Mazumder (24BDS0367) · Compiler Design Lab

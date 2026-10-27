@@ -1,6 +1,7 @@
 ---
 title: "Non-convergence"
-nav_order: 7
+parent: "Reference"
+nav_order: 6
 ---
 
 # Non-convergence classification

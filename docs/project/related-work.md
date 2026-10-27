@@ -1,6 +1,7 @@
 ---
 title: "Related work"
-nav_order: 14
+parent: "Project"
+nav_order: 3
 ---
 
 # Related work

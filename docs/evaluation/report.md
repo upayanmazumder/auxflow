@@ -1,6 +1,7 @@
 ---
-title: "Evaluation report"
-nav_order: 12
+title: "Report"
+parent: "Evaluation"
+nav_order: 3
 ---
 
 # Evaluation report

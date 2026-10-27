@@ -1,6 +1,7 @@
 ---
 title: "Benchmarks"
-nav_order: 10
+parent: "Evaluation"
+nav_order: 1
 ---
 
 # Benchmark corpus

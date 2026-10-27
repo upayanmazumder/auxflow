@@ -1,6 +1,7 @@
 ---
 title: "Research questions"
-nav_order: 15
+parent: "Project"
+nav_order: 2
 ---
 
 # Research questions

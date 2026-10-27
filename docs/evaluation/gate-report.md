@@ -1,6 +1,7 @@
 ---
 title: "Gate report"
-nav_order: 13
+parent: "Evaluation"
+nav_order: 4
 ---
 
 # Project Gate Report

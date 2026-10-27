@@ -1,6 +1,7 @@
 ---
 title: "Architecture"
-nav_order: 2
+parent: "Reference"
+nav_order: 1
 ---
 
 # Architecture

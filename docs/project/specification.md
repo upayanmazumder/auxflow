@@ -1,5 +1,6 @@
 ---
-title: "Project specification"
+title: "Specification"
+parent: "Project"
 nav_order: 1
 ---
 

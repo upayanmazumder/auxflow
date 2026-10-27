@@ -1,6 +1,7 @@
 ---
-title: "Evaluation methodology"
-nav_order: 11
+title: "Methodology"
+parent: "Evaluation"
+nav_order: 2
 ---
 
 # Evaluation methodology

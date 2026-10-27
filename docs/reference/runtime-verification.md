@@ -1,6 +1,7 @@
 ---
 title: "Runtime verification"
-nav_order: 9
+parent: "Reference"
+nav_order: 8
 ---
 
 # Runtime verification

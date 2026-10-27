@@ -1,6 +1,7 @@
 ---
 title: "Build planner"
-nav_order: 8
+parent: "Reference"
+nav_order: 7
 ---
 
 # Build planner
