@@ -58,6 +58,7 @@ _SUMMARIES = {
     "ast": "print the syntax tree of every file",
     "symbols": "print the label, reference, citation, and package tables",
     "completion": "print a tab-completion script for bash, zsh, or fish",
+    "info": "print version, platform, installation, and project links",
 }
 
 _COMPLETION_INSTALL = """install:
@@ -78,6 +79,7 @@ _EXAMPLES = {
     "tokens": "example:\n  auxflow tokens thesis.tex",
     "ast": "example:\n  auxflow ast thesis.tex",
     "symbols": "example:\n  auxflow symbols thesis.tex",
+    "info": "example:\n  auxflow info\n  auxflow info --json",
 }
 
 
@@ -162,6 +164,16 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     finisher.add_argument("shell", choices=completion.SHELLS, help="the shell to generate for")
+    info_parser = subparsers.add_parser(
+        "info",
+        help=_SUMMARIES["info"],
+        description="Show AuxFlow version, runtime environment, and project URLs.",
+        epilog=_EXAMPLES["info"],
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    info_parser.add_argument(
+        "--json", action="store_true", help="output machine-readable JSON"
+    )
     parser.add_argument(
         "--color",
         choices=("auto", "always", "never"),
@@ -181,6 +193,7 @@ _WORKFLOW = (
     "ast",
     "symbols",
     "completion",
+    "info",
 )
 
 
@@ -223,6 +236,8 @@ def _overview() -> str:
             "",
             "Run 'auxflow help COMMAND' for the options of one command.",
             "Documentation: https://auxflow.upayan.dev",
+            "Repository:    https://github.com/upayanmazumder/auxflow",
+            "PyPI Package:  https://pypi.org/project/auxflow/",
         )
     )
 
@@ -238,6 +253,47 @@ def _run_help(parser: argparse.ArgumentParser, topic: str | None) -> int:
     names = ", ".join((*_WORKFLOW, "help", "completion"))
     print(f"auxflow: no command named {topic!r}. Commands: {names}.", file=sys.stderr)
     return 2
+
+def _run_info(*, as_json: bool = False) -> int:
+    import platform
+    version = _version()
+    data = {
+        "version": version,
+        "python": platform.python_version(),
+        "platform": platform.platform(),
+        "executable": sys.executable,
+        "links": {
+            "documentation": "https://auxflow.upayan.dev",
+            "changelog": "https://auxflow.upayan.dev/changelog.html",
+            "repository": "https://github.com/upayanmazumder/auxflow",
+            "issues": "https://github.com/upayanmazumder/auxflow/issues",
+            "pypi": "https://pypi.org/project/auxflow/",
+        },
+    }
+    if as_json:
+        print(json.dumps(data, indent=2))
+        return 0
+
+    def heading(text: str) -> str:
+        return style.paint(text, "bold")
+
+    lines = [
+        f"{style.paint('AuxFlow', 'cyan', 'bold')} {version}",
+        "",
+        heading("Environment"),
+        f"  Python:      {data['python']} ({data['platform']})",
+        f"  Binary:      {data['executable']}",
+        "",
+        heading("Links"),
+        "  Docs:        https://auxflow.upayan.dev",
+        "  Changelog:   https://auxflow.upayan.dev/changelog.html",
+        "  Repository:  https://github.com/upayanmazumder/auxflow",
+        "  Issues:      https://github.com/upayanmazumder/auxflow/issues",
+        "  PyPI:        https://pypi.org/project/auxflow/",
+    ]
+    print("\n".join(lines))
+    return 0
+
 
 
 def _run_tokens(path: str) -> int:
@@ -509,6 +565,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "completion":
         print(completion.generate(parser, args.shell), end="")
         return 0
+    if args.command == "info":
+        return _run_info(as_json=args.json)
     problem = _unreadable(args.file)
     if problem is not None:
         print(f"auxflow: {problem}", file=sys.stderr)

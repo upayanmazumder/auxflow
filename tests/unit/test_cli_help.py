@@ -56,3 +56,25 @@ def test_help_has_no_colour_in_a_pipe(capsys: pytest.CaptureFixture[str]) -> Non
     assert cli.main(["help"]) == 0
 
     assert "\033[" not in capsys.readouterr().out
+
+
+def test_info_command_prints_environment_and_links(capsys: pytest.CaptureFixture[str]) -> None:
+    assert cli.main(["info"]) == 0
+    out = capsys.readouterr().out
+
+    assert "AuxFlow" in out
+    assert "https://auxflow.upayan.dev" in out
+    assert "Environment" in out
+    assert "Links" in out
+
+
+def test_info_command_supports_json_output(capsys: pytest.CaptureFixture[str]) -> None:
+    import json
+
+    assert cli.main(["info", "--json"]) == 0
+    out = capsys.readouterr().out
+    data = json.loads(out)
+
+    assert "version" in data
+    assert "python" in data
+    assert data["links"]["documentation"] == "https://auxflow.upayan.dev"

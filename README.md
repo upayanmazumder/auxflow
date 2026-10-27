@@ -61,6 +61,11 @@ Show all commands and options:
 auxflow help
 ```
 
+Show installation environment and project links:
+
+```bash
+auxflow info
+```
 ---
 
 ## How It Works

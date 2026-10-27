@@ -110,7 +110,7 @@ def test_bash_offers_every_command_and_only_command_options(tmp_path: Path) -> N
     commands = _bash_complete(script, "auxflow ", tmp_path)
     options = _bash_complete(script, "auxflow classify -", tmp_path)
 
-    assert commands == set(cli.COMMANDS) | {"help", "completion"}
+    assert commands == set(cli.COMMANDS) | {"help", "completion", "info"}
     assert {"--verbose", "--force", "-v"} <= options
     assert "--color" not in options
     assert "--strict" not in options
@@ -184,7 +184,7 @@ def test_scripts_cover_every_command_and_option_in_the_parser(shell: str) -> Non
     parser = cli.build_parser()
     script = completion.generate(parser, shell)
 
-    for name in (*cli.COMMANDS, "help", "completion"):
+    for name in (*cli.COMMANDS, "help", "completion", "info"):
         assert name in script
     for flag in _every_flag(parser):
         assert flag.lstrip("-") in script

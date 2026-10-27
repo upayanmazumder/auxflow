@@ -66,6 +66,18 @@ Build the document with automatic verification:
 auxflow run document.tex
 ```
 
+View system info and project links:
+
+```bash
+auxflow info
+```
+
+Show command options and usage:
+
+```bash
+auxflow help
+```
+
 ---
 
 ## Document States
