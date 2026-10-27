@@ -1,3 +1,8 @@
+---
+title: "Static analysis"
+nav_order: 6
+---
+
 # Static analysis
 
 The analysis stage takes the AST and symbol tables and produces a classification, a per-fact

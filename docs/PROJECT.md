@@ -1,3 +1,8 @@
+---
+title: "Project specification"
+nav_order: 1
+---
+
 # AuxFlow — Project Specification
 
 Authoritative specification. Where any other document in this repository conflicts with this

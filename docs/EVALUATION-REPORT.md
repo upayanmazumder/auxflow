@@ -1,3 +1,8 @@
+---
+title: "Evaluation report"
+nav_order: 12
+---
+
 # Evaluation report
 
 Every number in this report traces to a committed script and a results file under

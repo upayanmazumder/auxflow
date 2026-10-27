@@ -1,3 +1,8 @@
+---
+title: "Architecture"
+nav_order: 2
+---
+
 # Architecture
 
 Three layers, in strict dependency order. Each layer may depend only on layers above it.

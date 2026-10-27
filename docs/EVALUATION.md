@@ -1,3 +1,8 @@
+---
+title: "Evaluation methodology"
+nav_order: 11
+---
+
 # Evaluation methodology
 
 Fixed before any measurement is taken, so that the protocol cannot be adjusted to suit results.

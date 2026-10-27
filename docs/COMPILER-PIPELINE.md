@@ -1,3 +1,8 @@
+---
+title: "Compiler pipeline"
+nav_order: 3
+---
+
 # Compiler pipeline
 
 Thirteen phases. For each: input, output, responsibility, data structures, algorithm, and the

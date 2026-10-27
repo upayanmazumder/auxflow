@@ -1,3 +1,8 @@
+---
+title: "Auxiliary Reference Graph"
+nav_order: 5
+---
+
 # The Auxiliary Reference Graph
 
 The ARG is AuxFlow's intermediate representation. Nodes are **individual auxiliary fact

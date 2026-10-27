@@ -1,3 +1,8 @@
+---
+title: "Related work"
+nav_order: 14
+---
+
 # Related work
 
 Prior art is conceded first and claims are made afterwards. A reviewer who discovers an

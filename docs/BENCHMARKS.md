@@ -1,3 +1,8 @@
+---
+title: "Benchmarks"
+nav_order: 10
+---
+
 # Benchmark corpus
 
 Fifteen documents. Each tests a distinct mechanism or a required realistic case.

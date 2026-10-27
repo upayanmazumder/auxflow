@@ -1,3 +1,8 @@
+---
+title: "Gate report"
+nav_order: 13
+---
+
 # Project Gate Report
 
 This report summarizes the verification results for the AuxFlow compiler project.

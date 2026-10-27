@@ -1,3 +1,8 @@
+---
+title: "Build planner"
+nav_order: 8
+---
+
 # Build planner
 
 Converts an analysis result into an executable plan.

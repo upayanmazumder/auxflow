@@ -1,3 +1,8 @@
+---
+title: "Non-convergence"
+nav_order: 7
+---
+
 # Non-convergence classification
 
 The most important document in this repository. It defines what AuxFlow claims about

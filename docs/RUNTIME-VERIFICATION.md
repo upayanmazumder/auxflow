@@ -1,3 +1,8 @@
+---
+title: "Runtime verification"
+nav_order: 9
+---
+
 # Runtime verification
 
 Separate from the static analysis, and deliberately so. The analysis predicts; verification

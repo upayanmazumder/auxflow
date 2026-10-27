@@ -1,0 +1,35 @@
+title: AuxFlow
+description: Static convergence classification for multi-pass document compilation.
+theme: just-the-docs
+
+url: "https://auxflow.upayan.dev"
+
+aux_links:
+  "PyPI ↗":
+    - "https://pypi.org/project/auxflow/"
+  "GitHub ↗":
+    - "https://github.com/upayanmazumder/auxflow"
+aux_links_new_tab: true
+
+search_enabled: true
+heading_anchors: true
+color_scheme: dark
+back_to_top: true
+back_to_top_text: "Back to top"
+
+footer_content: 'MIT License · <a href="https://pypi.org/project/auxflow/">pip install auxflow</a>'
+
+# Files that are not part of the public documentation site
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - "*.docx"
+  - figures/src/
+  - AGENT-PROMPT.md
+  - PATENT-NOTES.md
+  - IMPLEMENTATION-PLAN.md
+  - FUTURE-INFRASTRUCTURE.md
+  - SCOPE.md
+  - review1-viva.md
+  - review2-viva.md
+  - review3-viva.md

@@ -1,3 +1,8 @@
+---
+title: "Research questions"
+nav_order: 15
+---
+
 # Research questions
 
 Revised after the prior-art audit of 2026-08-27. Two of the four original hypotheses were falsified

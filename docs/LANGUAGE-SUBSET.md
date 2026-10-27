@@ -1,3 +1,8 @@
+---
+title: "Language subset"
+nav_order: 4
+---
+
 # Language subset
 
 AuxFlow analyses a **declared subset of LaTeX**. It does not implement TeX and does not attempt
