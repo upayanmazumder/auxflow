@@ -1,0 +1,33 @@
+%% Evaluation design. Sources: bench/harness/run.py, container.py, groundtruth.py, report.py,
+%% reference_tools.py, bench/baselines/.
+flowchart LR
+    CORPUS[/"<b>Corpus</b><br/>15 documents<br/>expected.json written<br/>before implementation"/]
+
+    subgraph IMG["Pinned Docker image: one container per repetition, 1 CPU, no network"]
+        direction TB
+        DYN["<b>Dynamic baselines</b><br/>A fixed, B warning,<br/>C output, C' input,<br/>C'' read-then-written"]
+        BE["<b>E</b>: plan on host,<br/>run in container"]
+        GT["<b>Ground truth N*</b><br/>8 unconditional passes,<br/>state and text equal<br/>through pass 8"]
+        XT["<b>External tools</b><br/>latexmk, latexrun,<br/>Tectonic, Typst ports"]
+    end
+    BD["<b>D</b>: static analysis<br/>on host, no engine"]
+    RES[("results.jsonl<br/>15 x 7 x 10 = 1050<br/>records")]
+    REP["<b>report.py</b><br/>tables, Gate 1,<br/>Gate 2 (EC1)"]
+
+    CORPUS --> DYN & BE & GT & XT
+    CORPUS --> BD
+    DYN & BE & BD --> RES
+    RES --> REP
+    GT -- "groundtruth.json" --> REP
+
+    classDef data fill:#FFFFFF,stroke:#5A5A5A,color:#0D1B2A
+    classDef base fill:#DCE8F3,stroke:#0D1B2A,color:#0D1B2A
+    classDef gt fill:#FFF3CF,stroke:#8A6D00,color:#0D1B2A
+    classDef rep fill:#E3F1E3,stroke:#2E6B2E,color:#0D1B2A
+    classDef xc fill:#E8E0F5,stroke:#4B3A75,color:#0D1B2A
+    class CORPUS,RES data
+    class DYN,BE,BD base
+    class GT gt
+    class REP rep
+    class XT xc
+    style IMG fill:#FFF8F0,stroke:#C0392B,stroke-dasharray:6 4

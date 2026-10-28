@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -52,14 +54,31 @@ def is_editable() -> bool:
     return json.loads(direct_url).get("dir_info", {}).get("editable") is True
 
 
+def _is_pipx_environment() -> bool:
+    return (Path(sys.prefix) / "pipx_metadata.json").is_file()
+
+
+def install_command(version: str) -> list[str]:
+    """Pick the installer that can write to this environment.
+
+    A pipx environment has no pip of its own, so `python -m pip` fails there.
+    """
+    if importlib.util.find_spec("pip") is not None:
+        return [sys.executable, "-m", "pip", "install", "--upgrade", f"auxflow=={version}"]
+    pipx = shutil.which("pipx")
+    if _is_pipx_environment() and pipx is not None:
+        return [pipx, "upgrade", "auxflow"]
+    raise OSError(
+        "this environment has no pip. Update with your package manager, for example "
+        "'pipx upgrade auxflow'."
+    )
+
+
 def install(version: str) -> int:
-    """Upgrade only AuxFlow in the interpreter that launched this command."""
+    """Upgrade only AuxFlow in the environment that launched this command."""
     if not _RELEASE.fullmatch(version):
         raise ValueError("invalid release version")
-    return subprocess.run(
-        [sys.executable, "-m", "pip", "install", "--upgrade", f"auxflow=={version}"],
-        check=False,
-    ).returncode
+    return subprocess.run(install_command(version), check=False).returncode
 
 
 def _cache_path() -> Path:

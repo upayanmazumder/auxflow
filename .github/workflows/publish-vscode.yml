@@ -1,0 +1,78 @@
+name: Publish VS Code extension
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: ${{ startsWith(github.event.release.tag_name, 'vscode-v') }}
+    name: build and test extension
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate release tag and extension version
+        working-directory: extension
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          node - <<'NODE'
+          const tag = process.env.RELEASE_TAG;
+          const version = require('./package.json').version;
+          if (!/^vscode-v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(tag) || tag !== `vscode-v${version}`) {
+            console.error(`Invalid VS Code release tag ${tag}; expected vscode-v${version} with a three-part numeric version.`);
+            process.exit(1);
+          }
+          NODE
+      - name: Install dependencies
+        working-directory: extension
+        run: npm ci
+      - name: Test extension
+        working-directory: extension
+        run: xvfb-run -a npm test
+      - name: Package extension
+        working-directory: extension
+        run: |
+          npm run package
+          test -f "auxflow-${GITHUB_REF_NAME#vscode-v}.vsix"
+      - name: Store VSIX
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode-extension
+          path: extension/auxflow-*.vsix
+          if-no-files-found: error
+
+  publish:
+    if: ${{ startsWith(github.event.release.tag_name, 'vscode-v') }}
+    name: attach VSIX to GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download VSIX
+        uses: actions/download-artifact@v4
+        with:
+          name: vscode-extension
+          path: dist/
+      - name: Upload VSIX to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          vsix="dist/auxflow-${GITHUB_REF_NAME#vscode-v}.vsix"
+          test -f "$vsix"
+          gh release upload "$GITHUB_REF_NAME" "$vsix"

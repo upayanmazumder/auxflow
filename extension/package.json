@@ -1,0 +1,78 @@
+{
+    "name": "auxflow",
+    "displayName": "AuxFlow",
+    "description": "Static LaTeX diagnostics and convergence classification while editing, without running TeX.",
+    "version": "0.1.0",
+    "publisher": "UpayanMazumder",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/upayanmazumder/auxflow"
+    },
+    "engines": {
+        "vscode": "^1.85.0"
+    },
+    "extensionKind": [
+        "workspace"
+    ],
+    "capabilities": {
+        "untrustedWorkspaces": {
+            "supported": false,
+            "description": "AuxFlow invokes a local Python interpreter to analyze workspace TeX sources."
+        }
+    },
+    "categories": [
+        "Linters"
+    ],
+    "activationEvents": [
+        "onLanguage:latex",
+        "onCommand:auxflow.checkNow"
+    ],
+    "main": "./dist/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "auxflow.checkNow",
+                "title": "AuxFlow: Check TeX Sources"
+            }
+        ],
+        "configuration": {
+            "title": "AuxFlow",
+            "properties": {
+                "auxflow.pythonPath": {
+                    "type": "string",
+                    "default": "python3",
+                    "description": "Python 3.12 or newer executable used to run the bundled AuxFlow analyzer. Use an absolute path if python3 is not on PATH."
+                },
+                "auxflow.mainFile": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Main .tex file relative to the workspace folder. Empty uses the active .tex file. In multi-root workspaces, configure per folder."
+                },
+                "auxflow.debounceMilliseconds": {
+                    "type": "integer",
+                    "default": 350,
+                    "minimum": 0,
+                    "maximum": 10000,
+                    "description": "Delay before rechecking after a TeX buffer changes."
+                }
+            }
+        }
+    },
+    "scripts": {
+        "compile": "tsc -p .",
+        "bundle:python": "node scripts/bundle-python.cjs",
+        "format": "prettier --write \"src/**/*.ts\" \"scripts/**/*.cjs\" package.json tsconfig.json .prettierrc.json",
+        "format:check": "prettier --check \"src/**/*.ts\" \"scripts/**/*.cjs\" package.json tsconfig.json .prettierrc.json",
+        "test": "npm run compile && npm run bundle:python && node dist/test/runTest.js",
+        "package": "npm run compile && npm run bundle:python && vsce package --no-dependencies"
+    },
+    "devDependencies": {
+        "@types/node": "^20.17.0",
+        "@types/vscode": "^1.85.0",
+        "@vscode/test-electron": "^2.4.1",
+        "@vscode/vsce": "^4.0.0",
+        "prettier": "^3.6.2",
+        "typescript": "^5.7.0"
+    }
+}

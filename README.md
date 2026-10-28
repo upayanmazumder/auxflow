@@ -4,10 +4,14 @@ A compiler and static analyzer for LaTeX documents.
 
 [![PyPI](https://img.shields.io/pypi/v/auxflow)](https://pypi.org/project/auxflow/) [![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)](https://pypi.org/project/auxflow/) [![Docs](https://img.shields.io/badge/docs-auxflow.upayan.dev-blue)](https://auxflow.upayan.dev)
 
-AuxFlow checks LaTeX cross-references and citations before the typesetting engine runs.
-It builds a dependency graph of all labels and references, detects cyclic loops, and calculates the exact compile passes the document needs.
+AuxFlow checks LaTeX cross-references and citations before TeX runs.
+It models a declared subset, reports reference cycles, and calculates a conservative
+pass bound for documents it can certify. `auxflow run` verifies the plan against
+auxiliary files written by the engine.
 
-For complete technical specifications, compiler architecture, and evaluation reports, visit the **[Documentation Website](https://auxflow.upayan.dev)**.
+The [documentation website](https://auxflow.upayan.dev) includes the
+[package and class list](https://auxflow.upayan.dev/reference/package-support.html)
+and the [evaluation limits](https://auxflow.upayan.dev/evaluation/benchmarks.html).
 
 ---
 
@@ -90,6 +94,46 @@ Locations print as `file:line:column`. Paths under the current directory print r
 `auxflow --quiet COMMAND` hides progress, next-step hints, and update notices.
 Results and errors still print, so scripts can rely on the output and the exit status.
 
+## VS Code extension
+
+The [VS Code extension](extension/README.md) checks open `.tex` documents, including unsaved edits, after a short debounce. It puts warnings in Problems and shows the static classification in the status bar. Set `auxflow.mainFile` to a workspace-relative main `.tex` file when editing included sources; otherwise the active file is the root. It never runs TeX automatically.
+
+Download the VSIX attached to a [GitHub extension release](https://github.com/upayanmazumder/auxflow/releases) and install it with VS Code's **Extensions: Install from VSIX...** command. The release workflow attaches a VSIX to `vscode-v*` releases (for example, `vscode-v0.1.0`); to update, download the newer VSIX and install it again manually. Distribution is through GitHub Releases, not the Marketplace. The extension bundles the Python analyzer, so a separate AuxFlow installation is unnecessary, but Python 3.12 or newer must be available on the extension host. See the extension README for settings and requirements. `UNKNOWN` means the static model lacks enough information, not that non-convergence has been proved; [package and class support](docs/reference/package-support.md) and the supported LaTeX subset limit what it can certify.
+
+## Package and class support
+
+AuxFlow recognizes `graphicx`, `varioref`, and `ifthen` for limited constructs.
+It treats `inputenc`, `fontenc`, `ae`, `aecompl`, `lmodern`, `xcolor`,
+`parskip`, `geometry`, `setspace`, `multicol`, and `amsmath` as inert for
+auxiliary-state analysis. These package names do not imply support for every
+command or for their effects on layout. Every other direct package name is
+unmodelled and makes classification `UNKNOWN`.
+
+Package names in `\usepackage{geometry,xcolor}` are checked separately. AuxFlow
+does not certify TeX Live bundles as a unit. A local class makes classification
+`UNKNOWN`. An external class can produce a warning even when classification
+does not change. See [Packages and classes](https://auxflow.upayan.dev/reference/package-support.html)
+for limits and diagnosis commands.
+
+## Try the tested documents
+
+The [quickstart sources](examples/quickstart/) include a reference, a multi-file
+document, an amplifying loop, and a local class. The
+[15-document corpus](bench/corpus/) includes ordinary builds and deliberately
+non-convergent cases. Keep each document with its related files.
+
+```sh
+auxflow classify examples/quickstart/simple.tex
+auxflow plan --explain examples/quickstart/multifile/main.tex
+auxflow classify bench/corpus/b08_cycle/main.tex
+```
+
+The last command reports `AMPLIFYING` and exits with status 1. Avoid `--force`
+in a live demo. Three corpus documents (`b11_width`, `b12_float`,
+`b13_varioref`) exposed false negatives before syntactic guards changed their
+classifications to `UNKNOWN`. See the
+[benchmark notes](https://auxflow.upayan.dev/evaluation/benchmarks.html).
+
 ---
 
 ## How It Works
@@ -97,17 +141,17 @@ Results and errors still print, so scripts can rely on the output and the exit s
 LaTeX documents write labels, tables of contents, and citations to helper files (`.aux`, `.toc`, `.bbl`).
 Standard build tools repeat the compile process until these files stop changing.
 
-AuxFlow analyzes your source code directly:
+AuxFlow scans and parses LaTeX source, then builds a graph of reference,
+list, and citation facts. Its analysis identifies cycles and calculates a
+model-based pass bound. The planner uses that bound only for `CERTIFIED`.
+Other executable plans start with at least three engine runs.
 
-1. **Scans and parses** your LaTeX files into an Abstract Syntax Tree.
-2. **Builds a dependency graph** of all references, lists, and citations.
-3. **Finds feedback cycles** and calculates whether values affect document length.
-4. **Assigns a convergence state**:
-   - `CERTIFIED`: Clean document with a fixed pass count.
-   - `BENIGN_CYCLIC`: Safe cycles that settle without changing length.
-   - `AMPLIFYING`: Loops that cause endless page expansion. Refused by default.
-   - `UNKNOWN`: Unrecognized packages or commands. Uses safe default runs.
-5. **Creates an optimized build plan** that skips redundant runs and unnecessary tool calls.
+| State           | Meaning                                                                             |
+| --------------- | ----------------------------------------------------------------------------------- |
+| `CERTIFIED`     | The model yields a conservative pass bound. Runtime still checks the files.         |
+| `BENIGN_CYCLIC` | The model finds a cycle without a structural edge. Convergence is not guaranteed.   |
+| `AMPLIFYING`    | A value can change generated content. AuxFlow refuses the plan by default.          |
+| `UNKNOWN`       | An unsupported construct prevents certification. It does not prove non-convergence. |
 
 ---
 
@@ -118,6 +162,7 @@ Full documentation is available at **[auxflow.upayan.dev](https://auxflow.upayan
 - **[Technical Reference](https://auxflow.upayan.dev/reference/)**: Architecture, Compiler Pipeline, Intermediate Representation, and Static Analysis.
 - **[Project Details](https://auxflow.upayan.dev/project/)**: Formal Specifications, Research Questions, and Literature Review.
 - **[Evaluation & Benchmarks](https://auxflow.upayan.dev/evaluation/)**: 15-document Benchmark Corpus, Methodology, and Verification Reports.
+- **[Research Paper](https://auxflow.upayan.dev/paper/)**: The paper (PDF). Source and build notes are in [`paper/`](paper/).
 - **[Course Reviews](https://auxflow.upayan.dev/reviews/)**: Review Notes, Presentations, and Downloadable Documents.
 
 ---

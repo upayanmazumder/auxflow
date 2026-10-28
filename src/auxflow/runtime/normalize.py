@@ -59,12 +59,21 @@ def _group(text: str, index: int, opener: str = "{") -> tuple[str, int]:
         raise ValueError(f"expected {opener!r} at auxiliary offset {index}")
     start = index + 1
     depth = 1
+    brace_depth = 0
     index = start
     while index < len(text):
         char = text[index]
         if char == "\\" and index + 1 < len(text) and text[index + 1] in "{}[]":
             index += 2
             continue
+        if opener == "[":
+            if char == "{":
+                brace_depth += 1
+            elif char == "}" and brace_depth:
+                brace_depth -= 1
+            if brace_depth or char == "}":
+                index += 1
+                continue
         if char == opener:
             depth += 1
         elif char == closer:

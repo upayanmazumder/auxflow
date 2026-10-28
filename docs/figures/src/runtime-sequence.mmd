@@ -18,13 +18,13 @@ sequenceDiagram
         X-->>C: amplifying_refused, 0 runs
     else UNKNOWN plan under --strict
         X-->>C: opaque_abort, 0 runs
-    else missing input file, or no final verifying pdflatex step
+    else missing input file, missing tool on PATH, or no final verifying pdflatex step
         X-->>C: missing_input or tool_error
     end
 
     loop each planned step, in plan order
-        X->>T: run step (pdflatex -interaction=nonstopmode -halt-on-error)
-        T-->>X: exit status (non-zero gives tool_error)
+        X->>T: run step (pdflatex -interaction=nonstopmode -no-shell-escape -halt-on-error), 600 s limit per call
+        T-->>X: exit status (non-zero or timeout gives tool_error)
         opt step is pdflatex
             X->>N: read jobname.aux (follow @input), .toc, .lof, .lot, .bbl, .ind
             N-->>X: normalized aux state (set of canonical records, relax excluded)

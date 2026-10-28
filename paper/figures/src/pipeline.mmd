@@ -1,0 +1,38 @@
+%% AuxFlow pipeline. Sources: src/auxflow/cli.py (COMMANDS, _analyze), planner/lower.py, runtime/execute.py.
+flowchart LR
+    SRC[/"LaTeX<br/>sources"/]
+    subgraph STATIC["Static: no TeX engine runs"]
+        direction LR
+        FE["<b>Front end</b><br/>lexer, parser,<br/>AST, symbol<br/>tables"]
+        IR["<b>ARG lowering</b><br/>fact instances,<br/>lagged edges"]
+        AN["<b>Analysis</b><br/>taint, SCC,<br/>stable pass"]
+        CL{"<b>Classifier</b><br/>4 states"}
+        PL["<b>Planner</b><br/>BuildPlan<br/>(JSON)"]
+        FE --> IR --> AN --> CL --> PL
+    end
+    subgraph DYN["Dynamic: only auxflow run"]
+        direction LR
+        RT["<b>Verifier</b><br/>normalise aux<br/>state, compare"]
+        ENG[["pdflatex<br/>bibtex<br/>makeindex"]]
+        RT -- "run step" --> ENG
+        ENG -- "aux, toc,<br/>bbl files" --> RT
+    end
+    OUT[/"report:<br/>CONVERGED<br/>or cap_exceeded"/]
+    SRC --> FE
+    PL --> RT
+    RT --> OUT
+
+    classDef fe fill:#DCE8F3,stroke:#0D1B2A,color:#0D1B2A
+    classDef ir fill:#E8E0F5,stroke:#4B3A75,color:#0D1B2A
+    classDef an fill:#FFF3CF,stroke:#8A6D00,color:#0D1B2A
+    classDef be fill:#E3F1E3,stroke:#2E6B2E,color:#0D1B2A
+    classDef io fill:#FFFFFF,stroke:#5A5A5A,color:#0D1B2A
+    classDef eng fill:#FBE3C8,stroke:#A0522D,color:#0D1B2A
+    class FE fe
+    class IR ir
+    class AN,CL an
+    class PL,RT be
+    class SRC,OUT io
+    class ENG eng
+    style STATIC fill:#F7F9FC,stroke:#8A99AD,stroke-dasharray:4 3
+    style DYN fill:#FFF8F0,stroke:#C0392B,stroke-dasharray:6 4

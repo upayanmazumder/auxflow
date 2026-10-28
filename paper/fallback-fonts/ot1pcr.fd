@@ -1,0 +1,6 @@
+\ProvidesFile{ot1pcr.fd}[2026/10/28 fallback: pcr as Computer Modern typewriter]
+\DeclareFontFamily{OT1}{pcr}{\hyphenchar\font=-1}
+\DeclareFontShape{OT1}{pcr}{m}{n}{<->ssub*cmtt/m/n}{}
+\DeclareFontShape{OT1}{pcr}{m}{sl}{<->ssub*cmtt/m/sl}{}
+\DeclareFontShape{OT1}{pcr}{b}{n}{<->ssub*cmtt/m/n}{}
+\DeclareFontShape{OT1}{pcr}{bx}{n}{<->ssub*cmtt/m/n}{}

@@ -1,0 +1,29 @@
+%% Data model of the ARG. The ARG is the set of FACT and DEP_EDGE records of one document.
+%% Sources: src/auxflow/ir/model.py (Fact, DepEdge), parser/spans.py (Span),
+%% analysis/scc.py and analysis/classify_cycles.py (components and labels).
+erDiagram
+    direction LR
+    FACT ||--o{ DEP_EDGE : "source of"
+    FACT ||--o{ DEP_EDGE : "target of"
+    COMPONENT ||--|{ FACT : groups
+
+    FACT {
+        int fact_id PK
+        enum kind
+        string key
+        enum component
+        span source_location
+        int stable_pass
+        bool opaque
+    }
+    DEP_EDGE {
+        int source FK
+        int destination FK
+        int pass_lag
+        enum dependency_type
+        string reason
+    }
+    COMPONENT {
+        int component_id PK
+        enum label
+    }

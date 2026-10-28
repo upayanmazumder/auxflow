@@ -1,0 +1,437 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+
+\input{generated/macros.tex}
+
+\newcommand{\cls}[1]{\textsc{#1}}
+\newcommand{\tex}[1]{\texttt{\detokenize{#1}}}
+\graphicspath{{figures/}}
+
+\begin{document}
+
+\title{AuxFlow: A Static Applicability Test for Fixpoint Convergence\\in Multi-Pass LaTeX Builds}
+
+\author{\IEEEauthorblockN{Upayan Mazumder}
+\IEEEauthorblockA{School of Computer Science and Engineering (SCOPE)\\
+Vellore Institute of Technology\\
+Vellore, Tamil Nadu, India\\
+\texttt{upayan.mazumder2024@vitstudent.ac.in}}
+\and
+\IEEEauthorblockN{Banupriya R}
+\IEEEauthorblockA{School of Computer Science and Engineering (SCOPE)\\
+Vellore Institute of Technology\\
+Vellore, Tamil Nadu, India\\
+\texttt{banupriya.r@vit.ac.in}}}
+
+\maketitle
+
+\begin{abstract}
+Multi-pass document compilation in systems such as \LaTeX{} resolves cross-references, generated tables of contents, and bibliographic citations through successive approximations across intermediate auxiliary files. Deployed build tools govern this iteration dynamically, evaluating heuristic termination criteria against hard-coded repetition caps without statically deriving pass requirements from document structure. Consequently, pathological documents exhibiting circular reference dependencies can induce non-termination or silently converge upon stale auxiliary state.
+This paper presents AuxFlow, a compiler front end and static analyzer for multi-pass \LaTeX{} builds. AuxFlow formalizes auxiliary state dependencies over a declared language subset, lowering input sources into an instance-level Auxiliary Reference Graph (ARG) annotated with temporal pass lags. By propagating taint from resolved values to layout-governing control constructs, AuxFlow isolates content-amplifying cycles prior to execution, classifying documents into certified, benign-cyclic, amplifying, or unmodeled states and deriving provable pass bounds for certified inputs.
+Evaluating AuxFlow on an empirical corpus of \NDocs{} benchmark documents isolating nine published convergence mechanisms across \NRecords{} containerized trials reveals that statically derived bounds strictly upper-bound empirical ground-truth requirements ($N \ge N^*$) across all \NCertified{} certified cases. AuxFlow identifies all \NNonconv{} non-convergent documents before invoking the typesetting engine, operating with negligible analysis latency (\LatencyMedian{}~ms median, \LatencyMax{}~ms maximum). Finally, we characterize the structural boundaries where layout abstraction fails, examining the efficacy of post-hoc syntactic guards against variable-width oscillation.
+\end{abstract}
+
+\begin{IEEEkeywords}
+LaTeX, build systems, static analysis, fixpoint iteration, attribute grammars
+\end{IEEEkeywords}
+
+%% ---------------------------------------------------------------------------------------------
+\section{Introduction}
+
+In document preparation systems such as \LaTeX, typesetting documents with internal cross-references, tables of contents, or bibliographic databases is fundamentally an iterative fixpoint computation. During a primary compilation pass, the typesetting engine emits label definitions, section metadata, and citation keys to intermediate auxiliary files (such as \texttt{.aux} and \texttt{.toc}). Subsequent compilation passes re-read these records to reconcile forward references and settle page numbers. Because pagination shifts can alter referenced target values across successive runs, determining the required compilation depth is an intrinsic property of a document's cross-reference dependency structure.
+
+In contemporary practice, document build drivers resolve this dependency structure dynamically rather than analytically. Build automation tools such as \texttt{latexmk} compare cryptographic checksums of generated files across consecutive iterations, capping execution at a default threshold of five runs~\cite{latexmk}. Tectonic enforces a six-pass ceiling based on in-run file access tracking~\cite{tectonic}, ConTeXt iterates up to nine passes, and Typst caps internal layout resolution at five iterations~\cite{typst} (Table~\ref{tab:oracles}). Although dynamic checksumming functions reliably for typical documents, heuristic iteration caps exhibit sharp failure modes when processing non-convergent structures. Gaspar's canonical counterexample~\cite{gaspar2014}, for instance, constructs a loop bounded by a forward page reference that appends a page on every iteration, producing monotonic divergence. When dynamic tools exhaust their iteration caps on such inputs, three of the five widely deployed systems emit no diagnostic pinpointing the underlying causal dependencies.
+
+\begin{table}[t]
+\caption{Stopping tests and iteration ceilings in five deployed document compilation systems. Parameters derived from tool documentation and source code inspection (latexmk 4.88).}
+\label{tab:oracles}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}p{0.18\columnwidth}>{\raggedright\arraybackslash}p{0.36\columnwidth}c>{\raggedright\arraybackslash}p{0.28\columnwidth}@{}}
+\toprule
+System & Stability test between passes & Limit & Failure diagnostic \\
+\midrule
+latexmk & Timestamp, size, and MD5 file state & 5 & None \\
+latexrun~\cite{latexrun} & Input file digest invariance & None$^{a}$ & None \\
+Tectonic & In-run read-then-written comparison & 6 & Modified filename \\
+ConTeXt & MD5 digest of \texttt{.tuc} file & 9 & None \\
+Typst & 128-bit hash of layout iterations & 5 & Source spans and history \\
+\bottomrule
+\end{tabular}
+
+\smallskip
+\footnotesize $^{a}$No iteration limit is documented. Experimental runs aborted after 10 iterations (Section~\ref{sec:external}).
+\end{table}
+
+Static pass scheduling itself rests on established theoretical foundations in compiler construction and circular attribute grammars. Seminal work by Bochmann~\cite{bochmann1976} and Alblas~\cite{alblas1981} formalizes multi-pass attribute evaluation, Hecht and Ullman~\cite{hecht1975} bound iterative data-flow analysis rounds via flow-graph depth, and Jones~\cite{jones1990} formulates evaluation over strongly connected components (SCCs) on condensed directed acyclic graphs. However, applying classical fixpoint theorems to document compilation exposes an essential mismatch: in programming language attribute grammars, the derivation tree remains invariant during attribute evaluation, whereas in document typesetting, auxiliary values directly alter page counts and text formatting, thereby mutating the underlying dependency graph across iterations.
+
+AuxFlow investigates whether static influence analysis can determine when classical fixed-graph fixpoint theory safely applies to a document prior to compilation. Operating over a declared subset of \LaTeX, AuxFlow establishes a conservative decision procedure for the finite-height criterion identified by Magnusson and Hedin~\cite{magnusson2007}, isolating dataflow paths that risk unbounded content generation while statically bounding the evaluation passes needed for convergent documents.
+
+This paper makes the following contributions:
+\begin{itemize}
+\item \textbf{Formal Intermediate Representation and Influence Analysis:} We introduce the Auxiliary Reference Graph (ARG), an instance-level representation modeling auxiliary state interactions annotated with temporal pass lags. We develop a monotone taint propagation analysis that tracks when auxiliary values reach content-generating control constructs, distinguishing benign feedback from amplifying cycles prior to engine execution (Section~\ref{sec:approach}).
+\item \textbf{Comparative Empirical Evaluation:} We assemble an empirical corpus of \NDocs{} benchmark documents isolating nine published non-convergence mechanisms, systematically comparing five deployed convergence oracles against AuxFlow's static and verified execution models across \NRecords{} containerized trials (Section~\ref{sec:eval}).
+\item \textbf{Characterization of Layout Feedback Limits:} We analyze the theoretical boundary where layout abstraction breaks down, evaluating how unmodeled extent feedback induces oscillation and assessing the efficacy of post-hoc syntactic guards on classification accuracy (Section~\ref{sec:guard}).
+\end{itemize}
+
+%% ---------------------------------------------------------------------------------------------
+\section{Background and Related Work}
+\label{sec:related}
+
+\subsection{The Auxiliary Round Trip}
+
+In standard \LaTeX{} execution, a \tex{\label} directive emits a \tex{\newlabel} tuple containing a counter representation and page index to the primary auxiliary file (\texttt{.aux}). At \tex{\begin{document}}, the kernel executes \tex{\@input{\jobname.aux}} before opening the auxiliary stream for writing, ensuring that values written during run $p$ become visible to reference commands (\tex{\ref}, \tex{\pageref}) only during run $p+1$. We formalize this temporal delay as an invariant \emph{pass lag} of exactly one. External utilities, such as BibTeX, process auxiliary citation entries between engine passes, introducing mediated dependency stages.
+
+\subsection{Multi-Pass Evaluation and Circular Attribute Grammars}
+
+Bochmann established conditions under which attribute grammars can be evaluated in alternating left-to-right passes~\cite{bochmann1976}. Alblas subsequently distinguished \emph{simple} multi-pass evaluation, where attribute types map to fixed passes, from \emph{pure} multi-pass evaluation, where individual attribute instances may resolve in arbitrary passes~\cite{alblas1981}. While deciding pure multi-pass membership is inherently exponential and finding minimal pass assignments is NP-complete~\cite{raiha1981}, instance-level tracking remains essential in document compilation because distinct labels within the same document exhibit divergent dependency depths. AuxFlow operates in Alblas's pure setting, deriving conservative upper bounds rather than asserting minimality.
+
+Farrow formalized semantic evaluation over circular attribute grammars via successive approximations~\cite{farrow1986}, while Jones optimized circular evaluation by partitioning dependency graphs into strongly connected components evaluated in topological order~\cite{jones1990}. Magnusson and Hedin identified the necessary convergence conditions for circular reference attribute grammars: attributes on cyclic dependencies must form a complete partial order of finite height, and semantic transfer functions must remain monotonic~\cite{magnusson2007}. While Magnusson and Hedin noted that their runtime evaluator left convergence unverified, AuxFlow provides a static decision procedure that checks the finite-height requirement within its modeled domain.
+
+In higher-order attribute grammars, attribute evaluation can graft newly computed derivation trees into the syntax forest~\cite{vogt1989}. Krishnan and Van Wyk developed a static termination analysis for higher-order grammars using term-rewriting orderings over static production rules~\cite{krishnan2012}. AuxFlow addresses a related self-generating phenomenon but operates on concrete document instances using reachability-based dataflow analysis over an empirical reference graph. S\"oderberg and Hedin~\cite{soderberg2013} explored generalized evaluation algorithms for circular higher-order attributes, whereas AuxFlow focuses on pre-execution schedulability bounds.
+
+\subsection{Dataflow Bounds, Schedulability, and Build Systems}
+
+In classical data-flow analysis, Hecht and Ullman demonstrated that reverse post-order iteration over reducible flow graphs converges in $d+2$ passes, where $d$ represents loop connectedness~\cite{hecht1975,kam1976}. AuxFlow adopts an analogous decomposition: $P$ passes propagate auxiliary values across lag boundaries, followed by a final pass to verify state invariance. In dataflow scheduling, Lee and Messerschmitt distinguished synchronous dataflow graphs with static production rates from asynchronous systems with data-dependent production rates~\cite{lee1987}. AuxFlow adapts this distinction to document processing: auxiliary values that alter only printed text represent fixed-rate computation, whereas values that govern loop bounds or conditional structures modulate content volume and threaten stability.
+
+In build system theory, Mokhov et al.\ categorized build dependencies into static applicative tasks and dynamic monadic tasks~\cite{mokhov2018}. Erdweg et al.\ implemented Pluto, an incremental build system featuring a fixpoint cycle handler for \LaTeX{} and BibTeX, observing that sound static dependency detection in general \TeX{} is undecidable due to dynamic macro expansion~\cite{erdweg2015,erdweg2010}. AuxFlow addresses this challenge by restricting analysis to a declared subset, mapping unmodeled commands to opaque facts that safely force conservative execution. M\"adje proved that document introspection stability is undecidable via Rice's theorem, prescribing constant iteration caps with localized error reporting~\cite{madje2022}. AuxFlow complements this approach by providing a static decision procedure and schedule derivation for compliant documents.
+
+\subsection{Taxonomy of Non-Convergence Mechanisms}
+
+Published literature and community forensics document at least nine distinct non-convergence mechanisms in \LaTeX{} (enumerated in Section~\ref{sec:eval}). Mechanisms M1 and M2 involve explicit programmatic control, where loops or conditionals branch on resolved page numbers. Mechanisms M3 through M7 involve implicit physical feedback, where the typeset width of a resolved numeral, float relocation heuristic, or marginal note shifts downstream paragraph line breaks and alters page boundaries. Mechanism M8 represents nondeterministic auxiliary state, while M9 represents spurious kernel warnings induced by active character expansions in section headings.
+
+%% ---------------------------------------------------------------------------------------------
+\section{Approach}
+\label{sec:approach}
+
+Figure~\ref{fig:pipeline} outlines the AuxFlow compilation pipeline. All stages from lexical analysis through build planning execute statically without invoking external \TeX{} processes, ensuring that computational overhead remains bounded. Engine execution is confined strictly to the runtime verifier.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{pipeline.pdf}
+\caption{The AuxFlow pipeline architecture. Static analysis executes entirely in-process without invoking external \TeX{} binaries, producing an optimized build plan consumed by the runtime verification engine.}
+\label{fig:pipeline}
+\end{figure*}
+
+\subsection{Declared Language Subset and Opaque Abstraction}
+
+AuxFlow's front end incorporates a category-code lexer, a recursive-descent parser, an inclusion forest representing multi-file projects, and symbol tables tracking labels, references, citations, counters, and loaded packages. Every AST node and symbol definition preserves source span coordinates (\texttt{file:line:col}) to support precise diagnostics.
+
+The modeled subset encompasses structural sectioning (\tex{\section}, \tex{\chapter}), label declarations (\tex{\label}), cross-reference lookups (\tex{\ref}, \tex{\pageref}, \tex{\eqref}), generated lists (\tex{\tableofcontents}, \tex{\listoffigures}), bibliographic commands (\tex{\cite}, \tex{\bibliography}), counter arithmetic, and boolean conditionals (\tex{\whiledo}, \tex{\ifthenelse}). A curated registry of typesetting commands and styling packages (e.g., \tex{\textbf}, \texttt{geometry}, \texttt{xcolor}) is treated as inert, as these constructs write no auxiliary state. Macro definitions are analyzed without body expansion: a user-defined macro is classified as inert only if every constituent token resolves to an inert primitive. Any unrecognized macro, dynamic inclusion, or unsupported package instantiates an \cls{opaque} fact node, triggering conservative fallback planning.
+
+\subsection{The Auxiliary Reference Graph (ARG)}
+
+The ARG represents document dependencies at the granularity of individual fact \emph{instances}. Coarser abstractions that group dependencies by fact \emph{kinds} collapse documents into trivial fixed-size lattices, eliminating the structural variation necessary for dataflow analysis.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.78\textwidth]{arg-model.pdf}
+\caption{Entity-relationship model of the Auxiliary Reference Graph. Input documents lower into concrete \textsc{fact} instances and directed \textsc{dep\_edge} records. Strongly connected components derived via Tarjan's algorithm~\cite{tarjan1972} govern document classification and subsequent build plan lowering.}
+\label{fig:er}
+\end{figure*}
+
+As modeled in Fig.~\ref{fig:er}, each \textsc{fact} records a unique identifier, an instance kind (e.g., \cls{label\_number}, \cls{label\_page}, \cls{ref\_use}, \cls{toc\_entry}, \cls{content\_volume}), a symbolic key, an evaluation component (\texttt{exists} or \texttt{value}), and a mandatory source span. Directed \textsc{dep\_edge} records capture dependencies annotated with an integer \texttt{pass\_lag}, a semantic classification (\cls{aux\_roundtrip}, \cls{tool}, \cls{layout}, \cls{structural}), and an explanatory diagnostic string.
+
+\subsection{Stable-Pass Numbering}
+
+For each fact $f$ in an acyclic graph, its stable pass number $s(f)$ denotes the compilation pass after which its auxiliary state is guaranteed to remain invariant. Given predecessor dependencies $\mathrm{deps}(f)$ and edge lag function $\ell(g \to f)$, $s(f)$ is computed via the recurrence:
+\begin{equation}
+s(f)=\begin{cases}
+1 & \mathrm{deps}(f)=\varnothing,\\
+1+\max_{g\in \mathrm{deps}(f)}\bigl(s(g)+\ell(g\!\to\!f)-1\bigr) & \text{otherwise.}
+\end{cases}
+\label{eq:stable}
+\end{equation}
+For standard auxiliary file interactions, $\ell=1$, simplifying the recurrence to $1 + \max(s(g))$. Tool edges mediated by external utilities (such as BibTeX) are assigned an effective lag of zero within the engine recurrence, reflecting the fact that external tools execute synchronously between engine passes. Letting $P$ denote the maximum stable pass across all auxiliary facts, AuxFlow derives a predicted engine pass bound of $N = P + 1$, where the additional pass guarantees verification against the converged state.
+
+\subsection{Content-Quantity Influence Propagation}
+
+In typical documents, generated list extents feed into a synthetic \cls{content\_volume} fact representing global pagination. To prevent standard documents from collapsing into a single circular component, the ARG bifurcates label facts into \texttt{exists} and \texttt{value} components, deliberately decoupling reference values from downstream layout placement.
+
+To detect true non-convergence, AuxFlow executes a forward taint analysis that identifies when reference values influence layout volume. The analysis seeds the worklist with facts read within loop bounds, conditional expressions, or counter mutations governing control flow. Taint propagates monotonically along value-carrying dependency edges. For each tainted fact, AuxFlow injects a \cls{structural} edge with lag one targeting \cls{content\_volume}, recording the source span of the governing control structure.
+
+Following taint injection, an iterative implementation of Tarjan's algorithm partitions the ARG into strongly connected components in $O(V+E)$ time. Components are categorized into three disjoint classes:
+\begin{itemize}
+\item \cls{amplifying}: Components containing at least one internal \cls{structural} edge, indicating that auxiliary values modulate their own generation rate.
+\item \cls{unknown\_cycle}: Components containing unmodeled or opaque facts.
+\item \cls{benign}: Circular components devoid of structural feedback, representing value-only recirculation that settles without altering document length.
+\end{itemize}
+This taint propagation over-approximates influence, treating any value dependency reaching a control construct as potentially non-convergent. This asymmetry ensures safety: while benign documents may occasionally receive an amplifying classification, no modeled amplifying cycle can escape detection.
+
+\subsection{Document Classification and Build Planning}
+
+Figure~\ref{fig:classifier} details the document classification and lowering logic. The classifier evaluates components under strict precedence: \cls{amplifying} takes precedence over \cls{unknown}, followed by \cls{benign\_cyclic} and \cls{certified}.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{classifier.pdf}
+\caption{Document classification hierarchy and plan generation policy. Certified documents execute a derived $P+1$ schedule, whereas uncertified inputs fall back to safe conservative floors with fixpoint verification.}
+\label{fig:classifier}
+\end{figure*}
+
+The build planner lowers classifications into a linear \texttt{BuildPlan}. To ensure safety, an invariant assertion guarantees that non-certified plans execute at least three engine runs. An \cls{amplifying} document produces an empty plan that halts execution by default, requiring an explicit \texttt{--force} flag to execute under a defensive six-pass cap. For \cls{certified} documents, the planner optimizes execution by pruning unreachable files from auxiliary processing and scheduling BibTeX only when citations and bibliography commands co-exist.
+
+\subsection{Runtime Verification and State Normalization}
+
+Because \LaTeX{} kernel rerun warnings are fundamentally unsound on generated lists and vulnerable to spurious caption triggers, AuxFlow implements an independent runtime verification oracle.
+
+Following each engine execution, the verifier extracts all \texttt{.aux}, \texttt{.toc}, \texttt{.lof}, \texttt{.lot}, and \texttt{.bbl} files, parsing their contents into canonical, order-independent record tuples (e.g., \texttt{("label", key, number, page)}). Formatting whitespace, comments, and boilerplate \tex{\relax} tokens are discarded, while unrecognized records are preserved verbatim to ensure that unstable third-party data remains observable. The verifier evaluates set equality between the current state $A_k$ and the preceding state $A_{k-1}$ (Fig.~\ref{fig:runtime}). If a certified plan reaches its predicted bound without achieving state equality, the verifier dynamically extends execution up to a safety ceiling, logging a structured \cls{prediction\_miss} diagnostic.
+
+Execution safeguards enforce a 600-second per-command timeout, disable shell escapes via \texttt{-no-shell-escape}, and reject auxiliary paths resolving outside the workspace root.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{runtime.pdf}
+\caption{The runtime verification workflow in \texttt{auxflow run}. Execution extends dynamically only if auxiliary state continues to mutate beyond planned pass bounds.}
+\label{fig:runtime}
+\end{figure*}
+
+%% ---------------------------------------------------------------------------------------------
+\section{Worked Example}
+\label{sec:example}
+
+To illustrate the mechanics of instance-level influence analysis, consider document \texttt{b08} from our benchmark suite, adapted from Gaspar's non-convergent loop construction~\cite{gaspar2014}:
+\begin{small}
+\begin{verbatim}
+ 5 \whiledo{\value{generatedpage}
+ 6           <\pageref{end:generated}}{%
+ 7   \stepcounter{generatedpage}%
+ 8   Record sheet occupies its own page.
+ 9   \newpage }
+10 End of the record.\label{end:generated}
+\end{verbatim}
+\end{small}
+In this structure, the \tex{\whiledo} condition inspects the resolved page number of label \texttt{end:generated}. During pass $k$, the loop emits pages until the counter matches the prior pass value, placing the label on page $k+1$. The recorded page number increments by one on every run, inducing monotonic divergence.
+
+\begin{figure*}[t]
+\centering
+\begin{minipage}[b]{0.47\textwidth}
+\centering
+\includegraphics[width=0.78\linewidth]{arg-b08.pdf}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.50\textwidth}
+\centering
+\includegraphics[width=0.98\linewidth]{shot-amplifying.png}
+\end{minipage}
+\caption{Analysis of non-convergent document \texttt{b08}. Left: The lowered ARG, where taint analysis injects a \textsc{structural} edge from \texttt{PAGEREF\_USE} to \textsc{content\_volume}. Right: Terminal output from \texttt{auxflow classify} detailing the causal cycle and exact source spans.}
+\label{fig:b08}
+\end{figure*}
+
+AuxFlow lowers this source into the ARG depicted in Fig.~\ref{fig:b08}. Because the \tex{\whiledo} condition reads the page reference at line~5, the reference fact is identified as a taint seed. Taint propagation links this value to \cls{content\_volume} via a \cls{structural} edge. Together with the layout edge to \cls{label\_page} and the auxiliary round-trip edge back to the reference, these facts form a cyclic strongly connected component containing an internal structural dependency. AuxFlow classifies the document as \cls{amplifying} prior to compilation, reporting the complete causal chain and source spans without running the engine. When executed under \texttt{--force}, AuxFlow monitors monotonic page expansion and halts at run six, reporting \cls{cap\_exceeded} (Fig.~\ref{fig:shots}).
+
+\begin{figure*}[t]
+\centering
+\begin{minipage}[t]{0.49\textwidth}
+\centering
+\includegraphics[width=0.98\linewidth]{shot-unknown.png}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\textwidth}
+\centering
+\includegraphics[width=0.98\linewidth]{shot-run.png}
+\end{minipage}
+\caption{CLI diagnostic captures. Left: \texttt{auxflow classify} flagging unmodeled variable-width numbering on \texttt{b11}. Right: \texttt{auxflow run --force} terminating at the six-pass ceiling on \texttt{b08}.}
+\label{fig:shots}
+\end{figure*}
+
+%% ---------------------------------------------------------------------------------------------
+\section{Evaluation}
+\label{sec:eval}
+
+\subsection{Experimental Design and Benchmark Corpus}
+
+Our empirical evaluation addresses four core research questions:
+\begin{itemize}
+\item \textbf{RQ1 (Classification Fidelity):} Does static cycle analysis accurately isolate modeled non-convergence mechanisms without flagging benign cyclic feedback?
+\item \textbf{RQ2 (Bound Safety):} Does the computed pass bound $N$ strictly upper-bound empirical ground truth $N^*$ across all certified documents?
+\item \textbf{RQ3 (Oracle Performance and Accuracy):} How do deployed convergence oracles compare in execution overhead, termination accuracy, and vulnerability to premature convergence?
+\item \textbf{RQ4 (Analysis Overhead):} What computational latency does static graph construction and taint propagation introduce relative to engine execution?
+\end{itemize}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.86\textwidth]{evaluation.pdf}
+\caption{Experimental test harness. Dynamic baselines A through E execute within isolated, resource-pinned Docker containers, benchmarked against independently derived ground-truth metrics $N^*$.}
+\label{fig:eval}
+\end{figure*}
+
+Figure~\ref{fig:eval} illustrates the evaluation framework. The benchmark suite comprises \NDocs{} documents designed to exercise specific dependency structures. To enforce methodological integrity, expected classifications and structural properties were pre-registered in version-controlled metadata files prior to analyzer implementation.
+
+The benchmark compares seven execution strategies:
+\begin{itemize}
+\item \textbf{Baseline A (Fixed Schedule):} An unconditional three-pass schedule typical of conventional build scripts.
+\item \textbf{Baseline B (Engine Warning):} Dynamic re-execution governed by the \LaTeX{} kernel's ``Rerun to get cross-references right'' warning.
+\item \textbf{Baseline C (Output Checksum):} Full-file auxiliary checksum comparison across consecutive runs (\texttt{latexmk} model).
+\item \textbf{Baseline C$'$\ (Input Checksum):} Input file digest invariance detection (\texttt{latexrun} model).
+\item \textbf{Baseline C$''$\ (In-Run Comparison):} File-level read-then-written verification within a single pass (Tectonic model).
+\item \textbf{Baseline D (Static Analysis):} AuxFlow pre-compilation analysis operating without engine execution.
+\item \textbf{Baseline E (Verified Plan):} AuxFlow static build planning coupled with normalized runtime verification.
+\end{itemize}
+
+\textbf{Ground Truth Derivation.}
+Independent ground truth $N^*$ is established by executing eight unconditional \texttt{pdflatex} passes without stopping rules. $N^*$ represents the minimal run index $k < 8$ such that normalized auxiliary state and extracted text layers ($pdftotext -layout$) match identically across all subsequent passes up to run eight. Requiring full equality across all remaining runs is essential: alternating period-2 oscillations match coincidental state at even-numbered passes, producing spurious convergence if evaluated only against an isolated terminal pass. Documents failing this criterion are classified as divergent or oscillating.
+
+\textbf{Execution Environment.}
+All dynamic trials executed inside isolated Docker containers built from \texttt{python:3.12-slim-bookworm} (digest prefix \texttt{\ImageDigest}), containing TeX Live 2022, \texttt{latexmk} 4.79, \texttt{latexrun}, Tectonic 0.15.0, and Typst 0.11.0. Containers were pinned to single CPU cores with networking disabled and fixed \texttt{SOURCE\_DATE\_EPOCH} timestamps. Each document-baseline pair was evaluated across ten independent repetitions (\NRecords{} total trials).
+
+\begin{table}[t]
+\caption{Benchmark corpus characteristics and classification results. $N^{*}$ denotes empirical ground truth. ``Before'' reflects pre-registered classifier behavior; ``Now'' reflects current analyzer behavior incorporating syntactic width guards (bold indicates reclassification). $N$ indicates predicted bound.}
+\label{tab:corpus}
+\centering
+\footnotesize
+\begin{tabular}{@{}llrllr@{}}
+\toprule
+ID & Target Mechanism & $N^{*}$ & Before & Now & $N$ \\
+\midrule
+\input{generated/table_corpus.tex}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Classification Accuracy and Bound Safety (RQ1, RQ2)}
+
+Table~\ref{tab:corpus} summarizes corpus classification results. AuxFlow successfully classifies \texttt{b08} as \cls{amplifying} while certifying the complex table-of-contents cascade in \texttt{b05}, demonstrating that the analysis discriminates content-modulating loops from benign structural recursion without false positives. Document \texttt{b14} is classified as \cls{amplifying} due to conservative over-approximation: although the conditional selects between differently sized text without altering paragraph count, the taint framework safely flags the data-dependent branch.
+
+Across all \NCertified{} certified documents, static pass bounds satisfy the safety invariant $N \ge N^*$. Bounds are tight ($N = N^*$) for \BoundTight{} documents and overestimate by exactly one pass on \BoundOverOne{} documents (\texttt{b04}, \texttt{b06}, \texttt{b09}), with zero instances of under-prediction (\BoundUnder{} cases). Overestimation in \texttt{b06} and \texttt{b09} stems from conservative longest-path propagation across BibTeX tool boundaries. Furthermore, AuxFlow correctly isolates all \NNonconv{} non-convergent documents prior to compilation, assigning two to \cls{amplifying} and four to \cls{unknown}.
+
+\subsection{Empirical Oracle Comparison (RQ3)}
+
+Table~\ref{tab:exec} and Fig.~\ref{fig:exec} document the engine executions consumed across baselines, while Table~\ref{tab:verdict} tallies overall oracle verdicts.
+
+\begin{table}[t]
+\caption{Engine runs consumed until termination (median of ten trials). Symbol $\dagger$ denotes unsound termination (stale state accepted or non-convergence missed); \texttt{cap} denotes iteration ceiling reached; \texttt{ref.} indicates static execution refusal.}
+\label{tab:exec}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lrrrrrrr@{}}
+\toprule
+ID & $N^{*}$ & A & B & C & C$'$ & C$''$ & E \\
+\midrule
+\input{generated/table_exec.tex}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{executions.pdf}
+\caption{Compilation passes across benchmark documents and baselines. Dashed horizontal markers denote ground truth $N^*$. Hatched bars highlight unsound convergence; missing bars in Baseline E reflect upfront static refusal; the dotted line indicates the 8-pass ceiling.}
+\label{fig:exec}
+\end{figure*}
+
+\begin{table}[t]
+\caption{Summary of termination verdicts across 15 corpus documents. Dynamic baselines A through E benchmarked against static analysis D.}
+\label{tab:verdict}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}p{0.43\columnwidth}rrrrrrr@{}}
+\toprule
+Termination Outcome & A & B & C & C$'$ & C$''$ & E & D \\
+\midrule
+\input{generated/table_verdicts.tex}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The empirical data highlights four key findings:
+
+\textbf{1. Systematic Blindness in Fixed Scheduling.}
+Baseline A terminates after three passes across all documents, failing silently on all six non-convergent cases and providing no mechanism to detect instability.
+
+\textbf{2. Bidirectional Unsoundness in Engine Warnings.}
+Baseline B demonstrates severe unreliability in both directions. On \texttt{b10}, where random tokens mutate auxiliary state, the engine emits no cross-reference warning, causing Baseline B to report convergence after a single run despite active divergence. Conversely, on \texttt{b05} and \texttt{b15}, Baseline B halts prematurely at run one ($N^*=3$), accepting stale table-of-contents pagination because base \LaTeX{} suppresses rerun warnings for structural list files~\cite{rerunfilecheck}.
+
+\textbf{3. Equivalence Among State Checksumming Oracles.}
+Dynamic checksumming baselines C, C$'$, and C$''$ exhibit identical termination behavior across the corpus, spending \SumC{} runs across the seven certified documents. Although literature suggests that input-comparison (C$'$) and in-run access tracking (C$''$) can eliminate the redundant confirmation pass required by output comparison (C), this theoretical advantage did not manifest on our benchmark documents.
+
+\textbf{4. Efficiency and Safety in Verified Static Planning.}
+Baseline E matches the efficiency of the best dynamic detectors on all certified documents (\SumE{} runs total vs.\ \SumA{} for Baseline A). On uncertified documents, Baseline E refuses execution upfront for eight cases (the six non-convergent documents plus opaque cases \texttt{b07} and \texttt{b15}), avoiding futile engine iteration. On trivial document \texttt{b01} ($N^*=1$), Baseline E requires two runs because the \LaTeX{} kernel unconditionally emits an internal \tex{\@abspage@last} token, preventing the auxiliary state from evaluating to empty on pass one. This structural property triggers a recorded prediction miss, though the underlying static prediction remains correct.
+
+\subsection{Cross-Validation Against External Systems (RQ3)}
+\label{sec:external}
+
+To corroborate our non-convergence findings, we evaluated deployed versions of \texttt{latexmk}, \texttt{latexrun}, and Tectonic on the same corpus (Table~\ref{tab:external}). Both \texttt{latexmk} and \texttt{latexrun} fail to converge on all six non-convergent documents, validating that non-convergence is an intrinsic property of these document structures rather than an artifact of AuxFlow's harness. Tectonic compiles only \texttt{b01} and \texttt{b08} in offline mode due to sandboxed package retrieval constraints; on \texttt{b08}, it flags that a rerun is needed before aborting at its six-pass ceiling. Furthermore, our hand-ported Typst implementation of \texttt{b08} halts with an explicit compiler error (\texttt{loop seems to be infinite}), providing independent compiler-level confirmation of amplifying divergence.
+
+\begin{table}[t]
+\caption{External tool convergence on challenging corpus documents. All unlisted corpus documents converge successfully across all tools. Metric \texttt{n/a} denotes offline compilation limitations in Tectonic.}
+\label{tab:external}
+\centering
+\footnotesize
+\begin{tabular}{@{}lccc@{}}
+\toprule
+ID & latexmk & latexrun & Tectonic \\
+\midrule
+\input{generated/table_external.tex}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Computational Overhead (RQ4)}
+
+Static analysis executes with high efficiency, requiring a median of \LatencyMedian{}~ms and a maximum of \LatencyMax{}~ms across all documents. Even on the realistic thesis document (\texttt{b09}), which lowers to \ThesisFacts{} facts and \ThesisEdges{} edges, analysis completes in \ThesisLatency{}~ms. Because full typesetting runs require multiple seconds per document, the static planning overhead remains negligible.
+
+%% ---------------------------------------------------------------------------------------------
+\section{Evolution of Layout Feedback Guards}
+\label{sec:guard}
+
+During initial benchmark evaluations, documents \texttt{b11}, \texttt{b12}, and \texttt{b13} were certified by the analyzer. This constituted a planned false negative: because their cyclic instability originates from the typeset physical width of resolved page numerals shifting paragraph line breaks rather than explicit control-flow loops, taint analysis seeded no structural edges.
+
+To mitigate this vulnerability, we incorporated three post-hoc syntactic guards into the IR lowering stage:
+\begin{enumerate}
+\item Reference lookups operating under variable-width page numbering (\tex{\pagenumbering{roman}}, \texttt{Roman}, \texttt{alph}, \texttt{Alph}) instantiate an \cls{opaque} fact, as numeral width fluctuations can perturb line breaking.
+\item Dynamic reference directives provided by packages such as \texttt{varioref} (\tex{\vref}, \tex{\vpageref}) unconditionally generate \cls{opaque} facts.
+\item Standard front-matter commands and formatting packages are explicitly whitelisted as inert, preventing false \cls{unknown} classifications on common styling constructs.
+\end{enumerate}
+
+These guards reclassify documents \texttt{b11} through \texttt{b13} from \cls{certified} to \cls{unknown} (Table~\ref{tab:corpus}). While this eliminates empirical bound violations, methodological transparency requires acknowledging three limitations:
+\begin{itemize}
+\item The reclassification causes Gate~1 verification to report failure against pre-registered baseline expectations.
+\item The intervention is post-hoc, meaning the corpus no longer provides an independent evaluation of the guard.
+\item The heuristic pattern-matches syntax rather than modeling font metrics. Layout oscillation occurring under Arabic numbering or custom macros remains unmodeled and would escape detection.
+\end{itemize}
+
+%% ---------------------------------------------------------------------------------------------
+\section{Threats to Validity and Limitations}
+
+\textbf{Corpus Representativeness.}
+The benchmark suite contains fifteen documents, most of which are synthetic micro-benchmarks designed to isolate specific compilation mechanisms. While \texttt{b09} mirrors a production academic thesis, broader validation on large-scale open-source document corpora is necessary to assess macro-level package compatibility.
+
+\textbf{Methodological Author Bias.}
+To mitigate potential bias inherent in authoring both the static analyzer and the benchmark corpus, structural properties and expected classifications were codified in version control prior to parser implementation.
+
+\textbf{The Layout Invariance Abstraction (Assumption A2).}
+AuxFlow adopts the pragmatic modeling assumption that resolving reference values does not perturb global pagination. In physical typesetting, replacing placeholder glyphs (\texttt{??}) with multi-digit numerals can alter line breaks. Modeling font metrics and line-breaking algorithms would cause the reference graph to degenerate into a monolithic circular component; AuxFlow accepts this abstraction barrier, measuring the resulting unsoundness openly.
+
+\textbf{Conflation of Divergence and Oscillation.}
+The \cls{amplifying} classification combines monotonic divergence (violating lattice finite-height) and periodic oscillation (violating monotonicity). While separating these modes is theoretically appealing, detecting oscillation without evaluating geometric font metrics remains intractable.
+
+\textbf{Toolchain and Engine Drift.}
+Containerized evaluations executed under TeX Live 2022, whereas host environments utilized TeX Live 2026. During harness development, residual auxiliary files in a corpus directory caused premature termination in baseline B; clearing these artifacts restored deterministic evaluation.
+
+%% ---------------------------------------------------------------------------------------------
+\section{Conclusion}
+
+Multi-pass document compilation represents a dynamic fixpoint computation where auxiliary data can mutate the underlying dependency graph. AuxFlow demonstrates that static influence analysis over a declared \LaTeX{} subset can reliably verify the preconditions of classical fixpoint convergence. Across our empirical corpus, AuxFlow correctly bounded all certified documents, isolated all non-convergent inputs prior to execution, and imposed negligible computational latency.
+
+Future work will explore integrating bounding box approximations to detect font-metric feedback without full rendering, expanding the modeled package surface, and formally bisecting amplifying cycles into divergent and oscillating classifications.
+
+\section*{Availability}
+
+AuxFlow is distributed as open-source software under the MIT license, available on GitHub~\cite{auxflow} and PyPI (\texttt{auxflow}). The complete benchmark suite, container configurations, and execution harness are archived in the repository; running \texttt{python paper/make\_results.py} deterministically regenerates all empirical tables and figures presented in this paper.
+
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
+
+\end{document}

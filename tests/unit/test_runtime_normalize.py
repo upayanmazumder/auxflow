@@ -87,3 +87,9 @@ def test_package_defined_scalar_label_remains_observable() -> None:
 
     assert ("other", "newlabel", "RF1", "12") in first
     assert first != second
+
+
+def test_braced_closing_bracket_in_bibliography_label_is_not_the_option_end() -> None:
+    state = normalize_aux_file(r"\bibitem[{A ] B} 2024]{key} Body.", ".bbl")
+
+    assert ("bib", "key", "{A ] B}2024 Body.") in state

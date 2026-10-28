@@ -9,15 +9,16 @@ A compiler and static analysis tool for LaTeX documents.
 
 [![PyPI](https://img.shields.io/pypi/v/auxflow)](https://pypi.org/project/auxflow/) [![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)](https://pypi.org/project/auxflow/)
 
-LaTeX documents often compile multiple times to settle page numbers, tables of contents, and citations.
-Standard tools rerun the engine until auxiliary files stop changing.
-AuxFlow inspects your code upfront, finds reference loops, and calculates the exact compile passes needed.
+LaTeX often needs several runs to settle page numbers, contents, and citations.
+AuxFlow analyzes a declared subset before TeX runs. It reports cycles and
+computes a conservative pass bound when its model can certify the document.
+The runtime verifier checks the actual auxiliary files.
 
 ```mermaid
 flowchart LR
-  TeX["LaTeX Source"] --> AF["AuxFlow Analysis"]
-  AF --> Plan["Optimized Build Plan<br>Runs engine only when needed"]
-  AF --> State["Convergence Report<br>CERTIFIED / CYCLIC / UNKNOWN"]
+  TeX["LaTeX source"] --> AF["Static analysis"]
+  AF --> Plan["Build plan"]
+  AF --> State["CERTIFIED / BENIGN_CYCLIC / AMPLIFYING / UNKNOWN"]
 ```
 
 ---
@@ -103,16 +104,56 @@ Results and errors still print, so scripts can rely on the output and the exit s
 
 ---
 
+## VS Code extension
+
+Download the VSIX attached to a [GitHub extension release](https://github.com/upayanmazumder/auxflow/releases) and install it with VS Code's **Extensions: Install from VSIX...** command. The release workflow attaches a VSIX to `vscode-v*` releases (for example, `vscode-v0.1.0`). To update, download a newer VSIX and install it again manually; this distribution does not provide Marketplace updates. The [extension guide](https://github.com/upayanmazumder/auxflow/blob/main/extension/README.md) covers settings and other requirements. The extension bundles the analyzer but requires Python 3.12 or newer on the extension host; no separate AuxFlow installation is needed.
+
+Checks of open `.tex` documents use unsaved contents after a debounce. Set `auxflow.mainFile` to a workspace-relative main file for included sources; otherwise the active file is the root. Warnings appear in Problems, and the static classification appears in the status bar. The extension does not run TeX. `UNKNOWN` indicates insufficient static knowledge, not proof of non-convergence. See [package and class limits](/reference/package-support.html).
+
 ## Document States
 
-AuxFlow assigns every document one of four convergence states:
+AuxFlow assigns one of four states from its static model:
 
-| State | What it means |
-|:---|:---|
-| **CERTIFIED** | Stable reference structure. Needs a fixed number of runs. |
-| **BENIGN_CYCLIC** | Loops exist, but do not change content length. Settles safely. |
-| **AMPLIFYING** | Loops trigger infinite page growth. Refused by default. |
-| **UNKNOWN** | Uses packages outside the supported subset. Uses safe default runs. |
+| State             | What it means                                                                                               |
+| :---------------- | :---------------------------------------------------------------------------------------------------------- |
+| **CERTIFIED**     | The model gives a conservative pass bound. Runtime still verifies it.                                       |
+| **BENIGN_CYCLIC** | The model finds a cycle without a structural edge. Convergence is not guaranteed.                           |
+| **AMPLIFYING**    | A value may change the amount of generated content. Refused by default.                                     |
+| **UNKNOWN**       | Unsupported syntax, packages, or a local class prevent certification. This is not proof of non-convergence. |
+
+## Packages, classes, and bundles
+
+AuxFlow recognizes `graphicx`, `varioref`, and `ifthen` for limited constructs.
+It treats `inputenc`, `fontenc`, `ae`, `aecompl`, `lmodern`, `xcolor`,
+`parskip`, `geometry`, `setspace`, `multicol`, and `amsmath` as inert for
+auxiliary-state analysis. An accepted name does not make all its commands
+or layout effects safe. Other direct package names make classification `UNKNOWN`.
+AuxFlow checks comma-separated package names individually. It does not certify
+TeX Live bundles as a unit.
+
+A local `.cls` file makes the document `UNKNOWN`. A nonstandard external class
+can produce a warning without changing classification. The
+[package and class reference](/reference/package-support.html) gives the exact
+list, limits, and diagnosis commands.
+
+## Demo documents
+
+The [quickstart files](https://github.com/upayanmazumder/auxflow/tree/main/examples/quickstart)
+show a reference, a multi-file build, an amplifying cycle, and a local class.
+The [15-document corpus](https://github.com/upayanmazumder/auxflow/tree/main/bench/corpus)
+also includes deliberate failure cases. Run these commands from the repository root:
+
+```sh
+auxflow classify examples/quickstart/simple.tex
+auxflow plan --explain examples/quickstart/multifile/main.tex
+auxflow classify bench/corpus/b08_cycle/main.tex
+```
+
+The last command reports `AMPLIFYING` and exits with status 1. Do not use
+`--force` for that demo. Three corpus cases exposed false negatives before
+guards changed their classifications to `UNKNOWN`. Read the
+[benchmark results](/evaluation/benchmarks.html) before treating any
+`CERTIFIED` result as a general convergence guarantee.
 
 ---
 
@@ -123,5 +164,6 @@ Browse the sections in the sidebar:
 - **[Reference](/reference/)**: Compiler phases, supported LaTeX subset, and dependency graph models.
 - **[Project](/project/)**: Formal specification, research questions, and literature comparison.
 - **[Evaluation](/evaluation/)**: 15-document benchmark corpus, test setup, and experimental results.
+- **[Paper](/paper/)**: The research paper (PDF) with its method, measurements, and limits.
 - **[Reviews](/reviews/)**: Viva defense notes, slide presentations, and assessment documents.
 - **[Changelog](/changelog.html)**: Interactive release notes and update history.
