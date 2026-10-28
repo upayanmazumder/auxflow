@@ -5,7 +5,7 @@ introduction, literature review, methodology, implementation, results and
 discussion, conclusion and future work, references.
 
 The benchmark numbers come from bench/results/2026-10-28/ (see
-paper/make_results.py). Code and test counts refer to the review snapshot.
+paper/make_results.py). Code counts describe the current source tree.
 
 Run from the repository root:
     python scripts/generate_review3_document.py
@@ -79,12 +79,13 @@ def build_document() -> None:
     add_para(
         doc,
         "The evaluation used 15 documents and 7 baselines, with 10 repetitions per "
-        "document and baseline (1,050 containerized runs). The predicted bound met "
-        "or exceeded ground truth for all 7 currently certified documents. "
-        "Two non-convergent documents "
-        "were AMPLIFYING and four were UNKNOWN. UNKNOWN does not establish divergence. "
-        "Analysis took 1.3 ms at the median and 10.4 ms at most. Guards added after the "
-        "first measurements changed three declared false negatives from CERTIFIED to UNKNOWN.",
+        "document and baseline (1,050 trials, not 1,050 engine runs). Over an "
+        "eight-pass ground-truth horizon, the predicted bound met or exceeded "
+        "the measured requirement for all 7 currently certified documents. "
+        "Two unstable documents were AMPLIFYING and four were UNKNOWN. UNKNOWN "
+        "does not establish non-convergence. Analysis took 1.3 ms at the median "
+        "and 10.4 ms at most in this corpus. Guards added after the first "
+        "measurements changed three declared false negatives from CERTIFIED to UNKNOWN.",
     )
 
     # 3. Introduction -------------------------------------------------------------------
@@ -112,10 +113,10 @@ def build_document() -> None:
     for item in [
         "Classify a document before an engine run and show the source locations of "
         "potentially amplifying cycles.",
-        "Calculate a conservative pass bound when the analysis certifies a document.",
+        "Calculate a pass bound for certified documents, then compare it with measured run counts.",
         "Build from that classification and compare auxiliary files after each engine run.",
-        "Compare the results with five deployed stopping tests on a 15-document corpus, "
-        "including cases that expose limitations.",
+        "Compare a fixed schedule and four dynamic stopping tests with AuxFlow on "
+        "a 15-document corpus, including cases that expose limitations.",
     ]:
         add_bullet(doc, item)
 
@@ -123,56 +124,48 @@ def build_document() -> None:
     add_heading(doc, "4. Literature Review")
     add_grid(
         doc,
-        ["Work", "What it contributes", "Relation to AuxFlow"],
+        ["Related work", "Main finding", "Relation to AuxFlow"],
         [
             [
-                "Bochmann 1976 and Alblas 1981",
-                "They study how to schedule attribute evaluation across passes. Alblas "
-                "distinguishes simple and pure multi-pass evaluation. Raiha and Ukkonen "
-                "(1981) show that finding a minimum pass assignment is NP-complete.",
-                "AuxFlow numbers individual facts and calculates a conservative bound. "
-                "It does not claim the fewest possible passes.",
+                "Alblas (1981)",
+                "Distinguishes simple from pure multi-pass attribute evaluation. "
+                "The pure setting considers individual attribute instances.",
+                "AuxFlow numbers individual auxiliary facts. It does not claim "
+                "to invent instance-level pass numbering.",
             ],
             [
-                "Farrow 1986, Jones 1990, Magnusson and Hedin 2007",
-                "They study circular attribute grammars. Jones uses strongly connected "
-                "components to separate cycles. Magnusson and Hedin require finite height "
-                "and monotone functions for convergence, but their evaluator does not "
-                "check those conditions.",
-                "AuxFlow uses components to report cycles. Its influence analysis tests "
-                "a restricted form of the finite-height condition.",
+                "Hecht and Ullman (1975)",
+                "Relate iterative data-flow rounds to graph depth.",
+                "AuxFlow uses a similar propagation bound, followed by a "
+                "confirmation run.",
             ],
             [
-                "Hecht and Ullman 1975, Kam and Ullman 1976",
-                "They relate iterative data-flow rounds to graph depth.",
-                "AuxFlow uses a similar bound: P runs for propagation and one further "
-                "run in the static schedule.",
+                "Magnusson and Hedin (2007)",
+                "State finite-height and monotonicity conditions for circular "
+                "attribute convergence. Their evaluator does not check them.",
+                "AuxFlow detects content-generation feedback in its declared "
+                "subset, but it does not test every convergence condition.",
             ],
             [
-                "Mokhov, Mitchell and Peyton Jones 2018, Erdweg et al. 2015 (Pluto)",
-                "These works distinguish static and dynamic dependencies in build "
-                "systems. Pluto handles LaTeX cycles dynamically and questions whether "
-                "LaTeX dependencies can be found statically in general.",
-                "AuxFlow limits the source language. It reports UNKNOWN for unsupported "
-                "constructs instead of assuming their effects.",
+                "Erdweg, Lichter, and Weiel (2015)",
+                "Their Pluto build system handles LaTeX dependencies dynamically. "
+                "They explain why general static dependency detection is not sound.",
+                "AuxFlow restricts the source language and reports UNKNOWN "
+                "for unsupported constructs.",
             ],
             [
-                "latexmk, latexrun, Tectonic, ConTeXt, Typst, Gaspar 2014, Madje 2022",
-                "The tools use different stopping tests. Gaspar gives a document that "
-                "does not settle. Madje discusses why arbitrary program stability is "
-                "undecidable and proposes a capped check with an error location.",
-                "The tools supply stopping-test baselines. Gaspar's loop informs "
-                "corpus member b08.",
+                "Gaspar (2014)",
+                "Shows a LaTeX loop whose page reference causes repeated page growth.",
+                "The example informs corpus document b08_cycle, which AuxFlow "
+                "reports as AMPLIFYING.",
             ],
         ],
     )
     add_para(
         doc,
-        "The earlier work supplies ways to number passes and analyze cycles, but TeX "
-        "documents can change their own dependency structure. I used fact instances "
-        "rather than fact kinds so that the graph records where a particular label, "
-        "reference, or generated entry comes from. The corpus tests when that model "
-        "helps and where it misses feedback.",
+        "These five works cover pass scheduling, iteration bounds, cyclic "
+        "evaluation, dynamic build dependencies, and a non-convergent LaTeX "
+        "example. AuxFlow applies their ideas to a restricted document model.",
     )
 
     # 5. Methodology --------------------------------------------------------------------
@@ -226,10 +219,11 @@ def build_document() -> None:
     add_para(
         doc,
         "The classifier selects one of four states from the graph. A CERTIFIED plan "
-        "uses the derived bound. Every other executable plan starts with at least "
+        "uses the derived count. Every other executable plan starts with at least "
         "three engine runs, as enforced by a planner assertion. AMPLIFYING has no "
-        "plan unless the user supplies --force. That option permits runs up to a "
-        "cap of six.",
+        "plan unless the user supplies --force. Forced runs stop at a cap of six. "
+        "UNKNOWN has a conservative executable plan by default. The --strict option "
+        "refuses UNKNOWN before execution.",
     )
     add_figure(
         doc,
@@ -294,24 +288,13 @@ def build_document() -> None:
         add_bullet(doc, item)
     add_label(doc, "Code and quality figures")
     for item in [
-        "At the review snapshot, the project had 5,602 lines of Python source "
-        "code in 47 modules and 5,893 lines of test code in 57 test files. "
-        "The compiler core had no third-party runtime dependencies.",
-        "At that snapshot, 396 unit, golden, and property tests passed "
-        "(1 skipped). mypy --strict reported zero issues on 48 files. "
-        "ruff lint and format checks were clean.",
+        "The current tree has 5,657 lines of Python source in 47 modules, excluding "
+        "the generated version file. Tests contain 6,021 lines in 58 Python files. "
+        "The compiler core has no third-party runtime dependencies. In the local "
+        "non-engine test run, 403 tests passed, 1 skipped, and 3 engine or slow "
+        "tests were deselected. These counts describe the current tree.",
     ]:
         add_bullet(doc, item)
-    for filename, caption in [
-        (
-            "06-classify-certified.png",
-            "Figure 6. auxflow classify and plan on a CERTIFIED document",
-        ),
-        ("07-classify-amplifying.png", "Figure 7. auxflow classify on an AMPLIFYING document"),
-        ("09-classify-unknown.png", "Figure 8. auxflow classify on an UNKNOWN document"),
-        ("10-run-forced.png", "Figure 9. auxflow run --force stops at the cap of six runs"),
-    ]:
-        add_figure(doc, f"docs/screenshots/{filename}", caption)
 
     # 7. Results and discussion ---------------------------------------------------------
     add_heading(doc, "7. Results and Discussion")
@@ -321,19 +304,32 @@ def build_document() -> None:
         "The 15 documents, b01_plain through b15_ibid, include a multi-chapter thesis "
         "and cases for mechanisms M1 to M9. Each of seven baselines used ten "
         "repetitions per document, in separate containers with one CPU and no "
-        "network. This produced 1,050 runs. A is a fixed three-run schedule, B uses "
-        "engine warnings, C compares outputs, C' compares inputs, and C'' compares "
-        "files read and rewritten within a run. D is static AuxFlow analysis. "
-        "E adds runtime verification. Ground truth N* uses eight unconditional "
-        "engine passes rather than a baseline's stopping decision. I recorded the "
-        "expected classes before implementing the analyzer.",
+        "network. This produced 1,050 trials, including static-only D trials with "
+        "no engine runs. A is a fixed three-run schedule, B uses engine warnings, "
+        "C compares outputs, C' compares inputs, and C'' compares files read and "
+        "rewritten within a run. D is static AuxFlow analysis. E adds runtime "
+        "verification with --strict for UNKNOWN. Ground truth N* uses eight "
+        "unconditional engine passes rather than a baseline's stopping decision. "
+        "I recorded expected classes before implementing the analyzer.",
     )
     add_figure(
         doc,
         "docs/figures/evaluation-setup.png",
-        "Figure 10. Evaluation setup: corpus, baselines, ground truth, and gates",
+        "Figure 6. Evaluation setup: corpus, baselines, ground truth, and gates",
     )
 
+    add_label(doc, "Screenshots of classification and execution")
+
+    for filename, caption in [
+        (
+            "06-classify-certified.png",
+            "Figure 7. auxflow classify and plan on a CERTIFIED document",
+        ),
+        ("07-classify-amplifying.png", "Figure 8. auxflow classify on an AMPLIFYING document"),
+        ("09-classify-unknown.png", "Figure 9. auxflow classify on an UNKNOWN document"),
+        ("10-run-forced.png", "Figure 10. auxflow run --force stops at the cap of six runs"),
+    ]:
+        add_figure(doc, f"docs/screenshots/{filename}", caption)
     add_label(doc, "Classification and run-count bound")
     add_grid(
         doc,
@@ -357,9 +353,9 @@ def build_document() -> None:
         ],
     )
     for item in [
-        "For the 7 currently certified documents, N >= N*. The bound is exact "
-        "for 4 and exceeds ground truth by one for b04, b06, and b09. This is "
-        "a conservative bound, not a minimum pass count.",
+        "For the 7 currently certified documents, N >= N* over the measured "
+        "eight-pass horizon. The bound is exact for 4 and exceeds ground truth "
+        "by one for b04, b06, and b09. This does not prove a universal bound.",
         "The classifier marks b08 AMPLIFYING and b05 CERTIFIED. The former has a "
         "content-generating cycle, while the latter has a generated list without "
         "that cycle.",
@@ -396,6 +392,7 @@ def build_document() -> None:
             ["Non-convergence accepted as converged", "6", "1", "0", "0", "0", "0", "0"],
             ["Engine runs on the 9 convergent documents", "27", "17", "22", "22", "22", "17", "0"],
         ],
+        widths_cm=[6.9, 1.35, 1.35, 1.35, 1.35, 1.35, 1.35, 1.35],
     )
     for item in [
         "The fixed three-run schedule A accepts all 6 non-convergent cases as converged.",
@@ -406,8 +403,9 @@ def build_document() -> None:
         "one-run difference between output and input comparisons did not appear "
         "in this corpus.",
         "E made 17 engine runs across the 7 convergent documents it executed. "
-        "A made 21 on those same documents. E refused the 6 non-convergent cases "
-        "and the convergent but opaque b07 and b15 before an engine run.",
+        "A made 21 on those same documents. The benchmark's strict policy refused "
+        "the 6 non-convergent cases and the convergent but opaque b07 and b15 "
+        "before execution. Without --strict, UNKNOWN can run with verification.",
         "For b01_plain, N* and the predicted N are both 1, but E runs twice. "
         "pdfTeX writes a page-count record to the .aux file, so the verifier "
         "needs two observed states to confirm equality. It records a prediction "
@@ -460,9 +458,9 @@ def build_document() -> None:
     add_heading(doc, "8. Conclusion and Future Work")
     add_label(doc, "Outcomes")
     for item in [
-        "On the 7 currently certified documents, AuxFlow's bound was never "
-        "below the measured N*. The planner uses a conservative schedule "
-        "for documents it cannot certify.",
+        "On the 7 currently certified documents, AuxFlow's predicted count was "
+        "never below measured N* within eight passes. Non-certified plans use "
+        "at least three runs when execution is allowed.",
         "Static analysis took 1.3 ms at the median in this 15-document corpus. "
         "Diagnostics include source locations.",
         "In this corpus, a fixed three-run schedule accepted all 6 unstable "
@@ -474,11 +472,13 @@ def build_document() -> None:
     add_label(doc, "Limitations")
     for item in [
         "The analysis handles a declared subset. Unsupported constructs make "
-        "the result UNKNOWN, which is not a non-convergence finding.",
+        "the result UNKNOWN, which is not a non-convergence finding. The benchmark "
+        "refused UNKNOWN under --strict, while normal execution permits it.",
         "The syntactic width guard does not capture every change to text extent. "
         "Extent-driven feedback can still defeat the analysis.",
         "AMPLIFYING covers both divergence and oscillation. The bound for "
         "BENIGN_CYCLIC is heuristic, and this corpus has no benign cyclic case.",
+        "Ground truth observes eight passes. A longer run could reveal later changes.",
     ]:
         add_bullet(doc, item)
     add_label(doc, "Improvements")

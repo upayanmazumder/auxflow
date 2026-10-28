@@ -11,7 +11,7 @@ nav_order: 3
 
 Short answers for the viva, grouped by topic. Numbers come from `bench/results/2026-10-28/`.
 
-**Facts to remember:** 15 documents, 7 baselines, 10 repetitions, 1,050 runs. 7 certified, 6 non-convergent. Analysis 1.3 ms median, 10.4 ms maximum. 396 tests pass, 1 skipped. mypy --strict and ruff are clean.
+**Facts to remember:** 15 documents, 7 baselines, 10 repetitions, 1,050 trials. Static baseline D uses no engine runs. The corpus has 7 certified and 6 unstable documents. Analysis took 1.3 ms at the median and 10.4 ms at most. The current non-engine test run passed 403 tests, skipped 1, and deselected 3.
 
 ---
 
@@ -40,7 +40,7 @@ Corpus member `b08_cycle` (Gaspar 2014). A loop runs while a counter is below th
 The auxiliary state that stops changing between runs. A run is correct when it reads that state.
 
 **Q7. What is N\* and N?**
-N\* is the measured run count from ground truth. N is the run count AuxFlow predicts. For a certified document we need N ≥ N\*.
+N\* is the measured run count within eight passes. N is the predicted run count. All 7 certified corpus documents have N ≥ N\*. This does not prove a universal bound.
 
 **Q8. What is pass lag?**
 The number of runs before a written value can be read. It is 1 for the `.aux` round trip. A BibTeX edge counts as 0 in the recurrence, because BibTeX runs between two engine runs.
@@ -153,7 +153,7 @@ No. It reimplements the checksum idea of latexmk, so that baselines B, C, and E 
 15 documents, `b01_plain` to `b15_ibid`, one mechanism each (M1 to M9), plus a multi-chapter thesis. Expected classes were written before the analyzer.
 
 **Q38. What are the seven baselines?**
-A fixed 3 runs. B rerun warning. C output comparison (latexmk). C′ input comparison (latexrun). C″ read-then-written (Tectonic). D AuxFlow static only. E AuxFlow plus runtime verification.
+A fixed 3 runs. B rerun warning. C output comparison (latexmk). C′ input comparison (latexrun). C″ read-then-written (Tectonic). D AuxFlow static only. E AuxFlow plus runtime verification, using `--strict` for UNKNOWN.
 
 **Q39. How is ground truth defined?**
 Eight unconditional engine passes. N\* is the smallest k below 8 such that the state and the text layer from run k to run 8 all equal run 8. Documents with no such k are divergent or oscillating.
@@ -172,7 +172,7 @@ The published results were measured before the width guard. I rebuilt the image 
 ## 8. Results
 
 **Q43. What are the headline results?**
-All 7 certified documents have N ≥ N\*. All 6 non-convergent documents are flagged before any engine run (2 AMPLIFYING, 4 UNKNOWN). Analysis takes 1.3 ms median, 10.4 ms maximum.
+All 7 certified corpus documents have N ≥ N\* within eight passes. The strict benchmark refuses all 6 unstable documents before an engine run (2 AMPLIFYING, 4 UNKNOWN). Analysis took 1.3 ms at the median and 10.4 ms at most.
 
 **Q44. What do the baselines get wrong?**
 A accepts all 6 non-convergent documents after 3 runs. B accepts `b10_random` after 1 run and stops early on `b05` and `b15`. C, C′, C″ flag all 6 and give the same verdict everywhere.
@@ -181,7 +181,7 @@ A accepts all 6 non-convergent documents after 3 runs. B accepts `b10_random` af
 No. They agreed on every document. We expected a gap from the manuals, and a larger corpus might show it.
 
 **Q46. How many runs does E need?**
-17 runs on the 7 documents it executes, against 21 for A. It refuses 8 documents before the first run: the 6 non-convergent ones, plus `b07` and `b15` (opaque constructs). The saving is small on tiny documents.
+E made 17 runs on the 7 documents it executed, against 21 for A. Under the benchmark's strict policy, it refused 8 documents before execution. Without `--strict`, UNKNOWN can run with verification. The saving is small on tiny documents.
 
 **Q47. Why does `b01_plain` need 2 runs under E when N = 1?**
 pdfTeX writes a page-count record to every `.aux` file. The state is never empty, so the verifier needs a second run to see two equal states. The prediction is right. The miss comes from the confirming run.
