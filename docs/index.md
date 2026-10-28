@@ -106,7 +106,9 @@ Results and errors still print, so scripts can rely on the output and the exit s
 
 ## VS Code extension
 
-Download the VSIX attached to a [GitHub extension release](https://github.com/upayanmazumder/auxflow/releases) and install it with VS Code's **Extensions: Install from VSIX...** command. The release workflow attaches a VSIX to `vscode-v*` releases (for example, `vscode-v0.1.0`). To update, download a newer VSIX and install it again manually; this distribution does not provide Marketplace updates. The [extension guide](https://github.com/upayanmazumder/auxflow/blob/main/extension/README.md) covers settings and other requirements. The extension bundles the analyzer but requires Python 3.12 or newer on the extension host; no separate AuxFlow installation is needed.
+Download the VSIX from the [GitHub Releases page](https://github.com/upayanmazumder/auxflow/releases). Install it with VS Code's **Extensions: Install from VSIX...** command. The extension uses the same numeric version as the Python package. Release `vscode-v0.4.0` contains the current VSIX. Future `vX.Y.Z` releases publish the Python package to PyPI and attach the VSIX to the same GitHub release. The workflow updates the extension version before tests and saves it to `main` after publication.
+
+To update, install the newer VSIX manually. The Marketplace does not provide updates for this extension. The [extension guide](https://github.com/upayanmazumder/auxflow/blob/main/extension/README.md) covers settings. The extension bundles the analyzer but requires Python 3.12 or newer on the extension host. A separate AuxFlow installation is unnecessary.
 
 Checks of open `.tex` documents use unsaved contents after a debounce. Set `auxflow.mainFile` to a workspace-relative main file for included sources; otherwise the active file is the root. Warnings appear in Problems, and the static classification appears in the status bar. The extension does not run TeX. `UNKNOWN` indicates insufficient static knowledge, not proof of non-convergence. See [package and class limits](/reference/package-support.html).
 

@@ -4,7 +4,7 @@ AuxFlow checks LaTeX `.tex` sources while you edit. It reports parser and semant
 
 ## Install and update from GitHub
 
-Download `auxflow-<version>.vsix` from the [GitHub Releases page](https://github.com/upayanmazumder/auxflow/releases). In VS Code, open the Extensions view, select **Install from VSIX...**, and choose the downloaded file. Alternatively, run `code --install-extension auxflow-<version>.vsix` from a terminal.
+Download `auxflow-<version>.vsix` from the [GitHub Releases page](https://github.com/upayanmazumder/auxflow/releases). The extension uses the same numeric version as the Python package. Release `vscode-v0.4.0` contains the current VSIX. Future `vX.Y.Z` releases publish the Python package to PyPI and attach the VSIX to the same GitHub release. In VS Code, open Extensions, select **Install from VSIX...**, and choose the file. Alternatively, run `code --install-extension auxflow-<version>.vsix`.
 
 To update, download a newer VSIX from GitHub Releases and install it the same way. VS Code does not automatically update extensions installed from a VSIX. This extension is not published to the Visual Studio Marketplace.
 
