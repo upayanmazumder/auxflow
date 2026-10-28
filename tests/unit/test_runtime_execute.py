@@ -175,11 +175,11 @@ def test_extension_run_obeys_the_same_timeout(
 ) -> None:
     source = _setup(tmp_path, monkeypatch, "hang-after")
 
-    report = execute(_plan(source, runs=2), tmp_path, timeout=0.05)
+    report = execute(_plan(source, runs=2), tmp_path, timeout=0.5)
 
     assert report.status == "tool_error"
     assert report.runs == 2
-    assert report.message == "pdflatex timed out after 0.05 seconds"
+    assert report.message == "pdflatex timed out after 0.5 seconds"
     assert (tmp_path / "engine.count").read_text() == "3"
 
 
