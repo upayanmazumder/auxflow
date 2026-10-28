@@ -10,7 +10,7 @@ This page fetches release notes directly from [GitHub Releases](https://github.c
 
 ## Unreleased
 
-- The VS Code extension checks open and unsaved `.tex` buffers, reports diagnostics in Problems, and shows static classification without running TeX. It bundles the analyzer and requires Python 3.12 or newer. The release workflow sets the extension version from the release tag, tests the VSIX, and saves the version on `main`. Future Python releases attach the matching VSIX after tests. Install and update manually from GitHub Releases, not the Marketplace.
+- The VS Code extension checks open and unsaved `.tex` buffers, reports diagnostics in Problems, and shows static classification without running TeX. It bundles the analyzer and requires Python 3.12 or newer. The `vX.Y.Z` release workflow attaches the Python wheel, source distribution, and matching VSIX after tests. Install and update manually from GitHub Releases, not the Marketplace.
 - The website lists accepted package names, unsupported bundles, and class limits. It links to the tested demo documents.
 - The Review 3 report now separates static findings from runtime checks and explains the failed gate and post-measurement guards.
 - Runtime normalization reads braces inside optional bibliography labels before it finds the closing bracket.

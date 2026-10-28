@@ -106,7 +106,9 @@ Results and errors still print, so scripts can rely on the output and the exit s
 
 ## VS Code extension
 
-Download the VSIX from the [GitHub Releases page](https://github.com/upayanmazumder/auxflow/releases). Install it with VS Code's **Extensions: Install from VSIX...** command. The extension uses the same numeric version as the Python package. Release `vscode-v0.4.0` contains the current VSIX. Future `vX.Y.Z` releases publish the Python package to PyPI and attach the VSIX to the same GitHub release. The workflow updates the extension version before tests and saves it to `main` after publication.
+Download the VSIX from the [GitHub Releases page](https://github.com/upayanmazumder/auxflow/releases). Install it with VS Code's **Extensions: Install from VSIX...** command. Future `vX.Y.Z` releases attach a wheel, source distribution, and VSIX. The workflow checks Python and the extension before publication. It sets the extension version from the release tag and saves that version to `main`.
+
+The `v0.1.0` and `v0.4.0` VSIX files were added after the Python releases. They bundle newer analyzer code. Later releases build all assets from the same tag.
 
 To update, install the newer VSIX manually. The Marketplace does not provide updates for this extension. The [extension guide](https://github.com/upayanmazumder/auxflow/blob/main/extension/README.md) covers settings. The extension bundles the analyzer but requires Python 3.12 or newer on the extension host. A separate AuxFlow installation is unnecessary.
 
