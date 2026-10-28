@@ -10,6 +10,7 @@ This page fetches release notes directly from [GitHub Releases](https://github.c
 
 ## Unreleased
 
+- Runtime normalization reads braces inside optional bibliography labels before it finds the closing bracket.
 - `auxflow update` works in a pipx installation. The pipx environment has no pip, so AuxFlow runs `pipx upgrade auxflow` there. In any other environment without pip, it explains how to update.
 - Reports and `auxflow check` print `file:line:column` instead of character offsets. Paths under the current directory print relative to it.
 - The cycle report uses plain words. `auxflow classify -v` adds the internal fact names. `auxflow plan --explain` describes each pass in plain words.
