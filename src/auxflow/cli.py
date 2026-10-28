@@ -173,6 +173,11 @@ def build_parser() -> argparse.ArgumentParser:
             )
         if name == "check":
             sub.add_argument("--json", action="store_true", help="print the result as JSON")
+            sub.add_argument(
+                "--sources-stdin",
+                action="store_true",
+                help="read unsaved source buffers as JSON from stdin",
+            )
         if name == "classify":
             sub.add_argument(
                 "-v", "--verbose", action="store_true", help="list every source location"
@@ -473,7 +478,28 @@ def _run_tokens(path: str) -> int:
     return 0
 
 
-def _load_forest(path: str) -> tuple[Forest, list[Diagnostic]]:
+def _read_source_snapshots() -> dict[str, str]:
+    """Validate editor buffers before any document is read from disk."""
+    try:
+        payload = json.load(sys.stdin)
+    except (ValueError, UnicodeError) as error:
+        raise ValueError("invalid sources JSON") from error
+    if not isinstance(payload, dict) or set(payload) != {"sources"}:
+        raise ValueError("sources must be an object containing only 'sources'")
+    raw_sources = payload["sources"]
+    if not isinstance(raw_sources, dict):
+        raise ValueError("sources must map absolute file paths to text")
+    for file_id, text in raw_sources.items():
+        if not isinstance(file_id, str) or not Path(file_id).is_absolute():
+            raise ValueError("sources keys must be absolute file paths")
+        if not isinstance(text, str):
+            raise ValueError("sources values must be strings")
+    return raw_sources
+
+
+def _load_forest(
+    path: str, sources: dict[str, str] | None = None
+) -> tuple[Forest, list[Diagnostic]]:
     root = str(Path(path).absolute())
     documents: dict[str, Document] = {}
     diagnostics: list[Diagnostic] = []
@@ -482,13 +508,18 @@ def _load_forest(path: str) -> tuple[Forest, list[Diagnostic]]:
         file_id = pending.pop()
         if file_id in documents:
             continue
-        with open(file_id, encoding="utf-8") as f:
-            source = f.read()
+        if sources is not None and file_id in sources:
+            source = sources[file_id]
+        else:
+            with open(file_id, encoding="utf-8") as f:
+                source = f.read()
         result = parse(tokenize(source, file_id=file_id), file_id=file_id)
         documents[file_id] = result.document
         diagnostics.extend(result.diagnostics)
         for edge in inclusion_edges(file_id, result.document):
-            if edge.target not in documents and Path(edge.target).is_file():
+            if edge.target not in documents and (
+                (sources is not None and edge.target in sources) or Path(edge.target).is_file()
+            ):
                 pending.append(edge.target)
     return build_forest(documents), diagnostics
 
@@ -554,8 +585,10 @@ def _run_symbols(path: str) -> int:
     return 0
 
 
-def _run_check(path: str, *, as_json: bool, quiet: bool) -> int:
-    forest, parse_diagnostics = _load_forest(path)
+def _run_check(
+    path: str, *, as_json: bool, quiet: bool, sources: dict[str, str] | None = None
+) -> int:
+    forest, parse_diagnostics = _load_forest(path, sources)
     tables = resolve(forest, declare(forest))
     diagnostics = [
         *parse_diagnostics,
@@ -571,7 +604,7 @@ def _run_check(path: str, *, as_json: bool, quiet: bool) -> int:
             diagnostic.message,
         )
     )
-    locator = Locator()
+    locator = Locator(sources)
     errors = sum(diagnostic.severity == "error" for diagnostic in diagnostics)
     warnings = len(diagnostics) - errors
     state = _analyze(forest)[2].state.name
@@ -579,10 +612,15 @@ def _run_check(path: str, *, as_json: bool, quiet: bool) -> int:
         entries = []
         for diagnostic in diagnostics:
             line, column = locator.line_col(diagnostic.span)
+            end_line, end_column = locator.line_col(
+                replace(diagnostic.span, start=diagnostic.span.end)
+            )
             entries.append(
                 {
                     "file": diagnostic.span.file_id,
                     "line": line,
+                    "end_line": end_line,
+                    "end_column": end_column,
                     "column": column,
                     "severity": diagnostic.severity,
                     "message": diagnostic.message,
@@ -897,11 +935,19 @@ def main(argv: list[str] | None = None) -> int:
         return _run_update(check_only=args.check)
     if args.command == "doctor":
         return _run_doctor(as_json=args.json)
-    problem = _unreadable(args.file)
+    sources: dict[str, str] | None = None
+    if args.command == "check" and args.sources_stdin:
+        try:
+            sources = _read_source_snapshots()
+        except ValueError as error:
+            print(f"auxflow: {error}", file=sys.stderr)
+            return 2
+    root = str(Path(args.file).absolute())
+    problem = None if sources is not None and root in sources else _unreadable(args.file)
     if problem is not None:
         print(f"auxflow: {problem}", file=sys.stderr)
         return 2
-    if argv is None and not args.quiet:
+    if argv is None and not args.quiet and sources is None:
         update.notify_and_check(_version())
     try:
         if args.command == "tokens":
@@ -911,7 +957,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "symbols":
             return _run_symbols(args.file)
         if args.command == "check":
-            return _run_check(args.file, as_json=args.json, quiet=args.quiet)
+            return _run_check(args.file, as_json=args.json, quiet=args.quiet, sources=sources)
         if args.command == "graph":
             return _run_graph(args.file, args.output)
         if args.command == "classify":

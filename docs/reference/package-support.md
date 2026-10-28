@@ -38,4 +38,6 @@ auxflow plan --explain main.tex
 
 `check` reports package and class warnings. `classify -v` shows unsupported constructs and their locations. `UNKNOWN` uses at least three engine runs unless strict mode refuses execution. AuxFlow refuses `AMPLIFYING` unless you use `--force`. Only `auxflow run` starts TeX tools, and it is not a sandbox.
 
+The [VS Code extension](https://github.com/upayanmazumder/auxflow/blob/main/extension/README.md) uses the same static analyzer on open `.tex` documents, including unsaved edits. Download and install its VSIX from a [GitHub extension release](https://github.com/upayanmazumder/auxflow/releases); install a newer VSIX manually to update. Its diagnostics and classifications inherit these package, class, and language-subset limits. A configured workspace-relative main file sets the analysis root; otherwise the active file is the root. It reports warnings in Problems but never executes TeX. `UNKNOWN` reflects insufficient static knowledge, not proof of non-convergence.
+
 See the [benchmark corpus](/evaluation/benchmarks.html) for tested cases. `b06_bib` uses ordinary BibTeX, while `b15_ibid` uses unmodelled `biblatex`. The original specification marked `b11_width`, `b12_float`, and `b13_varioref` as false negatives. Guards added after measurement classify them as `UNKNOWN`. This corpus cannot independently test those guards.

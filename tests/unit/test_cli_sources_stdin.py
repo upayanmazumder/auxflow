@@ -59,6 +59,9 @@ def test_unsaved_included_file_replaces_disk_and_reports_its_location(
     assert report["diagnostics"][0]["file"] == str(child)
     assert report["diagnostics"][0]["message"] == "undefined reference: 'missing'"
 
+    assert report["diagnostics"][0]["end_line"] == 1
+    assert report["diagnostics"][0]["end_column"] == 14
+
 
 def test_new_unsaved_root_and_child_can_be_analyzed(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
@@ -76,6 +79,8 @@ def test_new_unsaved_root_and_child_can_be_analyzed(
     assert report["errors"] == 1
     assert report["diagnostics"][0]["file"] == str(child)
     assert report["diagnostics"][0]["message"] == "undefined reference: 'missing'"
+    assert report["diagnostics"][0]["end_line"] == 1
+    assert report["diagnostics"][0]["end_column"] == 14
 
 
 def test_invalid_source_snapshot_does_not_analyze_stale_disk(
@@ -89,3 +94,29 @@ def test_invalid_source_snapshot_does_not_analyze_stale_disk(
     output = capsys.readouterr()
     assert output.out == ""
     assert "sources" in output.err
+
+
+@pytest.mark.parametrize(
+    "snapshot",
+    [
+        "not json",
+        "[]",
+        '{"sources": []}',
+        '{"sources": {"relative.tex": "text"}}',
+        '{"sources": {"/absolute.tex": 5}}',
+    ],
+)
+def test_invalid_snapshots_never_read_disk(
+    snapshot: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    root = tmp_path / "main.tex"
+    root.write_text("\\ref{missing}")
+    monkeypatch.setattr(sys, "stdin", io.StringIO(snapshot))
+
+    assert cli.main(["check", "--json", "--sources-stdin", str(root)]) == 2
+    output = capsys.readouterr()
+    assert output.out == ""
+    assert output.err

@@ -55,7 +55,7 @@ def check_inclusions(forest: Forest) -> list[Diagnostic]:
     for edge in forest.edges:
         parents.setdefault(edge.target, []).append(edge.source)
     for edge in forest.edges:
-        if not Path(edge.target).is_file():
+        if edge.target not in forest.documents and not Path(edge.target).is_file():
             diagnostics.append(Diagnostic(edge.span, f"unresolvable inclusion: {edge.target}"))
     for file_id, document in forest.documents.items():
         directories = _graphics_directories(file_id, parents)

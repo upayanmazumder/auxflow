@@ -104,16 +104,22 @@ Results and errors still print, so scripts can rely on the output and the exit s
 
 ---
 
+## VS Code extension
+
+Download the VSIX attached to a [GitHub extension release](https://github.com/upayanmazumder/auxflow/releases) and install it with VS Code's **Extensions: Install from VSIX...** command. The release workflow attaches a VSIX to `vscode-v*` releases (for example, `vscode-v0.1.0`). To update, download a newer VSIX and install it again manually; this distribution does not provide Marketplace updates. The [extension guide](https://github.com/upayanmazumder/auxflow/blob/main/extension/README.md) covers settings and other requirements. The extension bundles the analyzer but requires Python 3.12 or newer on the extension host; no separate AuxFlow installation is needed.
+
+Checks of open `.tex` documents use unsaved contents after a debounce. Set `auxflow.mainFile` to a workspace-relative main file for included sources; otherwise the active file is the root. Warnings appear in Problems, and the static classification appears in the status bar. The extension does not run TeX. `UNKNOWN` indicates insufficient static knowledge, not proof of non-convergence. See [package and class limits](/reference/package-support.html).
+
 ## Document States
 
 AuxFlow assigns one of four states from its static model:
 
-| State | What it means |
-|:---|:---|
-| **CERTIFIED** | The model gives a conservative pass bound. Runtime still verifies it. |
-| **BENIGN_CYCLIC** | The model finds a cycle without a structural edge. Convergence is not guaranteed. |
-| **AMPLIFYING** | A value may change the amount of generated content. Refused by default. |
-| **UNKNOWN** | Unsupported syntax, packages, or a local class prevent certification. This is not proof of non-convergence. |
+| State             | What it means                                                                                               |
+| :---------------- | :---------------------------------------------------------------------------------------------------------- |
+| **CERTIFIED**     | The model gives a conservative pass bound. Runtime still verifies it.                                       |
+| **BENIGN_CYCLIC** | The model finds a cycle without a structural edge. Convergence is not guaranteed.                           |
+| **AMPLIFYING**    | A value may change the amount of generated content. Refused by default.                                     |
+| **UNKNOWN**       | Unsupported syntax, packages, or a local class prevent certification. This is not proof of non-convergence. |
 
 ## Packages, classes, and bundles
 

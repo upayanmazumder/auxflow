@@ -94,6 +94,12 @@ Locations print as `file:line:column`. Paths under the current directory print r
 `auxflow --quiet COMMAND` hides progress, next-step hints, and update notices.
 Results and errors still print, so scripts can rely on the output and the exit status.
 
+## VS Code extension
+
+The [VS Code extension](extension/README.md) checks open `.tex` documents, including unsaved edits, after a short debounce. It puts warnings in Problems and shows the static classification in the status bar. Set `auxflow.mainFile` to a workspace-relative main `.tex` file when editing included sources; otherwise the active file is the root. It never runs TeX automatically.
+
+Download the VSIX attached to a [GitHub extension release](https://github.com/upayanmazumder/auxflow/releases) and install it with VS Code's **Extensions: Install from VSIX...** command. The release workflow attaches a VSIX to `vscode-v*` releases (for example, `vscode-v0.1.0`); to update, download the newer VSIX and install it again manually. Distribution is through GitHub Releases, not the Marketplace. The extension bundles the Python analyzer, so a separate AuxFlow installation is unnecessary, but Python 3.12 or newer must be available on the extension host. See the extension README for settings and requirements. `UNKNOWN` means the static model lacks enough information, not that non-convergence has been proved; [package and class support](docs/reference/package-support.md) and the supported LaTeX subset limit what it can certify.
+
 ## Package and class support
 
 AuxFlow recognizes `graphicx`, `varioref`, and `ifthen` for limited constructs.
@@ -140,12 +146,12 @@ list, and citation facts. Its analysis identifies cycles and calculates a
 model-based pass bound. The planner uses that bound only for `CERTIFIED`.
 Other executable plans start with at least three engine runs.
 
-| State | Meaning |
-|---|---|
-| `CERTIFIED` | The model yields a conservative pass bound. Runtime still checks the files. |
-| `BENIGN_CYCLIC` | The model finds a cycle without a structural edge. Convergence is not guaranteed. |
-| `AMPLIFYING` | A value can change generated content. AuxFlow refuses the plan by default. |
-| `UNKNOWN` | An unsupported construct prevents certification. It does not prove non-convergence. |
+| State           | Meaning                                                                             |
+| --------------- | ----------------------------------------------------------------------------------- |
+| `CERTIFIED`     | The model yields a conservative pass bound. Runtime still checks the files.         |
+| `BENIGN_CYCLIC` | The model finds a cycle without a structural edge. Convergence is not guaranteed.   |
+| `AMPLIFYING`    | A value can change generated content. AuxFlow refuses the plan by default.          |
+| `UNKNOWN`       | An unsupported construct prevents certification. It does not prove non-convergence. |
 
 ---
 

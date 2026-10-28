@@ -10,6 +10,7 @@ This page fetches release notes directly from [GitHub Releases](https://github.c
 
 ## Unreleased
 
+- A VS Code extension can check open and unsaved `.tex` buffers after a debounce, report diagnostics in Problems, and show the static classification without running TeX. It bundles the Python analyzer and requires Python 3.12 or newer on the extension host. The GitHub Actions workflow attaches a VSIX to `vscode-v*` releases; install and update it manually from GitHub Releases, not the Marketplace.
 - The website lists accepted package names, unsupported bundles, and class limits. It links to the tested demo documents.
 - The Review 3 report now separates static findings from runtime checks and explains the failed gate and post-measurement guards.
 - Runtime normalization reads braces inside optional bibliography labels before it finds the closing bracket.
