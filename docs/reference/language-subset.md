@@ -61,10 +61,10 @@ This is a deliberate under-approximation. Expanding macros correctly requires a 
 expanding them incorrectly would produce an unsound analysis while looking like a feature.
 Recording without expanding is honest and its consequences are visible in the classification.
 
-## Optional
+## Proposed extensions
 
-Implemented only if the schedule allows. Each adds a distinct mechanism rather than more of the
-same.
+These constructs are not part of the current analysis. The planner can call
+`makeindex`, but the current subset does not lower `\index` facts.
 
 | Construct | What it adds |
 |---|---|
@@ -85,8 +85,9 @@ same.
 | TikZ externalisation | opaque | Communicates through auxiliary side-channels the model does not track |
 | Anything else not listed above | opaque | Default-deny |
 
-The list is default-deny: a construct is supported only if it appears in the Required or
-Optional table.
+The current subset is the implemented portion of the Required table and the
+package rules in [Packages and classes](/reference/package-support.html).
+The Proposed extensions table does not grant support.
 
 ## Fallback rule
 
@@ -144,30 +145,36 @@ Modelling that extent requires line breaking, which is out of scope. Treating ev
 as pagination-affecting makes the analysis vacuous. `b07` and `b15` instead remain opaque and
 are refused under strict mode. These cases state the subset boundary by convergence mechanism.
 
-### Inert packages and commands
+### Package names and inert commands
 
-Some packages and commands write no auxiliary or cross-reference state. AuxFlow treats them as inert and does not mark a document UNKNOWN for using them. The packages are `inputenc`, `fontenc`, `ae`, `aecompl`, `lmodern`, `xcolor`, `parskip`, `geometry`, `setspace`, `multicol`, and `amsmath`. The commands are listed in `_INERT_COMMANDS` in `src/auxflow/ir/graph.py`. `\eqref` resolves like `\ref`. A local macro is inert only if every command in its body is inert. These constructs can still change pagination. The ARG does not model that, as with all layout.
+The [Packages and classes](/reference/package-support.html) page lists every package
+name AuxFlow accepts without a package warning. It separates narrow syntax models
+from packages treated as inert. An accepted package name does not make all of its
+commands safe or modelled. The command allowlist lives in `_INERT_COMMANDS` in
+`src/auxflow/ir/graph.py`. `\eqref` resolves like `\ref`. A local macro is inert
+only when every command in its body is inert. Layout effects remain outside the ARG.
 
-The allowlist is part of the stated language subset from v0.1.0. Additions are breaking changes to the analysis contract: a package added to the allowlist can cause a document that was previously UNKNOWN to become CERTIFIED. Removals are also breaking: a document that was CERTIFIED may become UNKNOWN. Both directions require a minor version increment.
+Changes to the package list can change a document from `UNKNOWN` to `CERTIFIED`,
+or the reverse. Treat these changes as revisions to the analysis contract.
 
 A page reference under `roman`, `Roman`, `alph`, or `Alph` page numbering makes the document UNKNOWN. The numeral width changes with its value, which can move line breaks and the reference's own target (b11, b12). `\vref` and `\vpageref` also make a document UNKNOWN (b13). References under arabic numbering are not treated this way, so b03 and b09 stay CERTIFIED.
 
 ## Diagnosing larger projects
 
-`auxflow check` lists unmodelled packages declared directly in the document and packages
-loaded by a local class or local package file. These warnings report declarations only.
-They do not prove the package's macros or layout effects are safe.
+`auxflow check` reports direct unmodelled packages and literal package names
+required by local class files. It follows local `.sty` files reached through
+those requirements. These warnings list declarations, not effects.
 
-The classifier reports repeated unsupported constructs by name and occurrence count.
-Use `auxflow classify -v FILE` for each source location. A local unmodelled class
-makes a document UNKNOWN even when its main `.tex` file uses only supported commands.
-An external class that AuxFlow cannot inspect also remains outside the stated model.
+The classifier groups repeated unsupported constructs by name and count.
+Use `auxflow classify -v FILE` for source locations. A local class file
+next to the document makes the classification `UNKNOWN`. A nonstandard
+external class produces a warning but does not necessarily make classification
+`UNKNOWN`. Its internals remain uninspected, even if the result is `CERTIFIED`.
 
-The package inventory does not parse installed TeX packages or cache dependency
-graphs. A package's presence on a machine does not establish its convergence
-behavior. Project graphs depend on local document content and must be rebuilt
-when that content changes.
-Do not interpret a CERTIFIED result as a guarantee about arbitrary class internals.
+The inventory does not read installed TeX packages or evaluate conditional
+requirements. A package's presence on a machine says nothing about its
+convergence behavior. Project graphs depend on local document content and
+must be rebuilt when that content changes.
 
 Literal commands inside `verbatim` and `lstlisting` do not produce reference facts.
 `lstlisting` remains an unmodelled environment, so its document can still be UNKNOWN.

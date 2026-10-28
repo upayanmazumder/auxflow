@@ -10,6 +10,8 @@ This page fetches release notes directly from [GitHub Releases](https://github.c
 
 ## Unreleased
 
+- The website lists accepted package names, unsupported bundles, and class limits. It links to the tested demo documents.
+- The Review 3 report now separates static findings from runtime checks and explains the failed gate and post-measurement guards.
 - Runtime normalization reads braces inside optional bibliography labels before it finds the closing bracket.
 - `auxflow update` works in a pipx installation. The pipx environment has no pip, so AuxFlow runs `pipx upgrade auxflow` there. In any other environment without pip, it explains how to update.
 - Reports and `auxflow check` print `file:line:column` instead of character offsets. Paths under the current directory print relative to it.
