@@ -130,10 +130,22 @@ def add_details_table(doc: Document, rows: list[tuple[str, str]]) -> None:
     doc.add_paragraph()
 
 
-def add_grid(doc: Document, header: list[str], rows: list[list[str]]) -> None:
+def add_grid(
+    doc: Document,
+    header: list[str],
+    rows: list[list[str]],
+    widths_cm: list[float] | None = None,
+) -> None:
     table = doc.add_table(rows=len(rows) + 1, cols=len(header))
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     table.style = "Table Grid"
+    if widths_cm is not None:
+        table.autofit = False
+        for column, width in zip(table.columns, widths_cm, strict=True):
+            column.width = Cm(width)
+        for row in table.rows:
+            for cell, width in zip(row.cells, widths_cm, strict=True):
+                cell.width = Cm(width)
     for cell, text in zip(table.rows[0].cells, header, strict=True):
         set_cell_text(cell, text, bold=True, size=9)
         shade_cell(cell, "E6EDF3")

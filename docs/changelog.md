@@ -12,7 +12,7 @@ This page fetches release notes directly from [GitHub Releases](https://github.c
 
 - The VS Code extension checks open and unsaved `.tex` buffers, reports diagnostics in Problems, and shows static classification without running TeX. It bundles the analyzer and requires Python 3.12 or newer. The `vX.Y.Z` release workflow attaches the Python wheel, source distribution, and matching VSIX after tests. Install and update manually from GitHub Releases, not the Marketplace.
 - The website lists accepted package names, unsupported bundles, and class limits. It links to the tested demo documents.
-- The Review 3 report now separates static findings from runtime checks and explains the failed gate and post-measurement guards.
+- The Review 3 document matches the required nine-section format. Its literature review summarizes five cited works. Screenshots now appear with tables and graphs in Results and Discussion.
 - Runtime normalization reads braces inside optional bibliography labels before it finds the closing bracket.
 - `auxflow update` works in a pipx installation. The pipx environment has no pip, so AuxFlow runs `pipx upgrade auxflow` there. In any other environment without pip, it explains how to update.
 - Reports and `auxflow check` print `file:line:column` instead of character offsets. Paths under the current directory print relative to it.
