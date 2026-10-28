@@ -8,53 +8,147 @@ permissions:
   contents: read
 
 jobs:
+  validate:
+    if: ${{ startsWith(github.event.release.tag_name, 'v') && !startsWith(github.event.release.tag_name, 'vscode-') }}
+    name: read release version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - id: version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "Expected vX.Y.Z, got $RELEASE_TAG" >&2
+            exit 1
+          fi
+          echo "version=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
+
   verify:
-    if: ${{ !startsWith(github.event.release.tag_name, 'vscode-') }}
+    needs: validate
     uses: ./.github/workflows/ci.yml
 
-  build:
-    if: ${{ !startsWith(github.event.release.tag_name, 'vscode-') }}
-    name: build distribution
+  build-python:
+    name: build Python distribution
     needs: verify
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # hatch-vcs needs full tag history
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      - name: Install build frontend
-        run: python -m pip install build
-
-      - name: Build sdist and wheel
-        run: python -m build
-
-      - name: Store distribution packages
-        uses: actions/upload-artifact@v4
+      - name: Build wheel and source distribution
+        run: |
+          python -m pip install build
+          python -m build
+      - uses: actions/upload-artifact@v4
         with:
           name: python-package-distributions
           path: dist/
+          if-no-files-found: error
 
-  publish:
-    if: ${{ !startsWith(github.event.release.tag_name, 'vscode-') }}
+  build-vscode:
+    name: bump version, test, and package VSIX
+    needs: [validate, verify]
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_VERSION: ${{ needs.validate.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Bump extension manifest and lockfile
+        working-directory: extension
+        run: npm version "$RELEASE_VERSION" --no-git-tag-version --allow-same-version
+      - name: Install dependencies
+        working-directory: extension
+        run: npm ci
+      - name: Check extension formatting
+        working-directory: extension
+        run: npm run format:check
+      - name: Test extension
+        working-directory: extension
+        run: xvfb-run -a npm test
+      - name: Package extension
+        working-directory: extension
+        run: |
+          npm run package
+          test -f "auxflow-${RELEASE_VERSION}.vsix"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vscode-extension
+          path: extension/auxflow-*.vsix
+          if-no-files-found: error
+
+  release-assets:
+    name: attach Python distributions and VSIX
+    needs: [build-python, build-vscode]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+      - uses: actions/download-artifact@v4
+        with:
+          name: vscode-extension
+          path: dist/
+      - name: Attach release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release upload "$GITHUB_REF_NAME" dist/*
+
+  publish-pypi:
     name: publish to PyPI
-    needs: build
+    needs: release-assets
     runs-on: ubuntu-latest
     environment:
       name: pypi
       url: https://pypi.org/p/auxflow
     permissions:
-      id-token: write  # required for OIDC trusted publisher
-
+      id-token: write
     steps:
-      - name: Download distribution packages
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: python-package-distributions
           path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
 
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+  sync-version:
+    name: save tested extension version to main
+    needs: [validate, publish-pypi]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Update version after successful publication
+        env:
+          RELEASE_VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          node -e "if (require('./extension/package.json').version.localeCompare(process.env.RELEASE_VERSION, undefined, {numeric: true}) > 0) throw new Error('Refusing to lower the extension version on main')"
+          npm version "$RELEASE_VERSION" --prefix extension --no-git-tag-version --allow-same-version
+          git add extension/package.json extension/package-lock.json
+          if ! git diff --cached --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "chore: sync VS Code extension version to $RELEASE_VERSION"
+            git push origin "HEAD:${{ github.event.repository.default_branch }}"
+          fi
